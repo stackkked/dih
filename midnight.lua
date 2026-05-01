@@ -254,16 +254,27 @@ local KeyCodeToName = KeyUtils.KeyCodeToName
 --// UTILITY FUNCTIONS
 --// ═══════════════════════════════════════════════════════════
 
+-- Set to true during development to surface property errors in Create()
+local DEBUG_MODE = false
+
 local function Create(className, props, children)
     local inst = Instance.new(className)
     local parent = nil
     if props then
         parent = props.Parent
         props.Parent = nil
-        for k, v in pairs(props) do
-            if type(k) == "string" then
-                local ok, err = pcall(function() inst[k] = v end)
-                if not ok then warn("[MIDNIGHT] Property '" .. tostring(k) .. "' on " .. className .. ": " .. tostring(err)) end
+        if DEBUG_MODE then
+            for k, v in pairs(props) do
+                if type(k) == "string" then
+                    local ok, err = pcall(function() inst[k] = v end)
+                    if not ok then warn("[MIDNIGHT] Property '" .. tostring(k) .. "' on " .. className .. ": " .. tostring(err)) end
+                end
+            end
+        else
+            for k, v in pairs(props) do
+                if type(k) == "string" then
+                    inst[k] = v
+                end
             end
         end
         props.Parent = parent
@@ -311,7 +322,9 @@ local function GetTweenInfo(duration, style, dir)
     local d = duration or 0.3
     local s = (style or Enum.EasingStyle.Quad).Value
     local r = (dir   or Enum.EasingDirection.Out).Value
-    local key = d .. "_" .. s .. "_" .. r
+    -- Numeric key: avoid string alloc on every call
+    -- d packed to int (ms), s and r are small ints from .Value
+    local key = math.floor(d * 1000) * 10000 + s * 100 + r
     local ti = _TweenInfoCache[key]
     if not ti then
         ti = TweenInfo.new(d, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
@@ -323,9 +336,9 @@ end
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
     local prev = _ActiveTweens[inst]
-    if prev then pcall(function() prev:Cancel() end) end
-    local ok, t = pcall(TweenService.Create, TweenService, inst, GetTweenInfo(duration, style, dir), props)
-    if ok and t then
+    if prev then prev:Cancel() end
+    local t = TweenService:Create(inst, GetTweenInfo(duration, style, dir), props)
+    if t then
         _ActiveTweens[inst] = t
         t:Play()
         t.Completed:Connect(function()
@@ -1029,6 +1042,12 @@ end
 --// FPS + PING TRACKER
 --// ═══════════════════════════════════════════════════════════
 function MIDNIGHT:_InitFPSTracker()
+    -- Cache the Stats item once — avoids repeated indexing inside the hot path
+    local _pingStatItem = nil
+    pcall(function()
+        _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
+    end)
+
     local conn = RunService.Heartbeat:Connect(function()
         self._FPSCounter = self._FPSCounter + 1
         local now = tick()
@@ -1037,9 +1056,10 @@ function MIDNIGHT:_InitFPSTracker()
             self._Lagspike  = self._FPS < 30
             self._FPSCounter = 0
             self._LastFPSTick = now
-            pcall(function()
-                self._Ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
-            end)
+            if _pingStatItem then
+                local ok, v = pcall(_pingStatItem.GetValue, _pingStatItem)
+                if ok then self._Ping = math.floor(v) end
+            end
             self:_UpdateWatermark()
             self:_UpdateSidebarFooters()
         end
@@ -2353,23 +2373,26 @@ function MIDNIGHT:CreateTargetHUD(config)
         self._CurrentPlayer = player
         self._Visible = true
 
-        -- ── Name ──────────────────────────────────────────
-        nameLabel.Text = player.DisplayName ~= player.Name
-            and (player.DisplayName .. "  @" .. player.Name)
-            or player.Name
+        -- ── Static info (name, team, avatar) — only update on player change ──
+        if not isSame then
+            -- ── Name ──────────────────────────────────────────
+            nameLabel.Text = player.DisplayName ~= player.Name
+                and (player.DisplayName .. "  @" .. player.Name)
+                or player.Name
 
-        -- ── Team ──────────────────────────────────────────
-        local teamColor = Theme.TextMuted
-        local teamName  = "No Team"
-        pcall(function()
-            if player.Team then
-                teamName  = player.Team.Name
-                teamColor = player.Team.TeamColor.Color
-            end
-        end)
-        teamDot.BackgroundColor3   = teamColor
-        teamLabel.Text             = teamName
-        teamLabel.TextColor3       = teamColor
+            -- ── Team ──────────────────────────────────────────
+            local teamColor = Theme.TextMuted
+            local teamName  = "No Team"
+            pcall(function()
+                if player.Team then
+                    teamName  = player.Team.Name
+                    teamColor = player.Team.TeamColor.Color
+                end
+            end)
+            teamDot.BackgroundColor3   = teamColor
+            teamLabel.Text             = teamName
+            teamLabel.TextColor3       = teamColor
+        end
 
         -- ── HP ────────────────────────────────────────────
         local function refreshHP()
@@ -2391,20 +2414,28 @@ function MIDNIGHT:CreateTargetHUD(config)
                 hpLabel.TextColor3 = hpColor(pct)
             end)
         end
+
+        -- Always refresh HP once (health changes continuously)
         refreshHP()
 
-        -- Pulse HP bar on damage
+        -- ── HealthChanged listener — disconnect previous, connect new ──
         if not isSame then
+            -- Disconnect previous HealthChanged listener to prevent accumulation
+            if self._HPConn then
+                pcall(function() self._HPConn:Disconnect() end)
+                self._HPConn = nil
+            end
             pcall(function()
                 local char = player.Character
                 if char then
                     local hum = char:FindFirstChildOfClass("Humanoid")
                     if hum then
-                        RegConn(hum.HealthChanged:Connect(function()
+                        self._HPConn = hum.HealthChanged:Connect(function()
                             if self._CurrentPlayer == player then
                                 refreshHP()
                             end
-                        end))
+                        end)
+                        -- Note: NOT added to RegConn — managed manually above
                     end
                 end
             end)
@@ -4441,6 +4472,7 @@ function MIDNIGHT:MakeWindow(config)
         local function startTracking()
             stopTracking()
             trackLoop = task.spawn(function()
+                -- Resolve services once, outside the loop
                 local UIS      = game:GetService("UserInputService")
                 local camera   = workspace.CurrentCamera
                 local plrs     = game:GetService("Players")
@@ -4451,9 +4483,10 @@ function MIDNIGHT:MakeWindow(config)
 
                     -- Позиция мыши на экране
                     local mousePos = UIS:GetMouseLocation()
+                    local mX, mY = mousePos.X, mousePos.Y
 
                     local bestPlayer = nil
-                    local bestDist   = math.huge
+                    local bestDistSq = math.huge  -- compare squared distances — avoids sqrt
 
                     for _, p in ipairs(plrs:GetPlayers()) do
                         if p == lp then continue end
@@ -4472,12 +4505,12 @@ function MIDNIGHT:MakeWindow(config)
                         local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
                         if not onScreen then continue end
 
-                        local dx = screenPos.X - mousePos.X
-                        local dy = screenPos.Y - mousePos.Y
-                        local dist = math.sqrt(dx*dx + dy*dy)
+                        local dx = screenPos.X - mX
+                        local dy = screenPos.Y - mY
+                        local distSq = dx*dx + dy*dy  -- no sqrt needed for comparison
 
-                        if dist < bestDist then
-                            bestDist   = dist
+                        if distSq < bestDistSq then
+                            bestDistSq   = distSq
                             bestPlayer = p
                         end
                     end
@@ -4578,4 +4611,3 @@ MIDNIGHT.LucideIcons = LucideIcons
 MIDNIGHT.LucideBloxAssets = LucideBloxAssets
 
 return MIDNIGHT
-
