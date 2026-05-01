@@ -335,6 +335,18 @@ end
 
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
+    if not props or next(props) == nil then return nil end
+    local needsTween = false
+    for prop, targetValue in pairs(props) do
+        local ok, currentValue = pcall(function()
+            return inst[prop]
+        end)
+        if ok and currentValue ~= targetValue then
+            needsTween = true
+            break
+        end
+    end
+    if not needsTween then return nil end
     local prev = _ActiveTweens[inst]
     if prev then prev:Cancel() end
     local t = TweenService:Create(inst, GetTweenInfo(duration, style, dir), props)
@@ -430,14 +442,22 @@ local RegConn -- forward declaration, defined after MIDNIGHT table
 local function MakeDraggable(frame, handle, onDragStart)
     if not frame then return end
     handle = handle or frame
-    local dragging, dragInput, dragStart, startPos
+    local dragging, dragInput, dragStart, startPos, dragEndConn
     RegConn(handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
+            if dragEndConn then
+                dragEndConn:Disconnect()
+                dragEndConn = nil
+            end
             dragging = true; dragStart = input.Position; startPos = frame.Position
             if onDragStart then onDragStart() end
-            input.Changed:Connect(function()
+            dragEndConn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then dragging = false end
+                if input.UserInputState == Enum.UserInputState.End and dragEndConn then
+                    dragEndConn:Disconnect()
+                    dragEndConn = nil
+                end
             end)
         end
     end))
@@ -914,6 +934,7 @@ local MIDNIGHT = {
     _KeybindSettingsFrame   = nil,
     _KeybindSettingsBg      = nil,
     _KeybindSettingsCloseConn = nil,
+    _KeybindSettingsKeyConn = nil,
     _KeybindSettingsCb      = nil,
     _MenuCloseThreads       = {},
     _KeybindDispatcherInit  = false,
@@ -930,6 +951,18 @@ RegConn = function(conn)
         table.insert(MIDNIGHT._Connections, conn)
     end
     return conn
+end
+
+local function SafeDisconnect(conn)
+    if conn then
+        pcall(function() conn:Disconnect() end)
+    end
+end
+
+local function SafeCancelThread(th)
+    if th and typeof(th) == "thread" then
+        pcall(function() task.cancel(th) end)
+    end
 end
 
 --// FIX #2: Global slider input dispatcher
@@ -1166,10 +1199,34 @@ function MIDNIGHT:Reset()
         self._lagspikeBlinkStop()
         self._lagspikeBlinkStop = nil
     end
+    if self._TargetHUDHideThread then
+        SafeCancelThread(self._TargetHUDHideThread)
+        self._TargetHUDHideThread = nil
+    end
+    for _, th in ipairs(self._MenuCloseThreads or {}) do
+        SafeCancelThread(th)
+    end
+    self._MenuCloseThreads = {}
+    if self._ActiveDropdownCloseConn then
+        SafeDisconnect(self._ActiveDropdownCloseConn)
+        self._ActiveDropdownCloseConn = nil
+    end
+    if self._ActiveColorPickerCloseConn then
+        SafeDisconnect(self._ActiveColorPickerCloseConn)
+        self._ActiveColorPickerCloseConn = nil
+    end
+    if self._KeybindSettingsCloseConn then
+        SafeDisconnect(self._KeybindSettingsCloseConn)
+        self._KeybindSettingsCloseConn = nil
+    end
+    if self._KeybindSettingsKeyConn then
+        SafeDisconnect(self._KeybindSettingsKeyConn)
+        self._KeybindSettingsKeyConn = nil
+    end
     _SliderClearDrag()
     -- Disconnect all connections
     for _, conn in ipairs(self._Connections) do
-        pcall(function() conn:Disconnect() end)
+        SafeDisconnect(conn)
     end
     self._Connections = {}
     -- Destroy GUI
@@ -1192,6 +1249,7 @@ function MIDNIGHT:Reset()
     self._ActiveDropdownCloseConn = nil
     self._ActiveColorPickerCloseConn = nil
     self._KeybindSettingsCloseConn = nil
+    self._KeybindSettingsKeyConn = nil
     self._TargetHUD = nil
     self._TargetHUDHideThread = nil
     self._MenuCloseThreads = {}
@@ -2411,20 +2469,29 @@ function MIDNIGHT:CreateTargetHUD(config)
     local _dragInput  = nil
     local _dragStart  = nil
     local _startPos   = nil
+    local _dragEndConn = nil
     local _isDragged  = false  -- true после первого ручного перетаскивания
 
     RegConn(dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
+            if _dragEndConn then
+                _dragEndConn:Disconnect()
+                _dragEndConn = nil
+            end
             _dragging  = true
             _dragStart = input.Position
             _startPos  = hf.Position
             -- После ручного drag — отключаем preset-позиционирование
             _isDragged = true
             POS = nil
-            input.Changed:Connect(function()
+            _dragEndConn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     _dragging = false
+                    if _dragEndConn then
+                        _dragEndConn:Disconnect()
+                        _dragEndConn = nil
+                    end
                 end
             end)
         end
@@ -2448,12 +2515,13 @@ function MIDNIGHT:CreateTargetHUD(config)
     end))
 
     -- ── HUD object ──────────────────────────────────────────
-    local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil }
+    local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil, _CurrentCharacter = nil, _CurrentHumanoid = nil }
     local function disconnectHPConn()
         if hud._HPConn then
             pcall(function() hud._HPConn:Disconnect() end)
             hud._HPConn = nil
         end
+        hud._CurrentHumanoid = nil
     end
     hud._DisconnectHPConn = disconnectHPConn
 
@@ -2474,9 +2542,10 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     function hud:ClearTarget()
         disconnectHPConn()
+        self._CurrentPlayer = nil
+        self._CurrentCharacter = nil
         if not self._Visible then return end
         self._Visible = false
-        self._CurrentPlayer = nil
         -- Cancel pending auto-hide
         if MIDNIGHT._TargetHUDHideThread then
             if typeof(MIDNIGHT._TargetHUDHideThread) == "thread" then
@@ -2501,8 +2570,11 @@ function MIDNIGHT:CreateTargetHUD(config)
             MIDNIGHT._TargetHUDHideThread = nil
         end
 
+        local char = player.Character
         local isSame = (self._CurrentPlayer == player)
+        local charChanged = (self._CurrentCharacter ~= char)
         self._CurrentPlayer = player
+        self._CurrentCharacter = char
         self._Visible = true
 
         -- ── Static info (name, team, avatar) — only update on player change ──
@@ -2530,35 +2602,51 @@ function MIDNIGHT:CreateTargetHUD(config)
         local function refreshHP()
             if not hf.Parent then return end
             pcall(function()
-                local char = player.Character
                 if not char then
                     hpFill.Size = UDim2.new(0, 0, 1, 0)
                     hpLabel.Text = "? HP"
                     hpFill.BackgroundColor3 = Theme.TextMuted
+                    hpLabel.TextColor3 = Theme.TextMuted
                     return
                 end
-                local hum = char:FindFirstChildOfClass("Humanoid")
+                local hum = self._CurrentHumanoid
+                if not hum or hum.Parent ~= char then
+                    hum = char:FindFirstChildOfClass("Humanoid")
+                    self._CurrentHumanoid = hum
+                end
                 if not hum then return end
                 local pct = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
-                TweenObject(hpFill, {Size = UDim2.new(pct, 0, 1, 0)}, 0.15)
-                TweenObject(hpFill, {BackgroundColor3 = hpColor(pct)}, 0.15)
-                hpLabel.Text = math.ceil(hum.Health) .. " / " .. math.ceil(hum.MaxHealth) .. " HP"
-                hpLabel.TextColor3 = hpColor(pct)
+                local fillColor = hpColor(pct)
+                local targetSize = UDim2.new(pct, 0, 1, 0)
+                if hpFill.Size ~= targetSize then
+                    TweenObject(hpFill, {Size = targetSize}, 0.15)
+                end
+                if hpFill.BackgroundColor3 ~= fillColor then
+                    TweenObject(hpFill, {BackgroundColor3 = fillColor}, 0.15)
+                end
+                local hpText = math.ceil(hum.Health) .. " / " .. math.ceil(hum.MaxHealth) .. " HP"
+                if hpLabel.Text ~= hpText then
+                    hpLabel.Text = hpText
+                end
+                if hpLabel.TextColor3 ~= fillColor then
+                    hpLabel.TextColor3 = fillColor
+                end
             end)
         end
 
-        -- Always refresh HP once (health changes continuously)
-        refreshHP()
+        if not isSame or charChanged or not hf.Visible then
+            refreshHP()
+        end
 
         -- ── HealthChanged listener — disconnect previous, connect new ──
-        if not isSame then
+        if not isSame or charChanged then
             -- Disconnect previous HealthChanged listener to prevent accumulation
             disconnectHPConn()
             pcall(function()
-                local char = player.Character
                 if char then
                     local hum = char:FindFirstChildOfClass("Humanoid")
                     if hum then
+                        self._CurrentHumanoid = hum
                         self._HPConn = hum.HealthChanged:Connect(function()
                             if self._CurrentPlayer == player then
                                 refreshHP()
@@ -3116,6 +3204,7 @@ function MIDNIGHT:MakeWindow(config)
         _Frame=wf, _TitleBar=tb, _Body=body, _Sidebar=sidebar,
         _TabList=tabList, _ContentFrame=contentFrame,
         _Tabs={}, _ActiveTab=nil, _FloatingWindows={},
+        _AdminLogsWindow=nil, _ChatLoggerWindow=nil,
         _TabCount=0,
     }
     table.insert(self._Windows, wd)
@@ -4315,19 +4404,84 @@ function MIDNIGHT:MakeWindow(config)
 
         MakeDraggable(fw,ftb,function() MIDNIGHT:_CloseAllPopups() end)
 
-        local fData={_Frame=fw,_Scroll=fScroll,_Visible=false}
+        local fData={
+            _Frame=fw,
+            _Scroll=fScroll,
+            _Visible=false,
+            _Destroyed=false,
+            _OwnerWindow=self,
+            _OnDestroyCallbacks={},
+        }
+        local destroyCallbacksRun = false
+        local function runDestroyCallbacks()
+            if destroyCallbacksRun then return end
+            destroyCallbacksRun = true
+            for _, cb in ipairs(fData._OnDestroyCallbacks) do
+                pcall(cb)
+            end
+            fData._OnDestroyCallbacks = {}
+        end
+
+        function fData:IsAlive()
+            return not self._Destroyed and self._Frame and self._Frame.Parent ~= nil
+        end
+
+        function fData:OnDestroy(cb)
+            if typeof(cb) == "function" then
+                self._OnDestroyCallbacks[#self._OnDestroyCallbacks + 1] = cb
+            end
+            return cb
+        end
+
+        function fData:Destroy()
+            if self._Destroyed then return end
+            self._Destroyed = true
+            self._Visible = false
+            runDestroyCallbacks()
+            if self._OwnerWindow and self._OwnerWindow._FloatingWindows then
+                for i = #self._OwnerWindow._FloatingWindows, 1, -1 do
+                    if self._OwnerWindow._FloatingWindows[i] == self then
+                        table.remove(self._OwnerWindow._FloatingWindows, i)
+                        break
+                    end
+                end
+            end
+            if self._Frame then
+                pcall(function() self._Frame:Destroy() end)
+            end
+            self._Frame = nil
+            self._Scroll = nil
+        end
+
+        fw.Destroying:Connect(function()
+            fData._Destroyed = true
+            fData._Visible = false
+            runDestroyCallbacks()
+            if fData._OwnerWindow and fData._OwnerWindow._FloatingWindows then
+                for i = #fData._OwnerWindow._FloatingWindows, 1, -1 do
+                    if fData._OwnerWindow._FloatingWindows[i] == fData then
+                        table.remove(fData._OwnerWindow._FloatingWindows, i)
+                        break
+                    end
+                end
+            end
+            fData._Frame = nil
+            fData._Scroll = nil
+        end)
+
         fwClose.MouseButton1Click:Connect(function() fData:Toggle() end)
 
         function fData:Toggle()
-            fData._Visible=not fData._Visible
-            if fData._Visible then
+            if self._Destroyed or not self._Frame then return end
+            self._Visible = not self._Visible
+            if self._Visible then
                 fw.Visible=true; fw.BackgroundTransparency=1; fw.Size=UDim2.new(0,0,0,0)
                 TweenObject(fw,{Size=UDim2.new(0,sz[1],0,sz[2])},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                 TweenObject(fw,{BackgroundTransparency=0},0.25)
             else
                 TweenObject(fw,{Size=UDim2.new(0,0,0,0)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
                 TweenObject(fw,{BackgroundTransparency=1},0.18)
-                task.delay(0.25,function() if not fData._Visible then fw.Visible=false end end)
+                task.delay(0.25,function() if not self._Visible and fw.Parent then fw.Visible=false end end)
             end
         end
 
@@ -4351,11 +4505,23 @@ function MIDNIGHT:MakeWindow(config)
             local rh=Create("TextButton",{Text="",Size=UDim2.new(0,16,0,16),Position=UDim2.new(1,-16,1,-16),BackgroundTransparency=1,ZIndex=ZIndex.POPUP+4,Parent=fw})
             Create("Frame",{Size=UDim2.new(0,8,0,1),Position=UDim2.new(0.5,-4,0.8,0),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=-45,Parent=rh})
             Create("Frame",{Size=UDim2.new(0,5,0,1),Position=UDim2.new(0.5,-2,0.5,0),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=-45,Parent=rh})
-            local resDrag=false; local resStart,resStartSize
+            local resDrag=false; local resStart,resStartSize; local resEndConn=nil
             rh.InputBegan:Connect(function(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 then
+                    if resEndConn then
+                        resEndConn:Disconnect()
+                        resEndConn = nil
+                    end
                     resDrag=true; resStart=inp.Position; resStartSize=fw.Size
-                    inp.Changed:Connect(function() if inp.UserInputState==Enum.UserInputState.End then resDrag=false end end)
+                    resEndConn = inp.Changed:Connect(function()
+                        if inp.UserInputState==Enum.UserInputState.End then
+                            resDrag=false
+                            if resEndConn then
+                                resEndConn:Disconnect()
+                                resEndConn = nil
+                            end
+                        end
+                    end)
                 end
             end)
             RegConn(UserInputService.InputChanged:Connect(function(inp)
@@ -4371,6 +4537,10 @@ function MIDNIGHT:MakeWindow(config)
     end
 
     function wd:CreateAdminLogs(config)
+        if self._AdminLogsWindow and self._AdminLogsWindow.IsAlive and self._AdminLogsWindow:IsAlive() then
+            return self._AdminLogsWindow
+        end
+
         config=config or {}
         local groupId = config.GroupId or 0
         local ranks   = config.Ranks or {}
@@ -4378,15 +4548,50 @@ function MIDNIGHT:MakeWindow(config)
 
         local aw = self:MakeFloatingWindow({Name="Admin Logs", Size={300,380}, Resizable=true})
         if not aw then return nil end
+        self._AdminLogsWindow = aw
+
+        local ownedConns = {}
+        local ownedThreads = {}
+        local function bindConn(conn)
+            if conn then
+                ownedConns[#ownedConns + 1] = conn
+                RegConn(conn)
+            end
+            return conn
+        end
+        local function bindThread(th)
+            if th then
+                ownedThreads[#ownedThreads + 1] = th
+            end
+            return th
+        end
+        local function canUseWindow()
+            return aw and aw.IsAlive and aw:IsAlive()
+        end
+
+        aw:OnDestroy(function()
+            if self._AdminLogsWindow == aw then
+                self._AdminLogsWindow = nil
+            end
+            for _, conn in ipairs(ownedConns) do
+                SafeDisconnect(conn)
+            end
+            ownedConns = {}
+            for _, th in ipairs(ownedThreads) do
+                SafeCancelThread(th)
+            end
+            ownedThreads = {}
+        end)
 
         -- Скрыт по умолчанию — откроется сам при первом событии
         aw._Visible = false
         aw._Frame.Visible = false
 
         local logOrder = 0
-        local function addLog(tag, text, tagColor, textColor)
+        local function addLog(tag, text, tagColor, textColor, skipAutoOpen)
+            if not canUseWindow() then return end
             -- Авто-открытие при первом логе
-            if not aw._Visible then
+            if not skipAutoOpen and not aw._Visible then
                 aw:Toggle()
             end
             logOrder = logOrder + 1
@@ -4428,11 +4633,12 @@ function MIDNIGHT:MakeWindow(config)
             local ok2, admin, rankName = pcall(isAdmin, player)
             if not (ok2 and admin) then return end
             local conn = player.Chatted:Connect(function(msg)
+                if not canUseWindow() then return end
                 local nc = rankColor(player)
                 addLog(player.DisplayName, msg, nc, Theme.TextSecondary)
             end)
             chatConns[player.UserId] = conn
-            RegConn(conn)
+            bindConn(conn)
         end
 
         -- Подписка на спавн/деспавн
@@ -4440,18 +4646,21 @@ function MIDNIGHT:MakeWindow(config)
             local ok2, admin, rankName = pcall(isAdmin, player)
             if not (ok2 and admin) then return end
             local nc = rankColor(player)
-            RegConn(player.CharacterAdded:Connect(function()
+            bindConn(player.CharacterAdded:Connect(function()
+                if not canUseWindow() then return end
                 addLog(player.DisplayName, "spawned ["..tostring(rankName).."]", nc, Theme.Success)
                 midnight:Notify({Title="Admin Spawned", Content=player.DisplayName.." ("..tostring(rankName)..")", Type="warning", Duration=6})
             end))
-            RegConn(player.CharacterRemoving:Connect(function()
+            bindConn(player.CharacterRemoving:Connect(function()
+                if not canUseWindow() then return end
                 addLog(player.DisplayName, "despawned", nc, Theme.TextMuted)
             end))
         end
 
         -- Обработка входа игрока
         local function onPlayerAdded(player)
-            task.delay(2, function()
+            bindThread(task.delay(2, function()
+                if not canUseWindow() then return end
                 if not player or not player.Parent then return end
                 local ok2, admin, rankName = pcall(isAdmin, player)
                 if not (ok2 and admin) then return end
@@ -4467,11 +4676,12 @@ function MIDNIGHT:MakeWindow(config)
                 if not aw._Visible then aw:Toggle() end
                 watchChat(player)
                 watchSpawn(player)
-            end)
+            end))
         end
 
         -- Обработка выхода
         local function onPlayerRemoving(player)
+            if not canUseWindow() then return end
             local ok2, admin, rankName = pcall(isAdmin, player)
             if not (ok2 and admin) then return end
             local nc = rankColor(player)
@@ -4488,21 +4698,21 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         -- Инициализация текущих игроков
-        addLog("SYSTEM", "Admin monitor started", Theme.Accent, Theme.TextSecondary)
+        addLog("SYSTEM", "Admin monitor started", Theme.Accent, Theme.TextSecondary, true)
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
                 local ok2, admin, rankName = pcall(isAdmin, p)
                 if ok2 and admin then
                     local nc = rankColor(p)
-                    addLog(p.DisplayName, "online ["..tostring(rankName).."]", nc, Theme.TextAccent)
+                    addLog(p.DisplayName, "online ["..tostring(rankName).."]", nc, Theme.TextAccent, true)
                     watchChat(p)
                     watchSpawn(p)
                 end
             end
         end
 
-        RegConn(Players.PlayerAdded:Connect(onPlayerAdded))
-        RegConn(Players.PlayerRemoving:Connect(onPlayerRemoving))
+        bindConn(Players.PlayerAdded:Connect(onPlayerAdded))
+        bindConn(Players.PlayerRemoving:Connect(onPlayerRemoving))
         return aw
     end
     function wd:CreateAdminChecker(c) return self:CreateAdminLogs(c) end
@@ -4690,6 +4900,7 @@ function MIDNIGHT:MakeWindow(config)
             -- We cache the results and only invalidate when the character changes.
             local charCache = {}   -- [player] = { char, root, hum }
             local charConns = {}   -- [player] = CharacterAdded connection
+            local trackedPlayers = {}
             hud._TrackCharCache = charCache
             hud._TrackCharConns = charConns
 
@@ -4699,6 +4910,24 @@ function MIDNIGHT:MakeWindow(config)
                 charConns[p] = p.CharacterAdded:Connect(function()
                     charCache[p] = nil  -- invalidate on respawn
                 end)
+            end
+
+            local function addTrackedPlayer(p)
+                if p == lp then return end
+                trackedPlayers[#trackedPlayers + 1] = p
+                cachePlayer(p)
+            end
+
+            local function removeTrackedPlayer(p)
+                for i = #trackedPlayers, 1, -1 do
+                    if trackedPlayers[i] == p then
+                        table.remove(trackedPlayers, i)
+                        break
+                    end
+                end
+                if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
+                charCache[p] = nil
+                charConns[p] = nil
             end
 
             local function getCache(p)
@@ -4716,18 +4945,16 @@ function MIDNIGHT:MakeWindow(config)
 
             -- Seed cache for players already in game
             for _, p in ipairs(plrs:GetPlayers()) do
-                if p ~= lp then cachePlayer(p) end
+                addTrackedPlayer(p)
             end
 
             -- Track new joiners
             local joinConn = plrs.PlayerAdded:Connect(function(p)
-                cachePlayer(p)
+                addTrackedPlayer(p)
             end)
             -- Clean up when players leave
             local leaveConn = plrs.PlayerRemoving:Connect(function(p)
-                if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
-                charCache[p]  = nil
-                charConns[p]  = nil
+                removeTrackedPlayer(p)
             end)
             hud._TrackJoinConn = joinConn
             hud._TrackLeaveConn = leaveConn
@@ -4743,10 +4970,15 @@ function MIDNIGHT:MakeWindow(config)
                 local mousePos   = UIS:GetMouseLocation()
                 local mX, mY     = mousePos.X, mousePos.Y
                 local bestPlayer = nil
+                local cam = workspace.CurrentCamera or camera
+                if not cam then
+                    hud:ClearTarget()
+                    return
+                end
                 local bestDistSq = math.huge  -- сравниваем квадраты, sqrt не нужен
 
-                for _, p in ipairs(plrs:GetPlayers()) do
-                    if p == lp then continue end
+                for i = 1, #trackedPlayers do
+                    local p = trackedPlayers[i]
 
                     local entry = getCache(p)
                     if not entry then continue end
@@ -4757,8 +4989,7 @@ function MIDNIGHT:MakeWindow(config)
                         continue
                     end
 
-                    local cam = workspace.CurrentCamera or camera
-                    if not cam or not entry.root or not entry.root.Parent then
+                    if not entry.root or not entry.root.Parent then
                         charCache[p] = nil
                         continue
                     end
@@ -4774,7 +5005,11 @@ function MIDNIGHT:MakeWindow(config)
                 end
 
                 if bestPlayer then
-                    hud:SetTarget(bestPlayer)
+                    if hud._CurrentPlayer ~= bestPlayer
+                    or hud._CurrentCharacter ~= bestPlayer.Character
+                    or not hud._Visible then
+                        hud:SetTarget(bestPlayer)
+                    end
                 else
                     hud:ClearTarget()
                 end
@@ -4803,10 +5038,38 @@ function MIDNIGHT:MakeWindow(config)
     end
 
     function wd:CreateChatLogger()
+        if self._ChatLoggerWindow and self._ChatLoggerWindow.IsAlive and self._ChatLoggerWindow:IsAlive() then
+            return self._ChatLoggerWindow
+        end
+
         local cw = self:MakeFloatingWindow({Name="Chat Logger", Size={320,350}, Resizable=true})
         if not cw then return nil end
+        self._ChatLoggerWindow = cw
+
+        local ownedConns = {}
+        local function bindConn(conn)
+            if conn then
+                ownedConns[#ownedConns + 1] = conn
+                RegConn(conn)
+            end
+            return conn
+        end
+        local function canUseWindow()
+            return cw and cw.IsAlive and cw:IsAlive()
+        end
+
+        cw:OnDestroy(function()
+            if self._ChatLoggerWindow == cw then
+                self._ChatLoggerWindow = nil
+            end
+            for _, conn in ipairs(ownedConns) do
+                SafeDisconnect(conn)
+            end
+            ownedConns = {}
+        end)
 
         local function onChat(player, message)
+            if not canUseWindow() then return end
             local time = os.date("%H:%M:%S")
             local nc = Theme.TextSecondary
             pcall(function() if player.TeamColor then nc = player.TeamColor.Color end end)
@@ -4819,14 +5082,14 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         -- Ловим чат всех включая LocalPlayer
-        RegConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer, msg) end))
+        bindConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer, msg) end))
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
-                RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
+                bindConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
             end
         end
-        RegConn(Players.PlayerAdded:Connect(function(p)
-            RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
+        bindConn(Players.PlayerAdded:Connect(function(p)
+            bindConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
         end))
         return cw
     end
@@ -4847,17 +5110,26 @@ function MIDNIGHT:Destroy()
         self._lagspikeBlinkStop()
         self._lagspikeBlinkStop = nil
     end
+    if self._TargetHUDHideThread then
+        SafeCancelThread(self._TargetHUDHideThread)
+        self._TargetHUDHideThread = nil
+    end
+    for _, th in ipairs(self._MenuCloseThreads or {}) do
+        SafeCancelThread(th)
+    end
+    self._MenuCloseThreads = {}
     _SliderClearDrag()
     -- Disconnect all tracked connections
     for _, conn in ipairs(self._Connections) do
-        pcall(function() conn:Disconnect() end)
+        SafeDisconnect(conn)
     end
     self._Connections = {}
 
-    if self._MenuToggleConn then pcall(function() self._MenuToggleConn:Disconnect() end); self._MenuToggleConn=nil end
-    if self._ActiveDropdownCloseConn then pcall(function() self._ActiveDropdownCloseConn:Disconnect() end); self._ActiveDropdownCloseConn=nil end
-    if self._ActiveColorPickerCloseConn then pcall(function() self._ActiveColorPickerCloseConn:Disconnect() end); self._ActiveColorPickerCloseConn=nil end
-    if self._KeybindSettingsCloseConn then pcall(function() self._KeybindSettingsCloseConn:Disconnect() end); self._KeybindSettingsCloseConn=nil end
+    if self._MenuToggleConn then SafeDisconnect(self._MenuToggleConn); self._MenuToggleConn=nil end
+    if self._ActiveDropdownCloseConn then SafeDisconnect(self._ActiveDropdownCloseConn); self._ActiveDropdownCloseConn=nil end
+    if self._ActiveColorPickerCloseConn then SafeDisconnect(self._ActiveColorPickerCloseConn); self._ActiveColorPickerCloseConn=nil end
+    if self._KeybindSettingsCloseConn then SafeDisconnect(self._KeybindSettingsCloseConn); self._KeybindSettingsCloseConn=nil end
+    if self._KeybindSettingsKeyConn then SafeDisconnect(self._KeybindSettingsKeyConn); self._KeybindSettingsKeyConn=nil end
 
     if self._ScreenGui then
         pcall(function() self._ScreenGui:Destroy() end)
