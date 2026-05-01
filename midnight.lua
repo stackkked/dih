@@ -3355,6 +3355,106 @@ function MIDNIGHT:MakeWindow(config)
     end
     function wd:CreateAdminChecker(c) return self:CreateAdminLogs(c) end
 
+    function wd:TestAdminLogs()
+        local midnight = MIDNIGHT
+
+        -- Открываем окно Admin Logs
+        local aw = self:MakeFloatingWindow({Name="Admin Logs [TEST]", Size={300,380}, Resizable=true})
+        if not aw then return nil end
+
+        aw._Visible = true
+        aw._Frame.Visible = true
+        aw._Frame.BackgroundTransparency = 0
+
+        local function addLog(tag, text, tagColor, textColor)
+            local time = os.date("%H:%M:%S")
+            aw:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
+            task.defer(function()
+                if aw._Scroll and aw._Scroll.Parent then
+                    aw._Scroll.CanvasPosition = Vector2.new(0, aw._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
+        end
+
+        -- Фейковые данные для теста
+        local fakeAdmins = {
+            { name = "xX_ServerOwner_Xx", rank = "Owner",     rankColor = Theme.Error },
+            { name = "CoolModerator99",   rank = "Moderator", rankColor = Theme.Warning },
+            { name = "HeadAdmin_Dan",     rank = "HeadAdmin", rankColor = Color3.fromRGB(255, 140, 0) },
+        }
+        local fakeMessages = {
+            "anyone cheating rn?",
+            "clean the server",
+            "!ban suspicious_player",
+            "checking logs",
+            "all good here",
+        }
+
+        local admin = fakeAdmins[math.random(1, #fakeAdmins)]
+
+        -- Шаг 1: нотификация — Join
+        midnight:Notify({
+            Title   = "⚠ Admin Joined [TEST]",
+            Content = admin.name .. " — " .. admin.rank,
+            Type    = "warning",
+            Duration = 8,
+        })
+        addLog("SYSTEM", "Test sequence started", Theme.Accent, Theme.TextSecondary)
+        addLog(admin.name, "joined ["..admin.rank.."]", admin.rankColor, Theme.Warning)
+
+        -- Шаг 2: Смена команды
+        task.delay(1.8, function()
+            if not aw._Frame or not aw._Frame.Parent then return end
+            midnight:Notify({
+                Title   = "⚠ Team Switch [TEST]",
+                Content = admin.name .. " switched team",
+                Type    = "warning",
+                Duration = 5,
+            })
+            addLog(admin.name, "switched to Spectators", admin.rankColor, Theme.Warning)
+        end)
+
+        -- Шаг 3: Сообщение в чате
+        task.delay(3.8, function()
+            if not aw._Frame or not aw._Frame.Parent then return end
+            local msg = fakeMessages[math.random(1, #fakeMessages)]
+            midnight:Notify({
+                Title   = "⚠ Admin Chat [TEST]",
+                Content = admin.name .. ": " .. msg,
+                Type    = "warning",
+                Duration = 5,
+            })
+            addLog(admin.name, msg, admin.rankColor, Theme.TextSecondary)
+        end)
+
+        -- Шаг 4: Ещё одно сообщение
+        task.delay(5.5, function()
+            if not aw._Frame or not aw._Frame.Parent then return end
+            addLog(admin.name, "!spectate localplayer", admin.rankColor, Theme.Warning)
+            midnight:Notify({
+                Title   = "⚠ Admin Command [TEST]",
+                Content = admin.name .. " used a command",
+                Type    = "warning",
+                Duration = 5,
+            })
+        end)
+
+        -- Шаг 5: Выход
+        task.delay(8.0, function()
+            if not aw._Frame or not aw._Frame.Parent then return end
+            midnight:Notify({
+                Title   = "Admin Left [TEST]",
+                Content = admin.name .. " disconnected",
+                Type    = "info",
+                Duration = 5,
+            })
+            addLog(admin.name, "left ["..admin.rank.."]", admin.rankColor, Theme.Error)
+            addLog("SYSTEM", "Test sequence complete", Theme.Accent, Theme.TextSecondary)
+        end)
+
+        return aw
+    end
+
     function wd:CreateChatLogger()
         local cw = self:MakeFloatingWindow({Name="Chat Logger", Size={320,350}, Resizable=true})
         if not cw then return nil end
