@@ -1,5 +1,24 @@
 --[[
-    MIDNIGHT UI Library v6.4.0 → v6.9.0
+    MIDNIGHT UI Library v6.4.0 → v7.0.0
+
+    v7.0 Changelog:
+    - FEAT: AddDropdown now supports Multi=true for multiselect mode
+    - FEAT: AddInlineDropdown now supports Multi=true for multiselect mode
+    - FEAT: Multiselect shows checkboxes per option, Apply button to confirm, live label "Item1 +N"
+    - ANIM: Intro animation on MakeWindow — slide-up + fade-in (Back easing) + border accent pulse
+    - ANIM: Menu open/close uses Quint easing (smoother than Quad)
+    - ANIM: Tab switch detects direction (left/right) and slides content accordingly
+    - ANIM: Tab indicator: shrinks to 0 then springs out with Back easing on activation
+    - ANIM: Toggle knob squash/stretch — knob compresses horizontally during slide, springs back
+    - ANIM: Slider knob scales up (18px) on grab, springs back to 14px on release
+    - ANIM: Dropdown open: Back easing instead of Quad, slight fade-in
+    - ANIM: Dropdown close: fade + collapse simultaneously
+    - ANIM: Dropdown options have ripple flash on click (AccentDark → normal)
+    - ANIM: InlineDropdown chevron rotates 180° on expand (Back easing), has separator fade
+    - ANIM: Button hover: accent left stripe appears + text color shifts to TextAccent
+    - ANIM: Button click: AccentDark flash + border pulse, recovers with Quint
+    - ANIM: Notification dismiss: slide-out + fade simultaneously (Quint In)
+    - ANIM: Notification reposition: Back easing instead of Quad
     Styled after the MIDNIGHT CS2 Cheat
     For Roblox Executors
 
@@ -814,7 +833,7 @@ end
 --// MIDNIGHT LIBRARY
 --// ═══════════════════════════════════════════════════════════
 local MIDNIGHT = {
-    Version = "6.9.0",
+    Version = "7.0.0",
 
     _ScreenGui  = nil,
     _Windows    = {},
@@ -1358,8 +1377,9 @@ function MIDNIGHT:_CloseDropdown()
         local dd = self._ActiveDropdown
         self._ActiveDropdown = nil
         local w = dd.AbsoluteSize.X
-        TweenObject(dd, {Size=UDim2.new(0,w,0,0)}, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-        task.delay(0.12, function() pcall(function() dd:Destroy() end) end)
+        TweenObject(dd, {BackgroundTransparency=1}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        TweenObject(dd, {Size=UDim2.new(0,w,0,0)}, 0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        task.delay(0.15, function() pcall(function() dd:Destroy() end) end)
     end
     if self._ActiveDropdownBtn then
         TweenObject(self._ActiveDropdownBtn, {BackgroundColor3=Theme.InputBg}, 0.15)
@@ -1378,17 +1398,27 @@ function MIDNIGHT:_OpenDropdown(config)
     self:_CloseAllPopups()
     self:_InitScreenGui()
 
-    local absPos    = config.ButtonPos
-    local absSize   = config.ButtonSize
-    local opts      = config.Options
-    local currentSel = config.Current
-    local onSelect  = config.OnSelect
+    local absPos      = config.ButtonPos
+    local absSize     = config.ButtonSize
+    local opts        = config.Options
+    local currentSel  = config.Current        -- string (single) or table (multi)
+    local onSelect    = config.OnSelect
     local dropdownBtn = config.DropdownBtn
-    local listH = #opts * 26 + 8
+    local isMulti     = config.Multi or false
+
+    -- For multiselect: currentSel is a table of selected values
+    local multiSel = {}
+    if isMulti and type(currentSel) == "table" then
+        for _, v in ipairs(currentSel) do multiSel[v] = true end
+    end
+
+    local rowH  = 26
+    local listH = #opts * rowH + 8
+    if isMulti then listH = listH + 30 end  -- extra room for Apply button
 
     local vpSize = workspace.CurrentCamera.ViewportSize
     local posX = absPos.X
-    local posY = absPos.Y + absSize.Y
+    local posY = absPos.Y + absSize.Y + 2
     if posX + absSize.X > vpSize.X then posX = vpSize.X - absSize.X - 8 end
     if posX < 8 then posX = 8 end
     if posY + listH > vpSize.Y then posY = absPos.Y - listH - 4 end
@@ -1401,30 +1431,142 @@ function MIDNIGHT:_OpenDropdown(config)
         Size = UDim2.new(0,absSize.X,0,0),
         Position = UDim2.new(0,posX,0,posY),
         BackgroundColor3 = Theme.DropdownBg,
+        BackgroundTransparency = 0.08,
         BorderSizePixel = 0, ClipsDescendants = true,
         ZIndex = ZIndex.DROPDOWN,
         Parent = self._ScreenGui,
     })
-    ApplyCorner(dd,6); ApplyStroke(dd,Theme.BorderAccent,1)
+    ApplyCorner(dd,8); ApplyStroke(dd,Theme.BorderAccent,1)
     ApplyPadding(dd,4,4,4,4)
     Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=dd})
 
+    -- Animate: slide down + fade in from transparent
+    dd.BackgroundTransparency = 1
+    TweenObject(dd,{Size=UDim2.new(0,absSize.X,0,listH), BackgroundTransparency=0.05},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+
+    local optFrames = {}
     for i, opt in ipairs(opts) do
-        local isSel = opt == currentSel
-        local ob = Create("TextButton",{
-            Text = opt, Font = Font, TextSize = 12,
-            TextColor3 = isSel and Theme.Accent or Theme.TextSecondary,
-            Size = UDim2.new(1,0,0,22),
+        local isSel = isMulti and multiSel[opt] or opt == currentSel
+        local ob = Create("Frame",{
+            Size = UDim2.new(1,0,0,rowH-4),
             BackgroundColor3 = isSel and Theme.TabActiveBg or Theme.InputBg,
             BorderSizePixel = 0, LayoutOrder = i, ZIndex = ZIndex.DROPDOWN+1,
             Parent = dd,
         })
-        ApplyCorner(ob,4)
-        ApplyHoverEffect(ob, isSel and Theme.TabActiveBg or Theme.InputBg, Theme.ItemHoverBg, false)
-        ob.MouseButton1Click:Connect(function() onSelect(opt); self:_CloseDropdown() end)
+        ApplyCorner(ob,5)
+
+        -- Left accent bar for selected state
+        local selBar = Create("Frame",{
+            Size=UDim2.new(0,2,0.6,0), Position=UDim2.new(0,0,0.2,0),
+            BackgroundColor3=Theme.Accent, BorderSizePixel=0,
+            BackgroundTransparency = isSel and 0 or 1,
+            ZIndex=ZIndex.DROPDOWN+2, Parent=ob,
+        })
+        ApplyCorner(selBar,1)
+
+        -- Checkmark for multiselect
+        local checkEl = nil
+        if isMulti then
+            local checkBox = Create("Frame",{
+                Size=UDim2.new(0,14,0,14),
+                Position=UDim2.new(1,-22,0.5,-7),
+                BackgroundColor3 = isSel and Theme.Accent or Theme.InputBg,
+                BorderSizePixel=0, ZIndex=ZIndex.DROPDOWN+3, Parent=ob,
+            })
+            ApplyCorner(checkBox,3); ApplyStroke(checkBox,isSel and Theme.Accent or Theme.Border,1)
+            if isSel then
+                Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
+                    Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkBox})
+            end
+            checkEl = checkBox
+        end
+
+        local lbl = Create("TextLabel",{
+            Text = opt, Font = Font, TextSize = 12,
+            TextColor3 = isSel and Theme.TextAccent or Theme.TextSecondary,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Size = UDim2.new(1,isMulti and -30 or -14,1,0),
+            Position = UDim2.new(0,10,0,0),
+            BackgroundTransparency=1, ZIndex=ZIndex.DROPDOWN+2, Parent=ob,
+        })
+
+        local btn = Create("TextButton",{
+            Text="",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
+            ZIndex=ZIndex.DROPDOWN+4,Parent=ob,
+        })
+
+        -- Hover
+        btn.MouseEnter:Connect(function()
+            if not (isMulti and multiSel[opt] or (not isMulti and opt==currentSel)) then
+                TweenObject(ob,{BackgroundColor3=Theme.ItemHoverBg},0.12)
+            end
+            TweenObject(lbl,{TextColor3=Theme.TextPrimary},0.12)
+        end)
+        btn.MouseLeave:Connect(function()
+            local isCurSel = isMulti and multiSel[opt] or opt==currentSel
+            TweenObject(ob,{BackgroundColor3=isCurSel and Theme.TabActiveBg or Theme.InputBg},0.12)
+            TweenObject(lbl,{TextColor3=isCurSel and Theme.TextAccent or Theme.TextSecondary},0.12)
+        end)
+
+        -- Click with ripple effect
+        btn.MouseButton1Click:Connect(function()
+            -- Ripple flash
+            TweenObject(ob,{BackgroundColor3=Theme.AccentDark},0.06)
+            task.delay(0.07,function()
+                if isMulti then
+                    multiSel[opt] = not multiSel[opt]
+                    local nowSel = multiSel[opt]
+                    TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.InputBg},0.15)
+                    TweenObject(lbl,{TextColor3=nowSel and Theme.TextAccent or Theme.TextSecondary},0.15)
+                    TweenObject(selBar,{BackgroundTransparency=nowSel and 0 or 1},0.15)
+                    if checkEl then
+                        TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.InputBg},0.15)
+                        -- Rebuild checkmark label
+                        for _, ch in ipairs(checkEl:GetChildren()) do
+                            if ch:IsA("TextLabel") then ch:Destroy() end
+                        end
+                        if nowSel then
+                            Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
+                                Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkEl})
+                        end
+                    end
+                else
+                    -- Single select: update all rows
+                    currentSel = opt
+                    for _, fr in ipairs(optFrames) do
+                        local isThis = fr._opt == opt
+                        TweenObject(fr._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.InputBg},0.15)
+                        TweenObject(fr._lbl,{TextColor3=isThis and Theme.TextAccent or Theme.TextSecondary},0.15)
+                        TweenObject(fr._bar,{BackgroundTransparency=isThis and 0 or 1},0.15)
+                    end
+                    onSelect(opt)
+                    task.delay(0.12, function() self:_CloseDropdown() end)
+                end
+            end)
+        end)
+
+        table.insert(optFrames,{_opt=opt,_frame=ob,_lbl=lbl,_bar=selBar,_check=checkEl})
     end
 
-    TweenObject(dd,{Size=UDim2.new(0,absSize.X,0,listH)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+    -- Multiselect: Apply button
+    if isMulti then
+        local applyBtn = Create("TextButton",{
+            Text="Apply",Font=FontBold,TextSize=11,TextColor3=Theme.TextPrimary,
+            Size=UDim2.new(1,0,0,22),
+            BackgroundColor3=Theme.Accent,BorderSizePixel=0,
+            LayoutOrder=#opts+1, ZIndex=ZIndex.DROPDOWN+2, Parent=dd,
+        })
+        ApplyCorner(applyBtn,5)
+        applyBtn.MouseEnter:Connect(function() TweenObject(applyBtn,{BackgroundColor3=Theme.AccentHover},0.12) end)
+        applyBtn.MouseLeave:Connect(function() TweenObject(applyBtn,{BackgroundColor3=Theme.Accent},0.12) end)
+        applyBtn.MouseButton1Click:Connect(function()
+            local selected = {}
+            for v, state in pairs(multiSel) do if state then table.insert(selected,v) end end
+            onSelect(selected)
+            self:_CloseDropdown()
+        end)
+    end
+
     self._ActiveDropdown    = dd
     self._ActiveDropdownBtn = dropdownBtn
 
@@ -1580,10 +1722,12 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                     if self._MenuOpen then
                         w._Frame.Visible = true
                         w._Frame.BackgroundTransparency = 1
-                        TweenObject(w._Frame,{BackgroundTransparency=0},0.35)
+                        w._Frame.Size = UDim2.new(0, 600, 0, 440)
+                        -- Smooth scale+fade in
+                        TweenObject(w._Frame, {BackgroundTransparency=0}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
-                        TweenObject(w._Frame,{BackgroundTransparency=1},0.2)
-                        local th = task.delay(0.25,function() if not self._MenuOpen then w._Frame.Visible=false end end)
+                        TweenObject(w._Frame, {BackgroundTransparency=1}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        local th = task.delay(0.25, function() if not self._MenuOpen then w._Frame.Visible=false end end)
                         table.insert(self._MenuCloseThreads, th)
                     end
                 end
@@ -2332,7 +2476,7 @@ function MIDNIGHT:_RepositionNotifications()
     local totalH = 0
     for i, n in ipairs(self._Notifications) do
         if n._Frame and n._Frame.Parent then
-            TweenObject(n._Frame,{Position=self:_GetNotifPos(i,totalH)},0.35)
+            TweenObject(n._Frame,{Position=self:_GetNotifPos(i,totalH)},0.32,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
             totalH = totalH + n._Frame.AbsoluteSize.Y + 8
         end
     end
@@ -2437,8 +2581,9 @@ function MIDNIGHT:Notify(config)
         dismissed = true
         if not nf or not nf.Parent then return end
         local slideOut = self:_GetNotifSlideOffset(self._NotificationPosition)
-        TweenObject(nf,{Position=nf.Position+slideOut},0.35,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-        task.delay(0.4,function()
+        -- Slide out + fade simultaneously
+        TweenObject(nf,{Position=nf.Position+slideOut, BackgroundTransparency=1},0.28,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+        task.delay(0.3,function()
             pcall(function() nf:Destroy() end)
             for i, n in ipairs(self._Notifications) do
                 if n==nd then table.remove(self._Notifications,i); break end
@@ -2642,11 +2787,44 @@ function MIDNIGHT:MakeWindow(config)
     })
     ApplyStroke(wf,Theme.Border,1)
 
-    -- Animate in: fade only (no Size reset — avoids ClipsDescendants clipping content)
-    wf.BackgroundTransparency = 0  -- Set immediately as safety net for executors with unreliable TweenService
-    TweenObject(wf,{BackgroundTransparency=0},0.35)
-    -- Window is visible after creation, sync state
+    -- ═══ INTRO ANIMATION ═══
+    -- Start: fully transparent + shifted slightly down
+    wf.BackgroundTransparency = 1
+    wf.Position = UDim2.new(0.5, -300, 0.5, -200)
     self._MenuOpen = true
+
+    -- Slide up + fade in (Back easing for a nice elastic feel)
+    TweenObject(wf, {
+        BackgroundTransparency = 0,
+        Position = UDim2.new(0.5, -300, 0.5, -220),
+    }, 0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+    -- Accent border pulse: brief accent flash then settle to normal border
+    task.delay(0.1, function()
+        if not wf or not wf.Parent then return end
+        local stroke = wf:FindFirstChildWhichIsA("UIStroke")
+        if stroke then
+            TweenObject(stroke, {Color = Theme.Accent, Thickness = 1.8}, 0.22)
+            task.delay(0.32, function()
+                if stroke and stroke.Parent then
+                    TweenObject(stroke, {Color = Theme.Border, Thickness = 1}, 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                end
+            end)
+        end
+    end)
+
+    -- Title bar accent line sweep: briefly increase transparency then snap solid
+    task.delay(0.15, function()
+        if not tb or not tb.Parent then return end
+        for _, ch in ipairs(tb:GetChildren()) do
+            if ch:IsA("Frame") and ch.Size.Y.Offset == 2 then
+                TweenObject(ch, {BackgroundTransparency = 0.7}, 0.1)
+                task.delay(0.15, function()
+                    if ch and ch.Parent then TweenObject(ch, {BackgroundTransparency = 0}, 0.35, Enum.EasingStyle.Quint) end
+                end)
+            end
+        end
+    end)
 
     -- TITLE BAR
     local tb = Create("Frame",{
@@ -2899,20 +3077,28 @@ function MIDNIGHT:MakeWindow(config)
         table.insert(self._Tabs, td)
 
         local function selectTab(fromTab)
+            -- Determine slide direction: new tab index vs old tab index
+            local newIdx, oldIdx = 0, 0
+            for idx, t in ipairs(self._Tabs) do
+                if t == td then newIdx = idx end
+                if t == self._ActiveTab then oldIdx = idx end
+            end
+            local slideDir = newIdx > oldIdx and 1 or -1  -- 1=right-to-left, -1=left-to-right
+
             for _, t in ipairs(self._Tabs) do
                 if t._PageClip then
                     if t == td then continue end
-                    -- Slide old tab left
                     if t._PageClip.Visible then
-                        TweenObject(t._Page,{Position=UDim2.new(-1,4,0,4)},0.22,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-                        task.delay(0.25,function()
+                        -- Slide old tab out in correct direction with fade
+                        TweenObject(t._Page,{Position=UDim2.new(-slideDir,4,0,4)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+                        task.delay(0.22,function()
                             if t._PageClip then t._PageClip.Visible=false end
                             if t._Page then t._Page.Position=UDim2.new(0,4,0,4) end
                         end)
                     end
                 end
-                TweenObject(t._Button,{BackgroundColor3=Theme.TabBg},0.18)
-                TweenObject(t._Indicator,{Size=UDim2.new(0,2,0,0)},0.18)
+                TweenObject(t._Button,{BackgroundColor3=Theme.TabBg},0.2)
+                TweenObject(t._Indicator,{Size=UDim2.new(0,2,0,0)},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.In)
                 if t._Label then TweenObject(t._Label,{TextColor3=Theme.TextSecondary},0.18) end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then TweenObject(t._IconEl,{ImageColor3=Theme.TextMuted},0.18)
@@ -2920,18 +3106,24 @@ function MIDNIGHT:MakeWindow(config)
                 end
                 if t._GlowStroke then TweenObject(t._GlowStroke,{Transparency=1},0.18) end
             end
-            -- Slide new tab in from right
-            pageClip.Visible=true
-            page.Position = UDim2.new(1,4,0,4)
-            TweenObject(page,{Position=UDim2.new(0,4,0,4)},0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-            TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.18)
-            TweenObject(indicator,{Size=UDim2.new(0,2,0.7,0),Position=UDim2.new(0,0,0.15,0)},0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-            if tabLabel then TweenObject(tabLabel,{TextColor3=Theme.TextAccent},0.18) end
+
+            -- Slide new tab in from opposite direction
+            pageClip.Visible = true
+            page.Position = UDim2.new(slideDir, 4, 0, 4)
+            TweenObject(page,{Position=UDim2.new(0,4,0,4)},0.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+
+            TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.2)
+            -- Indicator: first shrink to 0, then spring out
+            TweenObject(indicator,{Size=UDim2.new(0,2,0,0)},0.05)
+            task.delay(0.06,function()
+                TweenObject(indicator,{Size=UDim2.new(0,2,0.7,0),Position=UDim2.new(0,0,0.15,0)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            end)
+            if tabLabel then TweenObject(tabLabel,{TextColor3=Theme.TextAccent},0.2) end
             if tabIconEl then
-                if tabIconEl:IsA("ImageLabel") then TweenObject(tabIconEl,{ImageColor3=Theme.Accent},0.18)
-                else TweenObject(tabIconEl,{TextColor3=Theme.Accent},0.18) end
+                if tabIconEl:IsA("ImageLabel") then TweenObject(tabIconEl,{ImageColor3=Theme.Accent},0.2)
+                else TweenObject(tabIconEl,{TextColor3=Theme.Accent},0.2) end
             end
-            if tabGlowStroke then TweenObject(tabGlowStroke,{Transparency=0.6},0.25) end
+            if tabGlowStroke then TweenObject(tabGlowStroke,{Transparency=0.55},0.28) end
             self._ActiveTab = td
         end
 
@@ -3055,22 +3247,30 @@ function MIDNIGHT:MakeWindow(config)
             local function update(anim)
                 if on then
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=col},0.22)
-                        TweenObject(knob,{Position=UDim2.new(0,20,0.5,-7)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        -- Flash: bright white pulse, then back to white (knob stays visible on accent bg)
-                        TweenObject(knob,{BackgroundColor3=Color3.fromRGB(255,255,255)},0.08)
-                        task.delay(0.1,function() TweenObject(knob,{BackgroundColor3=Color3.fromRGB(230,230,240)},0.18) end)
+                        TweenObject(sw,{BackgroundColor3=col},0.2)
+                        -- Squash knob horizontally as it slides (squeeze → snap to round)
+                        TweenObject(knob,{Size=UDim2.new(0,11,0,14),Position=UDim2.new(0,21,0.5,-7)},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+                        task.delay(0.1,function()
+                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,20,0.5,-7)},0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        end)
+                        TweenObject(knob,{BackgroundColor3=Color3.fromRGB(255,255,255)},0.06)
+                        task.delay(0.12,function() TweenObject(knob,{BackgroundColor3=Color3.fromRGB(230,230,240)},0.2) end)
                     else
-                        sw.BackgroundColor3=col; knob.Position=UDim2.new(0,20,0.5,-7)
+                        sw.BackgroundColor3=col
+                        knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,20,0.5,-7)
                         knob.BackgroundColor3=Color3.fromRGB(230,230,240)
                     end
                 else
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.22)
-                        TweenObject(knob,{Position=UDim2.new(0,2,0.5,-7)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.2)
+                        TweenObject(knob,{Size=UDim2.new(0,11,0,14),Position=UDim2.new(0,2,0.5,-7)},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+                        task.delay(0.1,function()
+                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,2,0.5,-7)},0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        end)
                         TweenObject(knob,{BackgroundColor3=Theme.ToggleKnob},0.18)
                     else
-                        sw.BackgroundColor3=Theme.ToggleOff; knob.Position=UDim2.new(0,2,0.5,-7)
+                        sw.BackgroundColor3=Theme.ToggleOff
+                        knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,2,0.5,-7)
                         knob.BackgroundColor3=Theme.ToggleKnob
                     end
                 end
@@ -3245,7 +3445,8 @@ function MIDNIGHT:MakeWindow(config)
             track.InputBegan:Connect(function(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                     drag=true; onInp(inp)
-                    -- Show tooltip
+                    -- Knob grows on grab
+                    TweenObject(k,{Size=UDim2.new(0,18,0,18)},0.12,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                     TweenObject(tooltip,{BackgroundTransparency=0},0.15)
                     TweenObject(tooltipLabel,{TextTransparency=0},0.15)
                 end
@@ -3253,6 +3454,7 @@ function MIDNIGHT:MakeWindow(config)
             k.InputBegan:Connect(function(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
                     drag=true
+                    TweenObject(k,{Size=UDim2.new(0,18,0,18)},0.12,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                     TweenObject(tooltip,{BackgroundTransparency=0},0.15)
                     TweenObject(tooltipLabel,{TextTransparency=0},0.15)
                 end
@@ -3260,6 +3462,8 @@ function MIDNIGHT:MakeWindow(config)
             RegConn(UserInputService.InputEnded:Connect(function(inp)
                 if drag and (inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch) then
                     drag=false
+                    -- Knob snaps back to normal size with spring
+                    TweenObject(k,{Size=UDim2.new(0,14,0,14)},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                     TweenObject(tooltip,{BackgroundTransparency=1},0.2)
                     TweenObject(tooltipLabel,{TextTransparency=1},0.2)
                 end
@@ -3395,41 +3599,135 @@ function MIDNIGHT:MakeWindow(config)
 
         --// ADDDROPDOWN (popup)
         function td:AddDropdown(dc)
-            dc = dc or {}; local nm=dc.Name or "Dropdown"; local opts=dc.Options or {}; local def=dc.Default or opts[1]; local cb=dc.Callback
+            dc = dc or {}
+            local nm    = dc.Name    or "Dropdown"
+            local opts  = dc.Options or {}
+            local def   = dc.Default or opts[1]
+            local cb    = dc.Callback
+            local multi = dc.Multi or false  -- NEW: multiselect mode
+
+            -- Height: single=34, multi can show tags so also 34 base
             local item=Create("Frame",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,10,10)
             ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
             local ic=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=12,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.5,0,1,0),BackgroundTransparency=1,Parent=ic})
-            local sb=Create("TextButton",{Text=def or "",Font=Font,TextSize=11,TextColor3=Theme.TextSecondary,Size=UDim2.new(0,100,0,24),Position=UDim2.new(1,-100,0.5,-12),BackgroundColor3=Theme.InputBg,BorderSizePixel=0,Parent=ic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=12,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.45,0,1,0),BackgroundTransparency=1,Parent=ic})
+
+            -- The selector button
+            local sb=Create("TextButton",{
+                Text = multi and "Select..." or (def or ""),
+                Font=Font,TextSize=11,TextColor3=Theme.TextSecondary,
+                Size=UDim2.new(0,110,0,24),Position=UDim2.new(1,-110,0.5,-12),
+                BackgroundColor3=Theme.InputBg,BorderSizePixel=0,Parent=ic,
+                ClipsDescendants=true,
+            })
             ApplyCorner(sb,5); ApplyStroke(sb,Theme.Border,1)
             CreateIconOrText(sb,"chevron-down",nil,UDim2.new(0,10,0,10),UDim2.new(1,-14,0.5,-5),Theme.TextMuted,FontBold,8)
-            local sel=def
-            local data={_Value=sel}
+
+            -- Chevron rotation indicator
+            local chevIcon = sb:FindFirstChildWhichIsA("TextLabel") or sb:FindFirstChildWhichIsA("ImageLabel")
+
+            -- Multi: track selected set; Single: track string
+            local selSet = {}  -- for multi
+            local sel    = def -- for single
+
+            -- Init multiselect default
+            if multi and type(def) == "table" then
+                for _, v in ipairs(def) do selSet[v] = true end
+            end
+
+            local function getMultiLabel()
+                local parts = {}
+                for _, o in ipairs(opts) do if selSet[o] then table.insert(parts, o) end end
+                if #parts == 0 then return "None" end
+                if #parts == 1 then return parts[1] end
+                return parts[1] .. " +" .. (#parts - 1)
+            end
+
+            local data = {_Value = multi and {} or sel}
+
+            local function refreshLabel()
+                if multi then
+                    local parts = {}
+                    for _, o in ipairs(opts) do if selSet[o] then table.insert(parts, o) end end
+                    data._Value = parts
+                    sb.Text = getMultiLabel()
+                    sb.TextColor3 = #parts > 0 and Theme.TextAccent or Theme.TextSecondary
+                else
+                    sb.Text = sel or ""
+                    sb.TextColor3 = Theme.TextSecondary
+                    data._Value = sel
+                end
+            end
+
+            -- Chevron tween on open/close
+            local dropOpen = false
             sb.MouseButton1Click:Connect(function()
+                dropOpen = not dropOpen
+                if chevIcon then
+                    TweenObject(chevIcon, {Rotation = dropOpen and 180 or 0}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                end
                 MIDNIGHT:_OpenDropdown({
-                    ButtonPos=item.AbsolutePosition,ButtonSize=item.AbsoluteSize,
-                    Options=opts,Current=sel,DropdownBtn=sb,
-                    OnSelect=function(opt) sel=opt; data._Value=opt; sb.Text=opt; if cb then cb(opt) end end,
+                    ButtonPos=item.AbsolutePosition, ButtonSize=item.AbsoluteSize,
+                    Options=opts, Current=multi and selSet or sel,
+                    DropdownBtn=sb, Multi=multi,
+                    OnSelect=function(opt)
+                        if multi then
+                            -- opt is the table of selected values
+                            selSet = {}
+                            for _, v in ipairs(opt) do selSet[v] = true end
+                            refreshLabel()
+                            if cb then cb(opt) end
+                        else
+                            sel = opt; refreshLabel()
+                            if cb then cb(opt) end
+                        end
+                        dropOpen = false
+                        if chevIcon then TweenObject(chevIcon,{Rotation=0},0.15) end
+                    end,
                 })
             end)
-            function data:Set(v) sel=v; data._Value=v; sb.Text=v end
-            function data:SetOptions(newOpts) opts=newOpts; if not table.find(opts,sel) then sel=opts[1]; data._Value=sel; sb.Text=sel or "" end end
+
+            refreshLabel()
+
+            function data:Set(v)
+                if multi then
+                    selSet = {}
+                    if type(v) == "table" then for _, x in ipairs(v) do selSet[x]=true end end
+                else sel = v end
+                refreshLabel()
+            end
+            function data:SetOptions(newOpts)
+                opts = newOpts
+                if not multi and not table.find(opts, sel) then sel=opts[1] end
+                refreshLabel()
+            end
             return data
         end
 
         --// ADDINLINEDROPDOWN (no popup, expands inline)
         function td:AddInlineDropdown(dc)
-            dc = dc or {}; local nm=dc.Name or "Dropdown"; local opts=dc.Options or {}; local def=dc.Default or opts[1]; local cb=dc.Callback
-            local sel = def
-            local data = {_Value=sel}
+            dc = dc or {}
+            local nm    = dc.Name    or "Dropdown"
+            local opts  = dc.Options or {}
+            local def   = dc.Default or opts[1]
+            local cb    = dc.Callback
+            local multi = dc.Multi or false  -- NEW: multiselect mode
+
+            local sel    = multi and {} or def
+            local selSet = {}  -- for multi
+            if multi and type(def) == "table" then
+                for _, v in ipairs(def) do selSet[v] = true end
+            elseif multi then sel = {} end
+
+            local data     = {_Value = multi and {} or def}
             local expanded = false
-            local baseH = 34
-            local itemH = 22
+            local baseH    = 34
+            local itemH    = 24
 
             local wrapper = Create("Frame",{
-                Size=UDim2.new(1,0,0,baseH),BackgroundColor3=Theme.ItemBg,
-                BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page,
+                Size=UDim2.new(1,0,0,baseH), BackgroundColor3=Theme.ItemBg,
+                BorderSizePixel=0, LayoutOrder=nextOrder(), Parent=page,
                 ClipsDescendants=true,
             })
             ApplyCorner(wrapper,6); ApplyStroke(wrapper,Theme.Border,1)
@@ -3437,54 +3735,171 @@ function MIDNIGHT:MakeWindow(config)
             local header = Create("Frame",{Size=UDim2.new(1,0,0,baseH),BackgroundTransparency=1,Parent=wrapper})
             ApplyPadding(header,0,0,10,10)
             local hic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=header})
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=12,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.5,0,1,0),BackgroundTransparency=1,Parent=hic})
-            local selLabel = Create("TextLabel",{Text=sel or "",Font=FontBold,TextSize=11,TextColor3=Theme.Accent,TextXAlignment=Enum.TextXAlignment.Right,Size=UDim2.new(0.4,0,1,0),Position=UDim2.new(0.55,0,0,0),BackgroundTransparency=1,Parent=hic})
-            local chevLabel = Create("TextLabel",{Text="▼",Font=FontBold,TextSize=9,TextColor3=Theme.TextMuted,TextXAlignment=Enum.TextXAlignment.Right,Size=UDim2.new(0.05,0,1,0),Position=UDim2.new(0.95,0,0,0),BackgroundTransparency=1,Parent=hic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=12,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.48,0,1,0),BackgroundTransparency=1,Parent=hic})
 
-            local listFrame = Create("Frame",{Size=UDim2.new(1,0,0,0),Position=UDim2.new(0,0,0,baseH),BackgroundTransparency=1,Parent=wrapper})
-            Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=listFrame})
-            ApplyPadding(listFrame,2,2,4,4)
+            local selLabel = Create("TextLabel",{
+                Text = multi and "None" or (def or ""),
+                Font=FontBold, TextSize=11, TextColor3=Theme.Accent,
+                TextXAlignment=Enum.TextXAlignment.Right,
+                Size=UDim2.new(0.42,0,1,0), Position=UDim2.new(0.5,0,0,0),
+                BackgroundTransparency=1, Parent=hic,
+            })
 
-            local optBtns = {}
-            for i,opt in ipairs(opts) do
-                local ob = Create("TextButton",{
-                    Text=opt,Font=Font,TextSize=11,
-                    TextColor3=opt==sel and Theme.Accent or Theme.TextSecondary,
-                    Size=UDim2.new(1,0,0,itemH),
-                    BackgroundColor3=opt==sel and Theme.TabActiveBg or Theme.InputBg,
-                    BorderSizePixel=0,LayoutOrder=i,Parent=listFrame,
-                })
-                ApplyCorner(ob,4)
-                ob.MouseButton1Click:Connect(function()
-                    sel=opt; data._Value=opt; selLabel.Text=opt
-                    for _, b in ipairs(optBtns) do
-                        TweenObject(b,{BackgroundColor3=Theme.InputBg},0.12)
-                        TweenObject(b,{TextColor3=Theme.TextSecondary},0.12)
-                    end
-                    TweenObject(ob,{BackgroundColor3=Theme.TabActiveBg},0.12)
-                    TweenObject(ob,{TextColor3=Theme.Accent},0.12)
-                    if cb then cb(opt) end
-                    -- auto-collapse
-                    expanded=false
-                    chevLabel.Text="▼"
-                    TweenObject(wrapper,{Size=UDim2.new(1,0,0,baseH)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-                end)
-                table.insert(optBtns,ob)
+            -- Animated chevron frame
+            local chevFrame = Create("Frame",{
+                Size=UDim2.new(0,16,0,16),
+                Position=UDim2.new(1,-16,0.5,-8),
+                BackgroundTransparency=1, Parent=hic,
+            })
+            local chevLabel = Create("TextLabel",{
+                Text="▼", Font=FontBold, TextSize=9, TextColor3=Theme.TextMuted,
+                Size=UDim2.new(1,0,1,0), TextXAlignment=Enum.TextXAlignment.Center,
+                BackgroundTransparency=1, Parent=chevFrame,
+            })
+
+            local function getLabel()
+                if not multi then return sel or "" end
+                local parts = {}
+                for _, o in ipairs(opts) do if selSet[o] then table.insert(parts, o) end end
+                data._Value = parts
+                if #parts == 0 then return "None" end
+                if #parts == 1 then return parts[1] end
+                return parts[1] .. " +" .. (#parts-1)
             end
 
-            local totalH = baseH + #opts * (itemH+2) + 8
+            -- Separator line between header and list
+            local sepLine = Create("Frame",{
+                Size=UDim2.new(1,-20,0,1), Position=UDim2.new(0,10,0,baseH-1),
+                BackgroundColor3=Theme.Border, BorderSizePixel=0,
+                BackgroundTransparency=1, Parent=wrapper,
+            })
+
+            local listFrame = Create("Frame",{
+                Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,0,baseH),
+                BackgroundTransparency=1, Parent=wrapper,
+            })
+            Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=listFrame})
+            ApplyPadding(listFrame,3,3,6,6)
+
+            local optBtns = {}
+            for i, opt in ipairs(opts) do
+                local isSel = multi and selSet[opt] or opt==def
+                local ob = Create("Frame",{
+                    Size=UDim2.new(1,0,0,itemH),
+                    BackgroundColor3=isSel and Theme.TabActiveBg or Theme.InputBg,
+                    BorderSizePixel=0, LayoutOrder=i, Parent=listFrame,
+                })
+                ApplyCorner(ob,5)
+
+                local selBar = Create("Frame",{
+                    Size=UDim2.new(0,2,0.6,0), Position=UDim2.new(0,0,0.2,0),
+                    BackgroundColor3=Theme.Accent, BorderSizePixel=0,
+                    BackgroundTransparency=isSel and 0 or 1, Parent=ob,
+                })
+                ApplyCorner(selBar,1)
+
+                -- Checkmark for multi
+                local checkEl = nil
+                if multi then
+                    local cb2 = Create("Frame",{
+                        Size=UDim2.new(0,14,0,14), Position=UDim2.new(1,-20,0.5,-7),
+                        BackgroundColor3=isSel and Theme.Accent or Theme.InputBg,
+                        BorderSizePixel=0, Parent=ob,
+                    })
+                    ApplyCorner(cb2,3); ApplyStroke(cb2,isSel and Theme.Accent or Theme.Border,1)
+                    if isSel then
+                        Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=cb2})
+                    end
+                    checkEl = cb2
+                end
+
+                local lbl = Create("TextLabel",{
+                    Text=opt, Font=Font, TextSize=11,
+                    TextColor3=isSel and Theme.TextAccent or Theme.TextSecondary,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Size=UDim2.new(1,multi and -28 or -14,1,0),
+                    Position=UDim2.new(0,10,0,0),
+                    BackgroundTransparency=1, Parent=ob,
+                })
+
+                local clickBtn = Create("TextButton",{Text="",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.CONTENT+3,Parent=ob})
+
+                clickBtn.MouseEnter:Connect(function()
+                    local curSel = multi and selSet[opt] or opt==sel
+                    if not curSel then TweenObject(ob,{BackgroundColor3=Theme.ItemHoverBg},0.1) end
+                    TweenObject(lbl,{TextColor3=Theme.TextPrimary},0.1)
+                end)
+                clickBtn.MouseLeave:Connect(function()
+                    local curSel = multi and selSet[opt] or opt==sel
+                    TweenObject(ob,{BackgroundColor3=curSel and Theme.TabActiveBg or Theme.InputBg},0.1)
+                    TweenObject(lbl,{TextColor3=curSel and Theme.TextAccent or Theme.TextSecondary},0.1)
+                end)
+
+                clickBtn.MouseButton1Click:Connect(function()
+                    -- Ripple
+                    TweenObject(ob,{BackgroundColor3=Theme.AccentDark},0.06)
+                    task.delay(0.07,function()
+                        if multi then
+                            selSet[opt] = not selSet[opt]
+                            local nowSel = selSet[opt]
+                            TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.InputBg},0.15)
+                            TweenObject(lbl,{TextColor3=nowSel and Theme.TextAccent or Theme.TextSecondary},0.15)
+                            TweenObject(selBar,{BackgroundTransparency=nowSel and 0 or 1},0.15)
+                            if checkEl then
+                                TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.InputBg},0.15)
+                                for _, ch in ipairs(checkEl:GetChildren()) do if ch:IsA("TextLabel") then ch:Destroy() end end
+                                if nowSel then Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=checkEl}) end
+                            end
+                            selLabel.Text = getLabel()
+                            -- callback fires live on each toggle
+                            local parts={}; for _,o in ipairs(opts) do if selSet[o] then table.insert(parts,o) end end
+                            data._Value = parts; if cb then cb(parts) end
+                        else
+                            -- Single: update all
+                            sel = opt; data._Value = opt; selLabel.Text = opt
+                            for _, bb in ipairs(optBtns) do
+                                local isThis = bb._opt == opt
+                                TweenObject(bb._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.InputBg},0.15)
+                                TweenObject(bb._lbl,{TextColor3=isThis and Theme.TextAccent or Theme.TextSecondary},0.15)
+                                TweenObject(bb._bar,{BackgroundTransparency=isThis and 0 or 1},0.15)
+                            end
+                            if cb then cb(opt) end
+                            -- Auto-collapse on single select
+                            expanded = false
+                            TweenObject(chevFrame,{Rotation=0},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                            TweenObject(sepLine,{BackgroundTransparency=1},0.15)
+                            local th = #opts * (itemH+2) + 12
+                            TweenObject(wrapper,{Size=UDim2.new(1,0,0,baseH)},0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        end
+                    end)
+                end)
+
+                table.insert(optBtns,{_opt=opt,_frame=ob,_lbl=lbl,_bar=selBar,_check=checkEl})
+            end
+
+            local totalH = baseH + #opts * (itemH+2) + 12
             local headerBtn = Create("TextButton",{Text="",Size=UDim2.new(1,0,0,baseH),BackgroundTransparency=1,ZIndex=ZIndex.CONTENT+2,Parent=header})
             headerBtn.MouseButton1Click:Connect(function()
                 expanded = not expanded
-                chevLabel.Text = expanded and "▲" or "▼"
                 if expanded then
-                    TweenObject(wrapper,{Size=UDim2.new(1,0,0,totalH)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+                    -- Open: chevron rotates, separator fades in, list grows with Back easing
+                    TweenObject(chevFrame,{Rotation=180},0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                    TweenObject(sepLine,{BackgroundTransparency=0},0.2)
+                    TweenObject(wrapper,{Size=UDim2.new(1,0,0,totalH)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                 else
-                    TweenObject(wrapper,{Size=UDim2.new(1,0,0,baseH)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+                    TweenObject(chevFrame,{Rotation=0},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                    TweenObject(sepLine,{BackgroundTransparency=1},0.12)
+                    TweenObject(wrapper,{Size=UDim2.new(1,0,0,baseH)},0.22,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
                 end
             end)
 
-            function data:Set(v) sel=v; data._Value=v; selLabel.Text=v end
+            function data:Set(v)
+                if multi then
+                    selSet = {}
+                    if type(v)=="table" then for _, x in ipairs(v) do selSet[x]=true end end
+                    selLabel.Text = getLabel()
+                else sel=v; data._Value=v; selLabel.Text=v end
+            end
             return data
         end
 
@@ -3500,14 +3915,33 @@ function MIDNIGHT:MakeWindow(config)
                 Size=UDim2.new(1,0,1,0),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,Parent=ic,
             })
             ApplyCorner(btn,6)
-            btn.MouseEnter:Connect(function() TweenObject(btn,{BackgroundColor3=Theme.ItemHoverBg},0.18) end)
-            btn.MouseLeave:Connect(function() TweenObject(btn,{BackgroundColor3=Theme.ItemBg},0.18) end)
+            -- Accent left stripe (hidden normally, shown on hover)
+            local accentStripe = Create("Frame",{
+                Size=UDim2.new(0,2,0.7,0), Position=UDim2.new(0,0,0.15,0),
+                BackgroundColor3=Theme.Accent, BorderSizePixel=0,
+                BackgroundTransparency=1, Parent=item,
+            })
+            ApplyCorner(accentStripe,1)
+            btn.MouseEnter:Connect(function()
+                TweenObject(btn,{BackgroundColor3=Theme.ItemHoverBg},0.15)
+                TweenObject(accentStripe,{BackgroundTransparency=0},0.15)
+                TweenObject(btn,{TextColor3=Theme.TextAccent},0.15)
+            end)
+            btn.MouseLeave:Connect(function()
+                TweenObject(btn,{BackgroundColor3=Theme.ItemBg},0.18)
+                TweenObject(accentStripe,{BackgroundTransparency=1},0.18)
+                TweenObject(btn,{TextColor3=Theme.TextPrimary},0.18)
+            end)
             btn.MouseButton1Click:Connect(function()
-                TweenObject(btn,{BackgroundColor3=Theme.Accent},0.08)
-                TweenObject(btn,{TextColor3=Color3.fromRGB(255,255,255)},0.08)
-                task.delay(0.15,function()
-                    TweenObject(btn,{BackgroundColor3=Theme.ItemBg},0.22)
-                    TweenObject(btn,{TextColor3=Theme.TextPrimary},0.22)
+                -- Press: flash accent bg then recover
+                TweenObject(btn,{BackgroundColor3=Theme.AccentDark},0.07)
+                TweenObject(btn,{TextColor3=Color3.fromRGB(255,255,255)},0.07)
+                local stroke = item:FindFirstChildWhichIsA("UIStroke")
+                if stroke then TweenObject(stroke,{Color=Theme.Accent,Thickness=1.5},0.07) end
+                task.delay(0.12,function()
+                    TweenObject(btn,{BackgroundColor3=Theme.ItemHoverBg},0.25,Enum.EasingStyle.Quint)
+                    TweenObject(btn,{TextColor3=Theme.TextAccent},0.25)
+                    if stroke then TweenObject(stroke,{Color=Theme.Border,Thickness=1},0.3) end
                 end)
                 if cb then cb() end
             end)
