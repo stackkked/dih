@@ -332,7 +332,6 @@ local function CreateAccentLine(parent, radius, color)
         Size     = UDim2.new(1, -(inset * 2), 0, 2),
         Position = UDim2.new(0, inset, 0, 0),
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
         BorderSizePixel  = 0,
         ZIndex = ZIndex.CONTENT,
         Parent = parent,
