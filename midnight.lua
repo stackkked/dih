@@ -3900,6 +3900,8 @@ function MIDNIGHT:MakeWindow(config)
                 hud:SetPosition(val)
             end,
         })
+        -- Callback не стреляет при создании — применяем дефолт вручную
+        task.defer(function() hud:SetPosition(posDropdown._Value or "CenterLow") end)
 
         local trackLoop = nil  -- текущий поток слежения
 
