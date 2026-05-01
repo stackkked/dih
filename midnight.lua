@@ -1058,15 +1058,13 @@ function MIDNIGHT:_CloseKeybindSettings()
     if self._KeybindSettingsFrame then
         local f = self._KeybindSettingsFrame
         self._KeybindSettingsFrame = nil
-        local w = f.AbsoluteSize.X
-        TweenObject(f, {Size = UDim2.new(0, w, 0, 0)}, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        TweenObject(f, {BackgroundTransparency=1}, 0.1)
         task.delay(0.12, function() pcall(function() f:Destroy() end) end)
     end
     if self._KeybindSettingsBg then
         local bg = self._KeybindSettingsBg
         self._KeybindSettingsBg = nil
-        local w = bg.AbsoluteSize.X
-        TweenObject(bg, {Size = UDim2.new(0, w, 0, 0)}, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        TweenObject(bg, {BackgroundTransparency=1}, 0.1)
         task.delay(0.12, function() pcall(function() bg:Destroy() end) end)
     end
     if self._KeybindSettingsCloseConn then
@@ -1115,10 +1113,11 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     local bgFill = Create("Frame", {
         Name = "KeybindSettingsBg",
-        Size = UDim2.new(0, panelW, 0, 0),
+        Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
         BackgroundColor3 = Theme.WindowBg,
         BorderSizePixel  = 0,
+        BackgroundTransparency = 1,
         Active = false,
         ZIndex = ZIndex.POPUP,
         Parent = self._ScreenGui,
@@ -1128,11 +1127,12 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     local pf = Create("Frame", {
         Name = "KeybindSettings",
-        Size = UDim2.new(0, panelW, 0, 0),
+        Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
         BackgroundColor3 = Theme.WindowBg,
         BorderSizePixel  = 0,
-        ClipsDescendants = true,
+        ClipsDescendants = false,
+        BackgroundTransparency = 1,
         Active = true,
         ZIndex = ZIndex.POPUP + 1,
         Parent = self._ScreenGui,
@@ -1307,8 +1307,8 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         if onVisibleChange then onVisibleChange(visState) end
     end)
 
-    TweenObject(pf,     {Size=UDim2.new(0,panelW,0,panelHFinal)}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    TweenObject(bgFill, {Size=UDim2.new(0,panelW,0,panelHFinal)}, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    TweenObject(pf,     {BackgroundTransparency=0}, 0.15)
+    TweenObject(bgFill, {BackgroundTransparency=0}, 0.15)
 
     self._KeybindSettingsFrame = pf
     self._KeybindSettingsBg    = bgFill
@@ -1320,7 +1320,8 @@ function MIDNIGHT:_ShowKeybindSettings(config)
                 if pf and pf.Parent then
                     local mp = UserInputService:GetMouseLocation()
                     local pp, ps = pf.AbsolutePosition, pf.AbsoluteSize
-                    if mp.X>=pp.X and mp.X<=pp.X+ps.X and mp.Y>=pp.Y and mp.Y<=pp.Y+ps.Y then return end
+                    -- Use panelHFinal for hit area since pf may still be animating
+                    if mp.X>=pp.X and mp.X<=pp.X+panelW and mp.Y>=pp.Y and mp.Y<=pp.Y+panelHFinal then return end
                 end
                 self:_CloseKeybindSettings()
                 if onClose then onClose() end
