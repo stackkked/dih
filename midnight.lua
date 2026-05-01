@@ -358,6 +358,8 @@ local function CreateGradientSeparator(parent, layoutOrder)
     return sf
 end
 
+local RegConn -- forward declaration, defined after MIDNIGHT table
+
 local function MakeDraggable(frame, handle, onDragStart)
     if not frame then return end
     handle = handle or frame
@@ -846,7 +848,7 @@ local MIDNIGHT = {
 }
 
 --// Helper: register a connection for cleanup
-local function RegConn(conn)
+RegConn = function(conn)
     if conn then
         table.insert(MIDNIGHT._Connections, conn)
     end
