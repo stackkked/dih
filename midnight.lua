@@ -2050,11 +2050,117 @@ function MIDNIGHT:CreateTargetHUD(config)
         else return Theme.Error end
     end
 
+    -- ── Drag handle (тонкая полоска сверху HUD) ─────────────
+    local dragHandle = Create("Frame", {
+        Name = "DragHandle",
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        ZIndex = ZIndex.OVERLAY + 5,
+        Active = true,
+        Parent = hf,
+    })
+
+    -- Иконка grip (три точки) по центру handle
+    local gripDots = Create("Frame", {
+        Size = UDim2.new(0, 24, 0, 4),
+        Position = UDim2.new(0.5, -12, 0.5, -2),
+        BackgroundTransparency = 1,
+        Parent = dragHandle,
+    })
+    Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 4),
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Parent = gripDots,
+    })
+    for i = 1, 4 do
+        local dot = Create("Frame", {
+            Size = UDim2.new(0, 3, 0, 3),
+            BackgroundColor3 = Theme.TextMuted,
+            BackgroundTransparency = 0.4,
+            BorderSizePixel = 0,
+            LayoutOrder = i,
+            Parent = gripDots,
+        })
+        ApplyCorner(dot, 2)
+    end
+
+    -- Hover: подсвечиваем dots при наведении на handle
+    dragHandle.MouseEnter:Connect(function()
+        TweenObject(gripDots, {}, 0.12)
+        for _, dot in ipairs(gripDots:GetChildren()) do
+            if dot:IsA("Frame") then
+                TweenObject(dot, {BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0}, 0.12)
+            end
+        end
+    end)
+    dragHandle.MouseLeave:Connect(function()
+        for _, dot in ipairs(gripDots:GetChildren()) do
+            if dot:IsA("Frame") then
+                TweenObject(dot, {BackgroundColor3 = Theme.TextMuted, BackgroundTransparency = 0.4}, 0.2)
+            end
+        end
+    end)
+
+    -- ── Drag logic ───────────────────────────────────────────
+    local _dragging   = false
+    local _dragInput  = nil
+    local _dragStart  = nil
+    local _startPos   = nil
+    local _isDragged  = false  -- true после первого ручного перетаскивания
+
+    RegConn(dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            _dragging  = true
+            _dragStart = input.Position
+            _startPos  = hf.Position
+            -- После ручного drag — отключаем preset-позиционирование
+            _isDragged = true
+            POS = nil
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    _dragging = false
+                end
+            end)
+        end
+    end))
+
+    RegConn(dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+            _dragInput = input
+        end
+    end))
+
+    RegConn(UserInputService.InputChanged:Connect(function(input)
+        if input == _dragInput and _dragging and _startPos then
+            local delta = input.Position - _dragStart
+            -- Сбрасываем AnchorPoint в (0,0) чтобы offset был предсказуем
+            hf.AnchorPoint = Vector2.new(0, 0)
+            hf.Position = UDim2.new(0, _startPos.X.Offset + _startPos.X.Scale * hf.Parent.AbsoluteSize.X + delta.X,
+                                     0, _startPos.Y.Offset + _startPos.Y.Scale * hf.Parent.AbsoluteSize.Y + delta.Y)
+        end
+    end))
+
     -- ── HUD object ──────────────────────────────────────────
     local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil }
 
     function hud:SetPosition(pos)
+        -- Если пользователь уже перетащил вручную — игнорируем
+        if _isDragged then return end
         POS = pos
+        positionHUD()
+    end
+
+    function hud:ResetPosition(pos)
+        -- Принудительный сброс даже после ручного drag
+        _isDragged = false
+        hf.AnchorPoint = Vector2.new(0.5, 0.5)  -- вернём нейтральный anchor
+        POS = pos or "CenterLow"
         positionHUD()
     end
 
@@ -3897,11 +4003,20 @@ function MIDNIGHT:MakeWindow(config)
             Options = { "CenterLow", "BottomLeft", "BottomRight", "BottomCenter", "TopLeft", "TopRight" },
             Default = "CenterLow",
             Callback = function(val)
-                hud:SetPosition(val)
+                hud:ResetPosition(val)
             end,
         })
         -- Callback не стреляет при создании — применяем дефолт вручную
-        task.defer(function() hud:SetPosition(posDropdown._Value or "CenterLow") end)
+        task.defer(function() hud:ResetPosition(posDropdown._Value or "CenterLow") end)
+
+        -- Кнопка сброса позиции (если пользователь перетащил HUD и хочет вернуть)
+        tab:AddButton({
+            Name = "Reset HUD Position",
+            Callback = function()
+                hud:ResetPosition(posDropdown._Value or "CenterLow")
+                MIDNIGHT:Notify({ Title = "Target HUD", Content = "Position reset", Type = "info", Duration = 2 })
+            end,
+        })
 
         local trackLoop = nil  -- текущий поток слежения
 
