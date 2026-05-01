@@ -3871,6 +3871,116 @@ function MIDNIGHT:MakeWindow(config)
         return aw
     end
 
+    --// ═══════════════════════════════════════════════════════════
+    --// TARGET HUD EXAMPLE BUTTON
+    --// Добавляет кнопку Toggle Target HUD в указанный таб.
+    --// При включении — запускает цикл, который каждые 0.1s находит
+    --// игрока, чья модель ближе всего к центру экрана (курсору мыши),
+    --// и показывает Target HUD для него. При выключении — очищает HUD.
+    --//
+    --// Usage:
+    --//   local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
+    --//   window:AddTargetHUDExample(someTab, hud)
+    --// ═══════════════════════════════════════════════════════════
+    function wd:AddTargetHUDExample(tab, hud)
+        if not tab or not hud then return end
+
+        tab:AddSection({ Name = "Target HUD" })
+
+        -- Dropdown: позиция HUD
+        local posDropdown = tab:AddInlineDropdown({
+            Name = "HUD Position",
+            Options = { "BottomLeft", "BottomRight", "BottomCenter", "TopLeft", "TopRight" },
+            Default = "BottomLeft",
+            Callback = function(val)
+                hud:SetPosition(val)
+            end,
+        })
+
+        local trackLoop = nil  -- текущий поток слежения
+
+        local function stopTracking()
+            if trackLoop and typeof(trackLoop) == "thread" then
+                pcall(task.cancel, trackLoop)
+            end
+            trackLoop = nil
+            hud:ClearTarget()
+        end
+
+        local function startTracking()
+            stopTracking()
+            trackLoop = task.spawn(function()
+                local UIS      = game:GetService("UserInputService")
+                local camera   = workspace.CurrentCamera
+                local plrs     = game:GetService("Players")
+                local lp       = plrs.LocalPlayer
+
+                while true do
+                    task.wait(0.1)
+
+                    -- Позиция мыши на экране
+                    local mousePos = UIS:GetMouseLocation()
+
+                    local bestPlayer = nil
+                    local bestDist   = math.huge
+
+                    for _, p in ipairs(plrs:GetPlayers()) do
+                        if p == lp then continue end
+                        local char = p.Character
+                        if not char then continue end
+
+                        -- Берём HumanoidRootPart или любой BasePart
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                            or char:FindFirstChildWhichIsA("BasePart")
+                        if not root then continue end
+
+                        -- Проверяем, что гуманоид жив
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if hum and hum.Health <= 0 then continue end
+
+                        local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
+                        if not onScreen then continue end
+
+                        local dx = screenPos.X - mousePos.X
+                        local dy = screenPos.Y - mousePos.Y
+                        local dist = math.sqrt(dx*dx + dy*dy)
+
+                        if dist < bestDist then
+                            bestDist   = dist
+                            bestPlayer = p
+                        end
+                    end
+
+                    if bestPlayer then
+                        hud:SetTarget(bestPlayer)
+                    else
+                        hud:ClearTarget()
+                    end
+                end
+            end)
+        end
+
+        local toggle = tab:AddToggle({
+            Name    = "Track Nearest Player",
+            Default = false,
+            Callback = function(val)
+                if val then
+                    startTracking()
+                    MIDNIGHT:Notify({
+                        Title   = "Target HUD",
+                        Content = "Tracking nearest player to cursor",
+                        Type    = "info",
+                        Duration = 3,
+                    })
+                else
+                    stopTracking()
+                end
+            end,
+        })
+
+        return toggle
+    end
+
     function wd:CreateChatLogger()
         local cw = self:MakeFloatingWindow({Name="Chat Logger", Size={320,350}, Resizable=true})
         if not cw then return nil end
