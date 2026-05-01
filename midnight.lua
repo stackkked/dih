@@ -439,21 +439,16 @@ local function ApplyHoverEffect(frame, normalBg, hoverBg, withBorder)
     if not frame then return end
     local borderLine
     if withBorder then
-        -- FIX #6: border must be placed on an overlay frame that ignores UIPadding of parent.
-        -- We create an AbsoluteSize-independent overlay as a sibling, but since we can't easily
-        -- do siblings here, we use a negative X offset equal to the left padding (10px) so the
-        -- stripe sits flush against the outer left edge regardless of UIPadding.
         borderLine = Create("Frame", {
-            Size = UDim2.new(0, 2, 1, 10),   -- 1, +10 vertical to cover padding top+bottom gaps
-            Position = UDim2.new(0, -10, 0, -0),  -- escape the 10px left padding
-            AnchorPoint = Vector2.new(0, 0),
+            Size = UDim2.new(0, 2, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = Theme.Accent,
             BorderSizePixel = 0,
             BackgroundTransparency = 1,
             ZIndex = frame.ZIndex + 1,
             Parent = frame,
         })
-        ApplyCorner(borderLine, 2)
+        ApplyCorner(borderLine, 1)
     end
     -- #3 OPT: register hover connections for proper Destroy() cleanup
     RegConn(frame.MouseEnter:Connect(function()
@@ -3266,14 +3261,8 @@ function MIDNIGHT:MakeWindow(config)
             local function update(anim)
                 if on then
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=col},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        -- Squash knob horizontally, then spring to final position
-                        TweenObject(knob,{Size=UDim2.new(0,10,0,14)},0.08)
-                        task.delay(0.08, function()
-                            if not knob or not knob.Parent then return end
-                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,20,0.5,-7)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        end)
-                        TweenObject(knob,{BackgroundColor3=Theme.ToggleKnob},0.18)
+                        TweenObject(sw,{BackgroundColor3=col},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,20,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                     else
                         sw.BackgroundColor3=col
                         knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,20,0.5,-7)
@@ -3281,14 +3270,8 @@ function MIDNIGHT:MakeWindow(config)
                     end
                 else
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        -- Squash knob, then spring back
-                        TweenObject(knob,{Size=UDim2.new(0,10,0,14)},0.08)
-                        task.delay(0.08, function()
-                            if not knob or not knob.Parent then return end
-                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,2,0.5,-7)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        end)
-                        TweenObject(knob,{BackgroundColor3=Theme.ToggleKnob},0.18)
+                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                     else
                         sw.BackgroundColor3=Theme.ToggleOff
                         knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,2,0.5,-7)
@@ -3334,24 +3317,11 @@ function MIDNIGHT:MakeWindow(config)
 
             update(false)
 
-            -- FIX #1: Always register in keybind map even without a key,
-            -- so RMB → KeybindSettings can change mode and visibility.
-            do
-                local kd
-                if bindKey ~= Enum.KeyCode.Unknown then
-                    kd = MIDNIGHT:_AddKeybindToList(nm, bindKey, bindMode, function(active)
-                        on = active; data._Value = on; update(true); if cb then cb(on) end
-                    end, not isMenuKey)
-                else
-                    -- No key yet: register a "placeholder" entry so mode/visible can be changed
-                    MIDNIGHT:_InitKeybindDispatcher()
-                    kd = {_Name=nm, _Key=Enum.KeyCode.Unknown, _Mode=bindMode, _Callback=function(active)
-                        on=active; data._Value=on; update(true); if cb then cb(on) end
-                    end, _Active=false, _Visible=not isMenuKey}
-                    table.insert(MIDNIGHT._Keybinds, kd)
-                    MIDNIGHT._KeybindsMap[nm] = kd
-                end
-                data._KeybindData = kd
+            if bindKey ~= Enum.KeyCode.Unknown then
+                local kd = MIDNIGHT:_AddKeybindToList(nm,bindKey,bindMode,function(active)
+                    on=active; data._Value=on; update(true); if cb then cb(on) end
+                end, not isMenuKey)
+                data._KeybindData=kd
             end
 
             function data:Set(v) on=v; data._Value=v; update(true); if data._KeybindData then data._KeybindData._Active=v end; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; if cb then cb(v) end end
@@ -4129,56 +4099,19 @@ function MIDNIGHT:MakeWindow(config)
 
         MakeDraggable(fw,ftb,function() MIDNIGHT:_CloseAllPopups() end)
 
-        -- FIX #3: Smart auto-scroll state
-        local _autoScroll = true  -- автоскролл включён пока юзер внизу
-
-        fScroll.ChildAdded:Connect(function()
-            if not _autoScroll then return end
-            task.defer(function()
-                if fScroll and fScroll.Parent and _autoScroll then
-                    fScroll.CanvasPosition = Vector2.new(0, math.huge)
-                end
-            end)
-        end)
-
-        -- Отслеживаем прокрутку юзера: если сам доскроллил до низа — включаем автоскролл
-        fScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-            local atBottom = fScroll.CanvasPosition.Y >= (fScroll.AbsoluteCanvasSize.Y - fScroll.AbsoluteSize.Y - 4)
-            _autoScroll = atBottom
-        end)
-
-        local fData={_Frame=fw,_Scroll=fScroll,_Visible=false,_AutoScroll=function() return _autoScroll end}
-
-        -- FIX #2: close button — скрываем без обнуления Size, чтобы повторное открытие работало
-        fwClose.MouseButton1Click:Connect(function()
-            fData._Visible = false
-            TweenObject(fw,{BackgroundTransparency=1},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
-            task.delay(0.22, function()
-                if not fData._Visible then
-                    fw.Visible = false
-                    -- Restore full size so next open animates correctly
-                    fw.Size = UDim2.new(0, sz[1], 0, sz[2])
-                end
-            end)
-        end)
+        local fData={_Frame=fw,_Scroll=fScroll,_Visible=false}
+        fwClose.MouseButton1Click:Connect(function() fData:Toggle() end)
 
         function fData:Toggle()
-            fData._Visible = not fData._Visible
+            fData._Visible=not fData._Visible
             if fData._Visible then
-                -- FIX #2: reset size before animating open (only if hidden)
-                fw.Size = UDim2.new(0, sz[1]*0.92, 0, sz[2]*0.92)
-                fw.BackgroundTransparency = 1
-                fw.Visible = true
-                TweenObject(fw, {Size=UDim2.new(0,sz[1],0,sz[2]), BackgroundTransparency=0},
-                    0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                fw.Visible=true; fw.BackgroundTransparency=1; fw.Size=UDim2.new(0,0,0,0)
+                TweenObject(fw,{Size=UDim2.new(0,sz[1],0,sz[2])},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                TweenObject(fw,{BackgroundTransparency=0},0.25)
             else
-                TweenObject(fw, {BackgroundTransparency=1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                task.delay(0.22, function()
-                    if not fData._Visible then
-                        fw.Visible = false
-                        fw.Size = UDim2.new(0, sz[1], 0, sz[2])
-                    end
-                end)
+                TweenObject(fw,{Size=UDim2.new(0,0,0,0)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
+                TweenObject(fw,{BackgroundTransparency=1},0.18)
+                task.delay(0.25,function() if not fData._Visible then fw.Visible=false end end)
             end
         end
 
@@ -4243,7 +4176,12 @@ function MIDNIGHT:MakeWindow(config)
             logOrder = logOrder + 1
             local time = os.date("%H:%M:%S")
             aw:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
-            -- FIX #3: scroll only if user is already at bottom (handled by fScroll listener in MakeFloatingWindow)
+            -- Скроллим вниз
+            task.defer(function()
+                if aw._Scroll and aw._Scroll.Parent then
+                    aw._Scroll.CanvasPosition = Vector2.new(0, aw._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
         end
 
         -- Проверка является ли игрок админом
@@ -4583,7 +4521,11 @@ function MIDNIGHT:MakeWindow(config)
             local nc = Theme.TextSecondary
             pcall(function() if player.TeamColor then nc = player.TeamColor.Color end end)
             cw:AddRichLine("["..time.."] "..player.DisplayName, message, nc, Theme.TextSecondary)
-            -- FIX #3: auto-scroll handled by ChildAdded listener inside MakeFloatingWindow
+            task.defer(function()
+                if cw._Scroll and cw._Scroll.Parent then
+                    cw._Scroll.CanvasPosition = Vector2.new(0, cw._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
         end
 
         -- Ловим чат всех включая LocalPlayer
