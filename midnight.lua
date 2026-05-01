@@ -341,9 +341,20 @@ local function TweenObject(inst, props, duration, style, dir)
     if t then
         _ActiveTweens[inst] = t
         t:Play()
-        t.Completed:Connect(function()
-            if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
-        end)
+        -- FIX #1: disconnect the Completed connection immediately after firing
+        -- to prevent accumulation of dead connections on long-lived instances.
+        -- Use Once() if available (cleaner), otherwise manual disconnect.
+        if t.Completed.Once then
+            t.Completed:Once(function()
+                if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
+            end)
+        else
+            local _c
+            _c = t.Completed:Connect(function()
+                if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
+                _c:Disconnect()
+            end)
+        end
         return t
     end
     return nil
@@ -911,6 +922,39 @@ RegConn = function(conn)
     end
     return conn
 end
+
+--// FIX #2: Global slider input dispatcher
+--// Instead of one InputChanged + one InputEnded per slider (N*2 global UIS connections),
+--// we use a single shared dispatcher that routes events to the active dragging slider.
+--// Sliders call _SliderSetDrag(onMove, onEnd) on grab and _SliderClearDrag() on release.
+local _sliderDragCallback = nil
+local _sliderEndCallback  = nil
+
+local function _SliderSetDrag(onMove, onEnd)
+    _sliderDragCallback = onMove
+    _sliderEndCallback  = onEnd
+end
+local function _SliderClearDrag()
+    _sliderDragCallback = nil
+    _sliderEndCallback  = nil
+end
+
+-- One permanent InputChanged for ALL sliders
+RegConn(UserInputService.InputChanged:Connect(function(inp)
+    if _sliderDragCallback
+    and (inp.UserInputType == Enum.UserInputType.MouseMovement
+      or inp.UserInputType == Enum.UserInputType.Touch) then
+        _sliderDragCallback(inp)
+    end
+end))
+-- One permanent InputEnded for ALL sliders
+RegConn(UserInputService.InputEnded:Connect(function(inp)
+    if _sliderEndCallback
+    and (inp.UserInputType == Enum.UserInputType.MouseButton1
+      or inp.UserInputType == Enum.UserInputType.Touch) then
+        _sliderEndCallback()
+    end
+end))
 
 --// ═══════════════════════════════════════════════════════════
 --// ICON CONFIGURATION
