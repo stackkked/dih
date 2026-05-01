@@ -984,7 +984,7 @@ end
 --// FPS + PING TRACKER
 --// ═══════════════════════════════════════════════════════════
 function MIDNIGHT:_InitFPSTracker()
-    local conn = RunService.RenderStepped:Connect(function()
+    local conn = RunService.Heartbeat:Connect(function()
         self._FPSCounter = self._FPSCounter + 1
         local now = tick()
         if now - self._LastFPSTick >= 1 then
@@ -1691,19 +1691,20 @@ function MIDNIGHT:CreateWatermark(config)
         self._Initialized = true
     end
 
-    local conn = RunService.Heartbeat:Connect(function()
-        local tl = content:FindFirstChild("TimeLabel")
-        if tl then tl.Text = os.date("%H:%M:%S") end
-    end)
-    RegConn(conn)
-
-    -- Initial size calculation with delay so TextBounds are computed
-    task.delay(0.1, updateSize)
+    -- Update time label once per second via loop instead of every Heartbeat frame
+    local timeLabel = content:FindFirstChild("TimeLabel")
     task.spawn(function()
-        task.wait(0.5)  -- Wait for text to render before first resize
-        updateSize()
-        while self._WatermarkFrame and self._WatermarkFrame.Parent do updateSize(); task.wait(1) end
+        while self._WatermarkFrame and self._WatermarkFrame.Parent do
+            if timeLabel and timeLabel.Parent then
+                timeLabel.Text = os.date("%H:%M:%S")
+            end
+            task.wait(1)
+        end
     end)
+
+    -- Calculate size after render so TextBounds are ready
+    task.delay(0.1, updateSize)
+    task.delay(0.5, updateSize)
 
     positionWM()
     -- Apply any pre-set custom watermark text immediately
