@@ -508,6 +508,14 @@ local function AccentTint(color, factor)
     return Color3.fromRGB(math.floor(r * factor), math.floor(g * factor), math.floor(b * factor))
 end
 
+local function GetViewportSize()
+    local cam = workspace.CurrentCamera
+    if cam then
+        return cam.ViewportSize
+    end
+    return Vector2.new(1920, 1080)
+end
+
 local function LetterSpace(text)
     -- #5 OPT: gsub instead of table alloc per call
     return (text:gsub(".", function(c) return c .. " " end):gsub(" $", ""))
@@ -909,6 +917,7 @@ local MIDNIGHT = {
     _KeybindSettingsCb      = nil,
     _MenuCloseThreads       = {},
     _KeybindDispatcherInit  = false,
+    _SliderDispatcherInit   = false,
 
     _TargetHUD              = nil,   -- frame
     _TargetHUDVisible       = false,
@@ -939,22 +948,29 @@ local function _SliderClearDrag()
     _sliderEndCallback  = nil
 end
 
--- One permanent InputChanged for ALL sliders
-RegConn(UserInputService.InputChanged:Connect(function(inp)
-    if _sliderDragCallback
-    and (inp.UserInputType == Enum.UserInputType.MouseMovement
-      or inp.UserInputType == Enum.UserInputType.Touch) then
-        _sliderDragCallback(inp)
-    end
-end))
--- One permanent InputEnded for ALL sliders
-RegConn(UserInputService.InputEnded:Connect(function(inp)
-    if _sliderEndCallback
-    and (inp.UserInputType == Enum.UserInputType.MouseButton1
-      or inp.UserInputType == Enum.UserInputType.Touch) then
-        _sliderEndCallback()
-    end
-end))
+local function _InitSliderDispatcher()
+    if MIDNIGHT._SliderDispatcherInit then return end
+    MIDNIGHT._SliderDispatcherInit = true
+
+    -- One permanent InputChanged for ALL sliders
+    RegConn(UserInputService.InputChanged:Connect(function(inp)
+        if _sliderDragCallback
+        and (inp.UserInputType == Enum.UserInputType.MouseMovement
+          or inp.UserInputType == Enum.UserInputType.Touch) then
+            _sliderDragCallback(inp)
+        end
+    end))
+    -- One permanent InputEnded for ALL sliders
+    RegConn(UserInputService.InputEnded:Connect(function(inp)
+        if _sliderEndCallback
+        and (inp.UserInputType == Enum.UserInputType.MouseButton1
+          or inp.UserInputType == Enum.UserInputType.Touch) then
+            _sliderEndCallback()
+        end
+    end))
+end
+
+_InitSliderDispatcher()
 
 --// ═══════════════════════════════════════════════════════════
 --// ICON CONFIGURATION
@@ -1062,6 +1078,9 @@ end
 function MIDNIGHT:SetWatermarkText(text)
     self._WatermarkCustomText = text
     self:_UpdateWatermark()
+    if self._WatermarkSizeUpdate then
+        self._WatermarkSizeUpdate()
+    end
 end
 
 --// ═══════════════════════════════════════════════════════════
@@ -1138,6 +1157,16 @@ end
 --// RESET
 --// ═══════════════════════════════════════════════════════════
 function MIDNIGHT:Reset()
+    if self._TargetHUD and self._TargetHUD.StopTracking then
+        pcall(function() self._TargetHUD:StopTracking() end)
+    elseif self._TargetHUD and self._TargetHUD._DisconnectHPConn then
+        pcall(self._TargetHUD._DisconnectHPConn)
+    end
+    if self._lagspikeBlinkStop then
+        self._lagspikeBlinkStop()
+        self._lagspikeBlinkStop = nil
+    end
+    _SliderClearDrag()
     -- Disconnect all connections
     for _, conn in ipairs(self._Connections) do
         pcall(function() conn:Disconnect() end)
@@ -1157,9 +1186,20 @@ function MIDNIGHT:Reset()
     self._KeybindSettingsFrame = nil; self._KeybindSettingsBg = nil
     self._SidebarFooters = {}
     self._ThemeCallbacks = {}
+    self._WatermarkSizeUpdate = nil
+    self._lagspikeBlinkStop = nil
+    self._MenuToggleConn = nil
+    self._ActiveDropdownCloseConn = nil
+    self._ActiveColorPickerCloseConn = nil
+    self._KeybindSettingsCloseConn = nil
+    self._TargetHUD = nil
+    self._TargetHUDHideThread = nil
+    self._MenuCloseThreads = {}
     self._KeybindDispatcherInit = false
+    self._SliderDispatcherInit = false
     -- Re-initialize
     self:_InitScreenGui()
+    _InitSliderDispatcher()
 end
 
 --// ═══════════════════════════════════════════════════════════
@@ -1224,7 +1264,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     local panelW, panelHFinal = 200, 158
 
-    local vpSize = workspace.CurrentCamera.ViewportSize
+    local vpSize = GetViewportSize()
     local posX = position.X + 4
     local posY = position.Y
     if posX + panelW > vpSize.X then posX = position.X - panelW - 4 end
@@ -1326,12 +1366,6 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         if listening then return end
         listening = true
         keyBtn.Text = "[ ... ]"; keyBtn.TextColor3 = Theme.Warning
-        -- Disconnect any previous conn2 that was never cleaned up
-        -- (e.g. user clicked keyBtn, then clicked it again before pressing a key)
-        if self._KeybindSettingsKeyConn then
-            pcall(function() self._KeybindSettingsKeyConn:Disconnect() end)
-            self._KeybindSettingsKeyConn = nil
-        end
         local conn2
         conn2 = UserInputService.InputBegan:Connect(function(inp, gp)
             if gp then return end
@@ -1339,17 +1373,10 @@ function MIDNIGHT:_ShowKeybindSettings(config)
                 local ns = KeyCodeToName(inp.KeyCode)
                 keyBtn.Text = "[ " .. ns .. " ]"; keyBtn.TextColor3 = Theme.Accent
                 listening = false; conn2:Disconnect()
-                -- Remove from self so _CloseKeybindSettings doesn't double-disconnect
-                if self._KeybindSettingsKeyConn == conn2 then
-                    self._KeybindSettingsKeyConn = nil
-                    self._KeybindSettingsListening = nil
-                end
                 if onKeyChange then onKeyChange(inp.KeyCode, ns) end
             end
         end)
-        -- Do NOT call RegConn(conn2): _CloseKeybindSettings already owns this
-        -- connection via self._KeybindSettingsKeyConn. Adding it to RegConn as
-        -- well would leave a dead reference in _Connections after every click.
+        RegConn(conn2)
         -- Auto-cleanup if panel is destroyed while listening
         if pf and pf.Destroying then
             pf.Destroying:Connect(function() if conn2 then conn2:Disconnect() end; listening = false end)
@@ -1510,7 +1537,7 @@ function MIDNIGHT:_OpenDropdown(config)
     local listH = #opts * rowH + 8
     if isMulti then listH = listH + 30 end  -- extra room for Apply button
 
-    local vpSize = workspace.CurrentCamera.ViewportSize
+    local vpSize = GetViewportSize()
     local posX = absPos.X
     local posY = absPos.Y + absSize.Y + 2
     if posX + absSize.X > vpSize.X then posX = vpSize.X - absSize.X - 8 end
@@ -1712,7 +1739,7 @@ function MIDNIGHT:_OpenColorPicker(config)
     local onColor  = config.OnColor
     local pickerW, pickerH = 160, 154
 
-    local vpSize = workspace.CurrentCamera.ViewportSize
+    local vpSize = GetViewportSize()
     local posX = absPos.X
     local posY = absPos.Y + 30
     if posX + pickerW > vpSize.X then posX = vpSize.X - pickerW - 8 end
@@ -1846,6 +1873,16 @@ function MIDNIGHT:CreateWatermark(config)
         ShowTime      = config.ShowTime ~= false,
     }
     self:_InitScreenGui()
+    if self._lagspikeBlinkStop then
+        self._lagspikeBlinkStop()
+        self._lagspikeBlinkStop = nil
+    end
+    if self._WatermarkFrame then
+        pcall(function() self._WatermarkFrame:Destroy() end)
+        self._WatermarkFrame = nil
+    end
+    self._WatermarkLabels = nil
+    self._WatermarkSizeUpdate = nil
 
     local wmFrame = Create("Frame",{
         Name = "Watermark", Size = UDim2.new(0,500,0,28),
@@ -1948,7 +1985,7 @@ function MIDNIGHT:CreateWatermark(config)
                 if i < lastVisible then tw = tw + 6 end  -- gap between items only
             end
             -- Clamp minimum size so watermark doesn't collapse to zero
-            if tw < 60 then tw = 500 end
+            if tw < 60 then tw = 60 end
             wmFrame.Size = UDim2.new(0, tw, 0, 28)
             task.defer(positionWM)
         end)
@@ -1963,7 +2000,7 @@ function MIDNIGHT:CreateWatermark(config)
     -- Update time label once per second via loop instead of every Heartbeat frame
     local timeLabel = content:FindFirstChild("TimeLabel")
     task.spawn(function()
-        while self._WatermarkFrame and self._WatermarkFrame.Parent do
+        while self._WatermarkFrame == wmFrame and wmFrame.Parent do
             if timeLabel and timeLabel.Parent then
                 timeLabel.Text = os.date("%H:%M:%S")
             end
@@ -1972,6 +2009,7 @@ function MIDNIGHT:CreateWatermark(config)
     end)
 
     -- Calculate size after render so TextBounds are ready
+    self._WatermarkSizeUpdate = updateSize
     task.delay(0.1, updateSize)
     task.delay(0.5, updateSize)
 
@@ -2009,6 +2047,7 @@ function MIDNIGHT:_UpdateWatermark()
     local wf = self._WatermarkFrame
     if not wf or not wf.Parent then return end
     local c = wf:FindFirstChild("Content"); if not c then return end
+    local needsResize = false
 
     -- #2 FIX: cache label references on first call so FindFirstChild is not
     -- called every second (these labels are created once and never renamed).
@@ -2032,6 +2071,7 @@ function MIDNIGHT:_UpdateWatermark()
         if self._Lagspike and not lagL.Visible then
             lagL.Visible = true
             lagL.TextTransparency = 0
+            needsResize = true
             -- #2 FIX: guard against double-start — only launch blink loop if one
             -- isn't already running (self._lagspikeBlinkStop acts as the flag).
             if not self._lagspikeBlinkStop then
@@ -2049,19 +2089,38 @@ function MIDNIGHT:_UpdateWatermark()
                 self._lagspikeBlinkStop = function() blinking = false end
             end
         elseif not self._Lagspike and lagL.Visible then
+            needsResize = true
             if self._lagspikeBlinkStop then self._lagspikeBlinkStop(); self._lagspikeBlinkStop = nil end
             TweenObject(lagL,{TextTransparency=1},0.2)
-            task.delay(0.25, function() if not self._Lagspike then lagL.Visible=false; lagL.TextTransparency=0 end end)
+            task.delay(0.25, function()
+                if not self._Lagspike then
+                    lagL.Visible=false
+                    lagL.TextTransparency=0
+                    if self._WatermarkSizeUpdate then self._WatermarkSizeUpdate() end
+                end
+            end)
         end
     end
 
     if cusL then
+        local showCustom = self._WatermarkCustomText and self._WatermarkCustomText ~= ""
+        if showCustom then
+            if cusL.Text ~= self._WatermarkCustomText or not cusL.Visible then
+                needsResize = true
+            end
+        elseif cusL.Visible then
+            needsResize = true
+        end
         if self._WatermarkCustomText and self._WatermarkCustomText ~= "" then
             cusL.Text    = self._WatermarkCustomText
             cusL.Visible = true
         else
             cusL.Visible = false
         end
+    end
+
+    if needsResize and self._WatermarkSizeUpdate then
+        self._WatermarkSizeUpdate()
     end
 
     -- #2 FIX: removed task.defer that rewrote AnchorPoint/Position every second.
@@ -2260,7 +2319,7 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     -- ── Positioning helper ───────────────────────────────────
     local function positionHUD()
-        local vs = workspace.CurrentCamera.ViewportSize
+        local vs = GetViewportSize()
         local margin = 14
         if POS == "BottomLeft" then
             hf.AnchorPoint = Vector2.new(0, 1)
@@ -2390,6 +2449,13 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     -- ── HUD object ──────────────────────────────────────────
     local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil }
+    local function disconnectHPConn()
+        if hud._HPConn then
+            pcall(function() hud._HPConn:Disconnect() end)
+            hud._HPConn = nil
+        end
+    end
+    hud._DisconnectHPConn = disconnectHPConn
 
     function hud:SetPosition(pos)
         -- Если пользователь уже перетащил вручную — игнорируем
@@ -2407,6 +2473,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     end
 
     function hud:ClearTarget()
+        disconnectHPConn()
         if not self._Visible then return end
         self._Visible = false
         self._CurrentPlayer = nil
@@ -2486,10 +2553,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         -- ── HealthChanged listener — disconnect previous, connect new ──
         if not isSame then
             -- Disconnect previous HealthChanged listener to prevent accumulation
-            if self._HPConn then
-                pcall(function() self._HPConn:Disconnect() end)
-                self._HPConn = nil
-            end
+            disconnectHPConn()
             pcall(function()
                 local char = player.Character
                 if char then
@@ -2500,10 +2564,7 @@ function MIDNIGHT:CreateTargetHUD(config)
                                 refreshHP()
                             end
                         end)
-                        -- Register in RegConn so MIDNIGHT:Destroy() also cleans this up.
-                        -- Manual disconnection on target change (above) still fires first;
-                        -- double-disconnect via pcall in Destroy() is harmless.
-                        RegConn(self._HPConn)
+                        -- Note: NOT added to RegConn — managed manually above
                     end
                 end
             end)
@@ -2557,7 +2618,7 @@ end
 
 function MIDNIGHT:_GetNotifPos(idx, totalH)
     local pos = self._NotificationPosition
-    local vs  = workspace.CurrentCamera.ViewportSize
+    local vs  = GetViewportSize()
     -- Offset Y down if watermark is at the top
     local wmOffset = 0
     if self._WatermarkFrame and self._WatermarkFrame.Parent then
@@ -2816,6 +2877,7 @@ function MIDNIGHT:_InitKeybindDispatcher()
     RegConn(UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
         local kc = input.KeyCode
+        if kc == Enum.KeyCode.Unknown then return end
         local needRefresh = false
         for _, kd in ipairs(self._Keybinds) do
             if kd._Key == kc then
@@ -3338,6 +3400,7 @@ function MIDNIGHT:MakeWindow(config)
             local bindKey = ParseKeyCode(tc.Key or "Unknown")
             local bindMode = tc.Mode   or "Press"
             local isMenuKey = tc.IsMenuKey or false
+            local bindVisible = not isMenuKey
 
             local item = Create("Frame",{
                 Size=UDim2.new(1,0,0,36),BackgroundColor3=Theme.ItemBg,
@@ -3397,6 +3460,22 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
+            local function syncKeybindData()
+                if data._KeybindData then
+                    data._KeybindData._Key = bindKey
+                    data._KeybindData._Mode = bindMode
+                    data._KeybindData._Visible = bindVisible
+                    data._KeybindData._Active = on
+                elseif bindKey ~= Enum.KeyCode.Unknown then
+                    local kd = MIDNIGHT:_AddKeybindToList(nm,bindKey,bindMode,function(active)
+                        on=active; data._Value=on; update(true); if cb then cb(on) end
+                    end, bindVisible)
+                    kd._Active = on
+                    data._KeybindData = kd
+                end
+                if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
+            end
+
             -- Transparent button overlay for reliable click handling
             local clickBtn = Create("TextButton",{
                 Text="",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
@@ -3410,42 +3489,39 @@ function MIDNIGHT:MakeWindow(config)
             end)
             clickBtn.MouseButton2Click:Connect(function()
                 local ap = item.AbsolutePosition; local as = item.AbsoluteSize
-                local curVis = true
-                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then curVis=kk._Visible end end
+                local curVis = data._KeybindData and data._KeybindData._Visible or bindVisible
                 MIDNIGHT:_ShowKeybindSettings({
                     Position=Vector2.new(ap.X+as.X,ap.Y),
                     Mode=data._Mode, Visible=curVis,
                     CurrentKeyStr=bindKey~=Enum.KeyCode.Unknown and KeyCodeToName(bindKey) or "None",
                     OnKeyChange=function(newKey,newKeyStr)
                         bindKey=newKey; keyBadgeLabel.Text=newKeyStr; data._Key=newKey
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=newKey; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
+                        syncKeybindData()
                         if isMenuKey then MIDNIGHT:SetMenuKey(newKeyStr) end
                     end,
                     OnModeChange=function(newMode)
                         data._Mode=newMode; bindMode=newMode
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and newMode~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=newMode end end
+                        if data._KeybindData and data._KeybindData._Mode=="Hold" and data._KeybindData._Active and newMode~="Hold" then
+                            data._KeybindData._Active=false
+                            if data._KeybindData._Callback then data._KeybindData._Callback(false) end
+                        end
+                        syncKeybindData()
                     end,
                     OnVisibleChange=function(vis)
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Visible=vis end end
-                        if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
+                        bindVisible = vis
+                        syncKeybindData()
                     end,
                 })
             end)
 
             update(false)
-
-            if bindKey ~= Enum.KeyCode.Unknown then
-                local kd = MIDNIGHT:_AddKeybindToList(nm,bindKey,bindMode,function(active)
-                    on=active; data._Value=on; update(true); if cb then cb(on) end
-                end, not isMenuKey)
-                data._KeybindData=kd
-            end
+            syncKeybindData()
 
             function data:Set(v) on=v; data._Value=v; update(true); if data._KeybindData then data._KeybindData._Active=v end; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; if cb then cb(v) end end
             function data:SetKey(k)
                 local nk=ParseKeyCode(k); if nk==Enum.KeyCode.Unknown then return end
                 bindKey=nk; keyBadgeLabel.Text=KeyCodeToName(nk); data._Key=nk
-                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
+                syncKeybindData()
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
             return data
@@ -3462,6 +3538,12 @@ function MIDNIGHT:MakeWindow(config)
             local step = sc.Step         or 1
             local dec  = sc.DecimalPlaces or (pct and 1 or 0)
             local cb   = sc.Callback
+
+            if mx < mn then mn, mx = mx, mn end
+            if mx == mn then mx = mn + 1 end
+            if step <= 0 then step = 1 end
+            def = math.clamp(def, mn, mx)
+            local range = mx - mn
 
             local item = Create("Frame",{
                 Size=UDim2.new(1,0,0,52),BackgroundColor3=Theme.ItemBg,
@@ -3488,7 +3570,7 @@ function MIDNIGHT:MakeWindow(config)
 
             local track = Create("Frame",{Size=UDim2.new(1,0,0,6),Position=UDim2.new(0,0,0,22),BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic})
             ApplyCorner(track,3)
-            local r0 = (def-mn)/(mx-mn)
+            local r0 = (def-mn)/range
             local fill = Create("Frame",{Size=UDim2.new(r0,0,1,0),BackgroundColor3=Theme.SliderFill,BorderSizePixel=0,Parent=track})
             ApplyCorner(fill,3)
             local k = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(r0,-7,0.5,-7),BackgroundColor3=Theme.SliderKnob,BorderSizePixel=0,Parent=track})
@@ -3530,7 +3612,7 @@ function MIDNIGHT:MakeWindow(config)
                 v=math.clamp(v,mn,mx)
                 local changed = v ~= cur
                 cur=v; data._Value=v
-                local rat=(v-mn)/(mx-mn)
+                local rat=(v-mn)/range
                 local txt = pct and string.format("%."..dec.."f%%",v) or string.format("%."..dec.."f",v)
                 vl.Text=txt; tooltipLabel.Text=txt; inputBox.PlaceholderText=txt
                 if anim then
@@ -3548,7 +3630,7 @@ function MIDNIGHT:MakeWindow(config)
             local function onInp(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch then
                     local rl=math.clamp((inp.Position.X-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
-                    upd(mn+rl*(mx-mn),false)
+                    upd(mn+rl*range,false)
                 end
             end
 
@@ -3642,6 +3724,7 @@ function MIDNIGHT:MakeWindow(config)
             })
             local kbBtn = Create("TextButton",{Text="",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.CONTENT+2,Parent=kbBadge})
 
+            local kd
             local listening2 = false
             kbBtn.MouseButton1Click:Connect(function()
                 if listening2 then return end
@@ -3651,7 +3734,8 @@ function MIDNIGHT:MakeWindow(config)
                     if inp.KeyCode~=Enum.KeyCode.Unknown then
                         key=inp.KeyCode; kbLabel.Text=KeyCodeToName(key); kbLabel.TextColor3=Theme.Accent
                         listening2=false; conn:Disconnect()
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=key; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
+                        kd._Key=key
+                        if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                         if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(key)) end
                     end
                 end)
@@ -3664,35 +3748,43 @@ function MIDNIGHT:MakeWindow(config)
 
             kbBtn.MouseButton2Click:Connect(function()
                 local ap=kbBadge.AbsolutePosition; local as=kbBadge.AbsoluteSize
-                local curVis=true
-                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then curVis=kk._Visible end end
                 MIDNIGHT:_ShowKeybindSettings({
-                    Position=Vector2.new(ap.X,ap.Y),Mode=mode,Visible=curVis,
+                    Position=Vector2.new(ap.X,ap.Y),Mode=mode,Visible=kd._Visible,
                     CurrentKeyStr=key~=Enum.KeyCode.Unknown and KeyCodeToName(key) or "None",
                     OnKeyChange=function(nk,ns) key=nk; kbLabel.Text=ns
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
+                        kd._Key=nk
+                        if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                         if isMenuKey then MIDNIGHT:SetMenuKey(ns) end
                     end,
                     OnModeChange=function(nm2) updateModeLabel(nm2)
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and nm2~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=nm2 end end
+                        if kd._Mode=="Hold" and kd._Active and nm2~="Hold" then
+                            kd._Active=false
+                            if kd._Callback then kd._Callback(false) end
+                        end
+                        kd._Mode=nm2
                     end,
                     OnVisibleChange=function(vis)
-                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Visible=vis end end
+                        kd._Visible=vis
                         if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                     end,
                 })
             end)
 
-            local kd = MIDNIGHT:_AddKeybindToList(nm,key,mode,cb,not isMenuKey)
+            kd = MIDNIGHT:_AddKeybindToList(nm,key,mode,cb,not isMenuKey)
             kd._Frame=item; kd._KeyLabel=kbLabel; kd._ModeLabel=modeLbl
             function kd:Set(k2)
                 local nk=ParseKeyCode(k2); kbLabel.Text=KeyCodeToName(nk); key=nk
-                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
+                kd._Key=nk
+                if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
             function kd:SetMode(m)
                 updateModeLabel(m)
-                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and m~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=m end end
+                if kd._Mode=="Hold" and kd._Active and m~="Hold" then
+                    kd._Active=false
+                    if kd._Callback then kd._Callback(false) end
+                end
+                kd._Mode=m
             end
             return kd
         end
@@ -4554,13 +4646,33 @@ function MIDNIGHT:MakeWindow(config)
 
         local trackLoop = nil  -- Connection (RunService.Heartbeat), не поток
 
-        local function stopTracking()
+        local function stopTracking(skipClear)
             if trackLoop then
                 -- Теперь это Connection, не thread — надёжный Disconnect на любом экзекьюторе
                 pcall(function() trackLoop:Disconnect() end)
                 trackLoop = nil
             end
-            hud:ClearTarget()
+            if hud._TrackJoinConn then
+                pcall(function() hud._TrackJoinConn:Disconnect() end)
+                hud._TrackJoinConn = nil
+            end
+            if hud._TrackLeaveConn then
+                pcall(function() hud._TrackLeaveConn:Disconnect() end)
+                hud._TrackLeaveConn = nil
+            end
+            for p, conn in pairs(hud._TrackCharConns or {}) do
+                if conn then pcall(function() conn:Disconnect() end) end
+                hud._TrackCharConns[p] = nil
+            end
+            hud._TrackCharConns = {}
+            hud._TrackCharCache = {}
+            if not skipClear then
+                hud:ClearTarget()
+            end
+        end
+
+        function hud:StopTracking(skipClear)
+            stopTracking(skipClear)
         end
 
         local function startTracking()
@@ -4578,6 +4690,8 @@ function MIDNIGHT:MakeWindow(config)
             -- We cache the results and only invalidate when the character changes.
             local charCache = {}   -- [player] = { char, root, hum }
             local charConns = {}   -- [player] = CharacterAdded connection
+            hud._TrackCharCache = charCache
+            hud._TrackCharConns = charConns
 
             local function cachePlayer(p)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
@@ -4615,6 +4729,8 @@ function MIDNIGHT:MakeWindow(config)
                 charCache[p]  = nil
                 charConns[p]  = nil
             end)
+            hud._TrackJoinConn = joinConn
+            hud._TrackLeaveConn = leaveConn
 
             -- Throttle-аккумулятор: обновляем ~10 раз/сек (0.1s), не каждый фрейм
             local accum = 0
@@ -4641,7 +4757,12 @@ function MIDNIGHT:MakeWindow(config)
                         continue
                     end
 
-                    local sp, onScreen = camera:WorldToViewportPoint(entry.root.Position)
+                    local cam = workspace.CurrentCamera or camera
+                    if not cam or not entry.root or not entry.root.Parent then
+                        charCache[p] = nil
+                        continue
+                    end
+                    local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
                     if not onScreen then continue end
 
                     local dx, dy = sp.X - mX, sp.Y - mY
@@ -4700,7 +4821,9 @@ function MIDNIGHT:MakeWindow(config)
         -- Ловим чат всех включая LocalPlayer
         RegConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer, msg) end))
         for _, p in ipairs(Players:GetPlayers()) do
-            RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
+            if p ~= LocalPlayer then
+                RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
+            end
         end
         RegConn(Players.PlayerAdded:Connect(function(p)
             RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
@@ -4715,6 +4838,16 @@ end
 --// DESTROY
 --// ═══════════════════════════════════════════════════════════
 function MIDNIGHT:Destroy()
+    if self._TargetHUD and self._TargetHUD.StopTracking then
+        pcall(function() self._TargetHUD:StopTracking() end)
+    elseif self._TargetHUD and self._TargetHUD._DisconnectHPConn then
+        pcall(self._TargetHUD._DisconnectHPConn)
+    end
+    if self._lagspikeBlinkStop then
+        self._lagspikeBlinkStop()
+        self._lagspikeBlinkStop = nil
+    end
+    _SliderClearDrag()
     -- Disconnect all tracked connections
     for _, conn in ipairs(self._Connections) do
         pcall(function() conn:Disconnect() end)
