@@ -328,12 +328,13 @@ end
 local function CreateAccentLine(parent, radius, color)
     if not parent then return nil end
     local inset = math.min(radius or 6, 4)
+    local parentZ = pcall(function() return parent.ZIndex end) and parent.ZIndex or ZIndex.CONTENT
     local line = Create("Frame", {
         Size     = UDim2.new(1, -(inset * 2), 0, 2),
         Position = UDim2.new(0, inset, 0, 0),
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BorderSizePixel  = 0,
-        ZIndex = ZIndex.CONTENT,
+        ZIndex = parentZ + 2,
         Parent = parent,
     })
     local accent = color or Theme.Accent
@@ -3236,7 +3237,7 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,Parent=keyBadge,
             })
 
-            local sw = Create("Frame",{Size=UDim2.new(0,36,0,18),Position=UDim2.new(1,-36,0.5,-9),BackgroundColor3=Theme.ToggleOff,BorderSizePixel=0,ClipsDescendants=true,Parent=ic})
+            local sw = Create("Frame",{Size=UDim2.new(0,36,0,18),Position=UDim2.new(1,-36,0.5,-9),BackgroundColor3=Theme.ToggleOff,BorderSizePixel=0,ClipsDescendants=false,Parent=ic})
             ApplyCorner(sw,9)
             local knob = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Theme.ToggleKnob,BorderSizePixel=0,Parent=sw})
             ApplyCorner(knob,7)
@@ -3282,7 +3283,10 @@ function MIDNIGHT:MakeWindow(config)
                 ZIndex=ZIndex.CONTENT+2,Parent=item,
             })
             clickBtn.MouseButton1Click:Connect(function()
-                on=not on; data._Value=on; update(true); if cb then cb(on) end
+                on=not on; data._Value=on; update(true)
+                if data._KeybindData then data._KeybindData._Active=on end
+                if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
+                if cb then cb(on) end
             end)
             clickBtn.MouseButton2Click:Connect(function()
                 local ap = item.AbsolutePosition; local as = item.AbsoluteSize
@@ -3329,7 +3333,7 @@ function MIDNIGHT:MakeWindow(config)
                 data._KeybindData=kd
             end
 
-            function data:Set(v) on=v; data._Value=v; update(true); if cb then cb(v) end end
+            function data:Set(v) on=v; data._Value=v; update(true); if data._KeybindData then data._KeybindData._Active=v end; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; if cb then cb(v) end end
             function data:SetKey(k)
                 local nk=ParseKeyCode(k); if nk==Enum.KeyCode.Unknown then return end
                 bindKey=nk; keyBadgeLabel.Text=KeyCodeToName(nk); data._Key=nk
