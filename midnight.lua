@@ -1048,14 +1048,18 @@ function MIDNIGHT:_InitFPSTracker()
         _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
     end)
 
-    local conn = RunService.Heartbeat:Connect(function()
+    -- #1 FIX: accumulate dt instead of calling tick() every frame.
+    -- tick() is a C-call but still costs more than a float add; more importantly
+    -- this removes the subtraction and branch on every single Heartbeat fire.
+    local dtAccum = 0
+    local conn = RunService.Heartbeat:Connect(function(dt)
         self._FPSCounter = self._FPSCounter + 1
-        local now = tick()
-        if now - self._LastFPSTick >= 1 then
-            self._FPS       = self._FPSCounter
-            self._Lagspike  = self._FPS < 30
+        dtAccum = dtAccum + dt
+        if dtAccum >= 1 then
+            self._FPS        = self._FPSCounter
+            self._Lagspike   = self._FPS < 30
             self._FPSCounter = 0
-            self._LastFPSTick = now
+            dtAccum          = dtAccum - 1  -- keep remainder, don't reset to 0
             if _pingStatItem then
                 local ok, v = pcall(_pingStatItem.GetValue, _pingStatItem)
                 if ok then self._Ping = math.floor(v) end
@@ -1103,7 +1107,7 @@ function MIDNIGHT:Reset()
     -- Reset state
     self._Windows = {}; self._Notifications = {}; self._Keybinds = {}; self._KeybindsMap = {}
     self._Initialized = false; self._MenuOpen = false
-    self._WatermarkFrame = nil; self._KeybindListFrame = nil
+    self._WatermarkFrame = nil; self._WatermarkLabels = nil; self._KeybindListFrame = nil
     self._KeybindListContent = nil; self._RefreshKeybindList = nil
     self._ActiveDropdown = nil; self._ActiveColorPicker = nil
     self._KeybindSettingsFrame = nil; self._KeybindSettingsBg = nil
@@ -1949,10 +1953,20 @@ function MIDNIGHT:_UpdateWatermark()
     if not wf or not wf.Parent then return end
     local c = wf:FindFirstChild("Content"); if not c then return end
 
-    local fpsL  = c:FindFirstChild("FPSLabel")
-    local pingL = c:FindFirstChild("PingLabel")
-    local lagL  = c:FindFirstChild("LagspikeLabel")
-    local cusL  = c:FindFirstChild("CustomLabel")
+    -- #2 FIX: cache label references on first call so FindFirstChild is not
+    -- called every second (these labels are created once and never renamed).
+    if not self._WatermarkLabels then
+        self._WatermarkLabels = {
+            fps  = c:FindFirstChild("FPSLabel"),
+            ping = c:FindFirstChild("PingLabel"),
+            lag  = c:FindFirstChild("LagspikeLabel"),
+            cus  = c:FindFirstChild("CustomLabel"),
+        }
+    end
+    local fpsL  = self._WatermarkLabels.fps
+    local pingL = self._WatermarkLabels.ping
+    local lagL  = self._WatermarkLabels.lag
+    local cusL  = self._WatermarkLabels.cus
 
     if fpsL  then fpsL.Text  = self._FPS.." fps";  fpsL.TextColor3  = self._Lagspike and Theme.Error or Theme.TextSecondary end
     if pingL then pingL.Text = self._Ping.."ms";   pingL.TextColor3 = self._Ping>150 and Theme.Warning or Theme.TextSecondary end
@@ -1961,20 +1975,22 @@ function MIDNIGHT:_UpdateWatermark()
         if self._Lagspike and not lagL.Visible then
             lagL.Visible = true
             lagL.TextTransparency = 0
-            -- Blink tween back and forth
-            local blinking = true
-            local function doBlink()
-                if not blinking or not lagL.Visible or not lagL.Parent then return end
-                TweenObject(lagL,{TextTransparency=1},0.35)
-                task.delay(0.4, function()
+            -- #2 FIX: guard against double-start — only launch blink loop if one
+            -- isn't already running (self._lagspikeBlinkStop acts as the flag).
+            if not self._lagspikeBlinkStop then
+                local blinking = true
+                local function doBlink()
                     if not blinking or not lagL.Visible or not lagL.Parent then return end
-                    TweenObject(lagL,{TextTransparency=0},0.35)
-                    task.delay(0.4, doBlink)
-                end)
+                    TweenObject(lagL,{TextTransparency=1},0.35)
+                    task.delay(0.4, function()
+                        if not blinking or not lagL.Visible or not lagL.Parent then return end
+                        TweenObject(lagL,{TextTransparency=0},0.35)
+                        task.delay(0.4, doBlink)
+                    end)
+                end
+                doBlink()
+                self._lagspikeBlinkStop = function() blinking = false end
             end
-            doBlink()
-            -- Store stop function so we can stop blinking when lagspike ends
-            self._lagspikeBlinkStop = function() blinking = false end
         elseif not self._Lagspike and lagL.Visible then
             if self._lagspikeBlinkStop then self._lagspikeBlinkStop(); self._lagspikeBlinkStop = nil end
             TweenObject(lagL,{TextTransparency=1},0.2)
@@ -1991,18 +2007,10 @@ function MIDNIGHT:_UpdateWatermark()
         end
     end
 
-    -- Reposition after content changes (for TopCenter/TopRight)
-    task.defer(function()
-        if not wf or not wf.Parent then return end
-        local pos = self._WatermarkPosition
-        if pos == "TopCenter" then
-            wf.AnchorPoint = Vector2.new(0.5,0)
-            wf.Position = UDim2.new(0.5,0,0,4)
-        elseif pos == "TopRight" then
-            wf.AnchorPoint = Vector2.new(1,0)
-            wf.Position = UDim2.new(1,-12,0,4)
-        end
-    end)
+    -- #2 FIX: removed task.defer that rewrote AnchorPoint/Position every second.
+    -- Position is only meaningful to update when the user calls SetWatermarkPosition()
+    -- — that function already sets it directly. Doing it here caused a redundant
+    -- deferred property write on every FPS tick with no visual benefit.
 end
 
 --// ═══════════════════════════════════════════════════════════
@@ -4459,67 +4467,110 @@ function MIDNIGHT:MakeWindow(config)
             end,
         })
 
-        local trackLoop = nil  -- текущий поток слежения
+        local trackLoop = nil  -- Connection (RunService.Heartbeat), не поток
 
         local function stopTracking()
-            if trackLoop and typeof(trackLoop) == "thread" then
-                pcall(task.cancel, trackLoop)
+            if trackLoop then
+                -- Теперь это Connection, не thread — надёжный Disconnect на любом экзекьюторе
+                pcall(function() trackLoop:Disconnect() end)
+                trackLoop = nil
             end
-            trackLoop = nil
             hud:ClearTarget()
         end
 
         local function startTracking()
             stopTracking()
-            trackLoop = task.spawn(function()
-                -- Resolve services once, outside the loop
-                local UIS      = game:GetService("UserInputService")
-                local camera   = workspace.CurrentCamera
-                local plrs     = game:GetService("Players")
-                local lp       = plrs.LocalPlayer
 
-                while true do
-                    task.wait(0.1)
+            -- Резолвим сервисы один раз до подключения — не аллоцируем внутри хот-пата
+            local UIS    = game:GetService("UserInputService")
+            local camera = workspace.CurrentCamera
+            local plrs   = game:GetService("Players")
+            local lp     = plrs.LocalPlayer
 
-                    -- Позиция мыши на экране
-                    local mousePos = UIS:GetMouseLocation()
-                    local mX, mY = mousePos.X, mousePos.Y
+            -- #9 FIX: per-player cache for HumanoidRootPart and Humanoid.
+            -- FindFirstChild / FindFirstChildOfClass walk the instance tree every call —
+            -- on a full server (20 players) at 10Hz that's 40–60 tree-walks per second.
+            -- We cache the results and only invalidate when the character changes.
+            local charCache = {}   -- [player] = { char, root, hum }
+            local charConns = {}   -- [player] = CharacterAdded connection
 
-                    local bestPlayer = nil
-                    local bestDistSq = math.huge  -- compare squared distances — avoids sqrt
+            local function cachePlayer(p)
+                if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
+                charCache[p] = nil
+                charConns[p] = p.CharacterAdded:Connect(function()
+                    charCache[p] = nil  -- invalidate on respawn
+                end)
+            end
 
-                    for _, p in ipairs(plrs:GetPlayers()) do
-                        if p == lp then continue end
-                        local char = p.Character
-                        if not char then continue end
+            local function getCache(p)
+                if charCache[p] then return charCache[p] end
+                local char = p.Character
+                if not char then return nil end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                          or char:FindFirstChildWhichIsA("BasePart")
+                local hum  = char:FindFirstChildOfClass("Humanoid")
+                if not root then return nil end
+                local entry = { char = char, root = root, hum = hum }
+                charCache[p] = entry
+                return entry
+            end
 
-                        -- Берём HumanoidRootPart или любой BasePart
-                        local root = char:FindFirstChild("HumanoidRootPart")
-                            or char:FindFirstChildWhichIsA("BasePart")
-                        if not root then continue end
+            -- Seed cache for players already in game
+            for _, p in ipairs(plrs:GetPlayers()) do
+                if p ~= lp then cachePlayer(p) end
+            end
 
-                        -- Проверяем, что гуманоид жив
-                        local hum = char:FindFirstChildOfClass("Humanoid")
-                        if hum and hum.Health <= 0 then continue end
+            -- Track new joiners
+            local joinConn = plrs.PlayerAdded:Connect(function(p)
+                cachePlayer(p)
+            end)
+            -- Clean up when players leave
+            local leaveConn = plrs.PlayerRemoving:Connect(function(p)
+                if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
+                charCache[p]  = nil
+                charConns[p]  = nil
+            end)
 
-                        local screenPos, onScreen = camera:WorldToViewportPoint(root.Position)
-                        if not onScreen then continue end
+            -- Throttle-аккумулятор: обновляем ~10 раз/сек (0.1s), не каждый фрейм
+            local accum = 0
 
-                        local dx = screenPos.X - mX
-                        local dy = screenPos.Y - mY
-                        local distSq = dx*dx + dy*dy  -- no sqrt needed for comparison
+            trackLoop = RunService.Heartbeat:Connect(function(dt)
+                accum = accum + dt
+                if accum < 0.1 then return end
+                accum = 0
 
-                        if distSq < bestDistSq then
-                            bestDistSq   = distSq
-                            bestPlayer = p
-                        end
+                local mousePos   = UIS:GetMouseLocation()
+                local mX, mY     = mousePos.X, mousePos.Y
+                local bestPlayer = nil
+                local bestDistSq = math.huge  -- сравниваем квадраты, sqrt не нужен
+
+                for _, p in ipairs(plrs:GetPlayers()) do
+                    if p == lp then continue end
+
+                    local entry = getCache(p)
+                    if not entry then continue end
+
+                    local hum = entry.hum
+                    if hum and hum.Health <= 0 then
+                        charCache[p] = nil  -- dead — invalidate so we re-check on respawn
+                        continue
                     end
 
-                    if bestPlayer then
-                        hud:SetTarget(bestPlayer)
-                    else
-                        hud:ClearTarget()
+                    local sp, onScreen = camera:WorldToViewportPoint(entry.root.Position)
+                    if not onScreen then continue end
+
+                    local dx, dy = sp.X - mX, sp.Y - mY
+                    local dSq = dx*dx + dy*dy
+                    if dSq < bestDistSq then
+                        bestDistSq = dSq
+                        bestPlayer = p
                     end
+                end
+
+                if bestPlayer then
+                    hud:SetTarget(bestPlayer)
+                else
+                    hud:ClearTarget()
                 end
             end)
         end
