@@ -2910,19 +2910,6 @@ function MIDNIGHT:MakeWindow(config)
         end
     end)
 
-    -- Title bar accent line sweep: briefly increase transparency then snap solid
-    task.delay(0.15, function()
-        if not tb or not tb.Parent then return end
-        for _, ch in ipairs(tb:GetChildren()) do
-            if ch:IsA("Frame") and ch.Size.Y.Offset == 2 then
-                TweenObject(ch, {BackgroundTransparency = 0.7}, 0.1)
-                task.delay(0.15, function()
-                    if ch and ch.Parent then TweenObject(ch, {BackgroundTransparency = 0}, 0.35, Enum.EasingStyle.Quint) end
-                end)
-            end
-        end
-    end)
-
     -- TITLE BAR
     local tb = Create("Frame",{
         Name="TitleBar", Size=UDim2.new(1,0,0,40),
@@ -3113,25 +3100,47 @@ function MIDNIGHT:MakeWindow(config)
         -- MIDNIGHT:Destroy(). Previously this connection leaked forever — every tab ever
         -- created kept a live CanvasPosition listener even after the GUI was torn down,
         -- causing memory bloat and potential nil-indexing crashes after Destroy().
+        -- BUG FIX #2+#3: Scrollbar auto-hide rewrite
+        -- Old code had two bugs:
+        --   1. scrollFrame.ScrollBarImageTransparency = 0 AFTER TweenObject({..Transparency=1}) cancelled
+        --      the tween visually — the bar flashed instead of fading smoothly.
+        --   2. Direct property writes (Thickness=3) on EVERY CanvasPosition change caused micro-jank;
+        --      now we guard with a `visible` flag so we only write on state transitions.
         local function setupScrollbarAutoHide(scrollFrame)
             if not scrollFrame then return end
-            local fadeTimer = nil
+            local fadeTimer  = nil
+            local sbVisible  = false  -- track state so we don't write on every scroll event
+
             RegConn(scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
                 if not scrollFrame.Parent then return end
-                scrollFrame.ScrollBarThickness = 3
-                scrollFrame.ScrollBarImageTransparency = 0
+
+                -- Show bar only on state transition (hidden → visible)
+                if not sbVisible then
+                    sbVisible = true
+                    scrollFrame.ScrollBarThickness = 3
+                    scrollFrame.ScrollBarImageTransparency = 0
+                end
+
+                -- Cancel previous hide timer
                 if fadeTimer and typeof(fadeTimer) == "thread" then
                     pcall(function() task.cancel(fadeTimer) end)
                     fadeTimer = nil
                 end
+
+                -- Schedule hide
                 fadeTimer = task.delay(1.5, function()
                     fadeTimer = nil
                     if not scrollFrame.Parent then return end
-                    TweenObject(scrollFrame, {ScrollBarImageTransparency=1}, 0.4)
+                    -- Fade out transparency only; do NOT reset Transparency back to 0 after fade
+                    -- (the old code did ScrollBarImageTransparency=0 after the tween, which
+                    --  made the bar reappear briefly — that line is intentionally absent here)
+                    TweenObject(scrollFrame, {ScrollBarImageTransparency = 1}, 0.4)
                     task.delay(0.45, function()
                         if scrollFrame and scrollFrame.Parent then
+                            -- Only hide thickness AFTER the tween completes, and mark invisible
                             scrollFrame.ScrollBarThickness = 0
-                            scrollFrame.ScrollBarImageTransparency = 0
+                            sbVisible = false
+                            -- Keep ImageTransparency=1 so next show starts from invisible state
                         end
                     end)
                 end)
