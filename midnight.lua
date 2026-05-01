@@ -284,12 +284,24 @@ local function ApplyPadding(parent, top, bottom, left, right)
     })
 end
 
+-- #2 OPT: Cancel previous tween on same instance before playing new one
+-- prevents competing tweens on hover in/out
+local _ActiveTweens = {}  -- [instance] = tween
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
+    local prev = _ActiveTweens[inst]
+    if prev then pcall(function() prev:Cancel() end) end
     local ok, t = pcall(TweenService.Create, TweenService, inst,
         TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out),
         props)
-    if ok and t then t:Play(); return t end
+    if ok and t then
+        _ActiveTweens[inst] = t
+        t:Play()
+        t.Completed:Connect(function()
+            if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
+        end)
+        return t
+    end
     return nil
 end
 
@@ -407,48 +419,43 @@ local function ApplyHoverEffect(frame, normalBg, hoverBg, withBorder)
         })
         ApplyCorner(borderLine, 1)
     end
-    frame.MouseEnter:Connect(function()
+    -- #3 OPT: register hover connections for proper Destroy() cleanup
+    RegConn(frame.MouseEnter:Connect(function()
         TweenObject(frame, {BackgroundColor3 = hoverBg}, 0.18)
         if borderLine then TweenObject(borderLine, {BackgroundTransparency = 0}, 0.18) end
-    end)
-    frame.MouseLeave:Connect(function()
+    end))
+    RegConn(frame.MouseLeave:Connect(function()
         TweenObject(frame, {BackgroundColor3 = normalBg}, 0.18)
         if borderLine then TweenObject(borderLine, {BackgroundTransparency = 1}, 0.18) end
-    end)
+    end))
+end
+
+-- #7 OPT: single helper instead of repeating math.floor(c.R*255) everywhere
+local function ColorToRGB(color)
+    return math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
 end
 
 local function LightenColor(color, amount)
     amount = amount or 28
-    return Color3.fromRGB(
-        math.min(255, math.floor(color.R * 255 + amount)),
-        math.min(255, math.floor(color.G * 255 + amount)),
-        math.min(255, math.floor(color.B * 255 + amount))
-    )
+    local r, g, b = ColorToRGB(color)
+    return Color3.fromRGB(math.min(255, r + amount), math.min(255, g + amount), math.min(255, b + amount))
 end
 
 local function DarkenColor(color, amount)
     amount = amount or 30
-    return Color3.fromRGB(
-        math.max(0, math.floor(color.R * 255 - amount)),
-        math.max(0, math.floor(color.G * 255 - amount)),
-        math.max(0, math.floor(color.B * 255 - amount))
-    )
+    local r, g, b = ColorToRGB(color)
+    return Color3.fromRGB(math.max(0, r - amount), math.max(0, g - amount), math.max(0, b - amount))
 end
 
 local function AccentTint(color, factor)
     factor = factor or 0.15
-    return Color3.fromRGB(
-        math.floor(color.R * 255 * factor),
-        math.floor(color.G * 255 * factor),
-        math.floor(color.B * 255 * factor)
-    )
+    local r, g, b = ColorToRGB(color)
+    return Color3.fromRGB(math.floor(r * factor), math.floor(g * factor), math.floor(b * factor))
 end
 
 local function LetterSpace(text)
-    -- Insert spaces between characters for section headings
-    local result = {}
-    for i = 1, #text do result[i] = text:sub(i,i) end
-    return table.concat(result, " ")
+    -- #5 OPT: gsub instead of table alloc per call
+    return (text:gsub(".", function(c) return c .. " " end):gsub(" $", ""))
 end
 
 --// ═══════════════════════════════════════════════════════════
@@ -845,6 +852,7 @@ local MIDNIGHT = {
     _KeybindSettingsCloseConn = nil,
     _KeybindSettingsCb      = nil,
     _MenuCloseThreads       = {},
+    _KeybindDispatcherInit  = false,
 }
 
 --// Helper: register a connection for cleanup
@@ -941,10 +949,11 @@ function MIDNIGHT:SetThemeColor(color)
     Theme.ToggleOn     = color
     Theme.SliderFill   = color
     Theme.TextAccent   = LightenColor(color, 28)
+    local r, g, b = ColorToRGB(color)
     Theme.BorderAccent = Color3.fromRGB(
-        math.floor(color.R * 255 * 0.57),
-        math.floor(color.G * 255 * 0.43),
-        math.floor(color.B * 255 * 0.8)
+        math.floor(r * 0.57),
+        math.floor(g * 0.43),
+        math.floor(b * 0.8)
     )
     Theme.Info = color
     for _, cb in ipairs(self._ThemeCallbacks) do pcall(cb, color) end
@@ -1007,10 +1016,16 @@ end
 --// ═══════════════════════════════════════════════════════════
 MIDNIGHT._SidebarFooters = {}
 
+-- #6 OPT: cache the formatted string so we only concat when values actually change
+MIDNIGHT._SidebarFooterCache = ""
 function MIDNIGHT:_UpdateSidebarFooters()
+    if #self._SidebarFooters == 0 then return end
+    local str = "v" .. self.Version .. "  |  " .. self._FPS .. " fps  " .. self._Ping .. "ms"
+    if str == self._SidebarFooterCache then return end
+    self._SidebarFooterCache = str
     for _, footer in ipairs(self._SidebarFooters) do
         if footer and footer.Parent then
-            footer.Text = "v" .. self.Version .. "  |  " .. self._FPS .. " fps  " .. self._Ping .. "ms"
+            footer.Text = str
         end
     end
 end
@@ -1038,6 +1053,7 @@ function MIDNIGHT:Reset()
     self._KeybindSettingsFrame = nil; self._KeybindSettingsBg = nil
     self._SidebarFooters = {}
     self._ThemeCallbacks = {}
+    self._KeybindDispatcherInit = false
     -- Re-initialize
     self:_InitScreenGui()
 end
@@ -2058,32 +2074,53 @@ function MIDNIGHT:CreateKeybindList(config)
     return kf
 end
 
+-- #1 OPT: Single shared dispatcher instead of N*2 global UIS connections
+function MIDNIGHT:_InitKeybindDispatcher()
+    if self._KeybindDispatcherInit then return end
+    self._KeybindDispatcherInit = true
+
+    RegConn(UserInputService.InputBegan:Connect(function(input, gp)
+        if gp then return end
+        local kc = input.KeyCode
+        local needRefresh = false
+        for _, kd in ipairs(self._Keybinds) do
+            if kd._Key == kc then
+                if kd._Mode == "Hold" then
+                    kd._Active = true
+                    if kd._Callback then kd._Callback(true) end
+                elseif kd._Mode == "Press" then
+                    kd._Active = not kd._Active
+                    if kd._Callback then kd._Callback(kd._Active) end
+                end
+                needRefresh = true
+            end
+        end
+        if needRefresh and self._RefreshKeybindList then
+            self._RefreshKeybindList()
+        end
+    end))
+
+    RegConn(UserInputService.InputEnded:Connect(function(input)
+        local kc = input.KeyCode
+        local needRefresh = false
+        for _, kd in ipairs(self._Keybinds) do
+            if kd._Key == kc and kd._Mode == "Hold" and kd._Active then
+                kd._Active = false
+                if kd._Callback then kd._Callback(false) end
+                needRefresh = true
+            end
+        end
+        if needRefresh and self._RefreshKeybindList then
+            self._RefreshKeybindList()
+        end
+    end))
+end
+
 function MIDNIGHT:_AddKeybindToList(name, key, mode, callback, visible)
+    self:_InitKeybindDispatcher()
     local kd = {_Name=name,_Key=key,_Mode=mode or "Press",_Callback=callback,_Active=false,_Visible=visible~=false}
     table.insert(self._Keybinds, kd)
     if self._RefreshKeybindList then self._RefreshKeybindList() end
-
-    RegConn(UserInputService.InputBegan:Connect(function(input,gp)
-        if gp then return end
-        if input.KeyCode == kd._Key then
-            if kd._Mode == "Hold" then
-                kd._Active=true; if kd._Callback then kd._Callback(true) end
-            elseif kd._Mode == "Press" then
-                kd._Active = not kd._Active; if kd._Callback then kd._Callback(kd._Active) end
-            end
-            if self._RefreshKeybindList then self._RefreshKeybindList() end
-        end
-    end))
-
-    RegConn(UserInputService.InputEnded:Connect(function(input,gp)
-        if input.KeyCode == kd._Key and kd._Mode == "Hold" then
-            if kd._Active then
-                kd._Active=false; if kd._Callback then kd._Callback(false) end
-                if self._RefreshKeybindList then self._RefreshKeybindList() end
-            end
-        end
-    end))
-
     return kd
 end
 
