@@ -1326,6 +1326,12 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         if listening then return end
         listening = true
         keyBtn.Text = "[ ... ]"; keyBtn.TextColor3 = Theme.Warning
+        -- Disconnect any previous conn2 that was never cleaned up
+        -- (e.g. user clicked keyBtn, then clicked it again before pressing a key)
+        if self._KeybindSettingsKeyConn then
+            pcall(function() self._KeybindSettingsKeyConn:Disconnect() end)
+            self._KeybindSettingsKeyConn = nil
+        end
         local conn2
         conn2 = UserInputService.InputBegan:Connect(function(inp, gp)
             if gp then return end
@@ -1333,10 +1339,17 @@ function MIDNIGHT:_ShowKeybindSettings(config)
                 local ns = KeyCodeToName(inp.KeyCode)
                 keyBtn.Text = "[ " .. ns .. " ]"; keyBtn.TextColor3 = Theme.Accent
                 listening = false; conn2:Disconnect()
+                -- Remove from self so _CloseKeybindSettings doesn't double-disconnect
+                if self._KeybindSettingsKeyConn == conn2 then
+                    self._KeybindSettingsKeyConn = nil
+                    self._KeybindSettingsListening = nil
+                end
                 if onKeyChange then onKeyChange(inp.KeyCode, ns) end
             end
         end)
-        RegConn(conn2)
+        -- Do NOT call RegConn(conn2): _CloseKeybindSettings already owns this
+        -- connection via self._KeybindSettingsKeyConn. Adding it to RegConn as
+        -- well would leave a dead reference in _Connections after every click.
         -- Auto-cleanup if panel is destroyed while listening
         if pf and pf.Destroying then
             pf.Destroying:Connect(function() if conn2 then conn2:Disconnect() end; listening = false end)
@@ -2487,7 +2500,10 @@ function MIDNIGHT:CreateTargetHUD(config)
                                 refreshHP()
                             end
                         end)
-                        -- Note: NOT added to RegConn — managed manually above
+                        -- Register in RegConn so MIDNIGHT:Destroy() also cleans this up.
+                        -- Manual disconnection on target change (above) still fires first;
+                        -- double-disconnect via pcall in Destroy() is harmless.
+                        RegConn(self._HPConn)
                     end
                 end
             end)
