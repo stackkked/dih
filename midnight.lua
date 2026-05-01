@@ -2035,6 +2035,10 @@ function MIDNIGHT:CreateTargetHUD(config)
         elseif POS == "TopRight" then
             hf.AnchorPoint = Vector2.new(1, 0)
             hf.Position = UDim2.new(1, -margin, 0, margin + 34)
+        elseif POS == "CenterLow" then
+            -- По центру экрана, чуть ниже середины (~62% по вертикали)
+            hf.AnchorPoint = Vector2.new(0.5, 0.5)
+            hf.Position = UDim2.new(0.5, 0, 0.62, 0)
         end
     end
     positionHUD()
@@ -3890,8 +3894,8 @@ function MIDNIGHT:MakeWindow(config)
         -- Dropdown: позиция HUD
         local posDropdown = tab:AddInlineDropdown({
             Name = "HUD Position",
-            Options = { "BottomLeft", "BottomRight", "BottomCenter", "TopLeft", "TopRight" },
-            Default = "BottomLeft",
+            Options = { "CenterLow", "BottomLeft", "BottomRight", "BottomCenter", "TopLeft", "TopRight" },
+            Default = "CenterLow",
             Callback = function(val)
                 hud:SetPosition(val)
             end,
