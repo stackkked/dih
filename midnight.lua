@@ -305,14 +305,26 @@ end
 
 -- #2 OPT: Cancel previous tween on same instance before playing new one
 -- prevents competing tweens on hover in/out
-local _ActiveTweens = {}  -- [instance] = tween
+local _ActiveTweens = setmetatable({}, {__mode="k"})  -- weak keys: dead instances are GC'd
+local _TweenInfoCache = {}
+local function GetTweenInfo(duration, style, dir)
+    local d = duration or 0.3
+    local s = (style or Enum.EasingStyle.Quad).Value
+    local r = (dir   or Enum.EasingDirection.Out).Value
+    local key = d .. "_" .. s .. "_" .. r
+    local ti = _TweenInfoCache[key]
+    if not ti then
+        ti = TweenInfo.new(d, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
+        _TweenInfoCache[key] = ti
+    end
+    return ti
+end
+
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
     local prev = _ActiveTweens[inst]
     if prev then pcall(function() prev:Cancel() end) end
-    local ok, t = pcall(TweenService.Create, TweenService, inst,
-        TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out),
-        props)
+    local ok, t = pcall(TweenService.Create, TweenService, inst, GetTweenInfo(duration, style, dir), props)
     if ok and t then
         _ActiveTweens[inst] = t
         t:Play()
@@ -352,7 +364,6 @@ local function CreateAccentLine(parent, radius, color)
         Rotation = 0,
         Parent = line,
     })
-    pcall(function() parent.ClipsDescendants = true end)
     return line
 end
 
@@ -840,6 +851,7 @@ local MIDNIGHT = {
     _Windows    = {},
     _Notifications = {},
     _Keybinds   = {},
+    _KeybindsMap = {},  -- [name] = kd, for O(1) lookup instead of ipairs scan
     _Connections = {},   -- ALL connections stored here for Destroy()
 
     _NotificationPosition = "TopRight",
@@ -1069,7 +1081,7 @@ function MIDNIGHT:Reset()
         self._ScreenGui = nil
     end
     -- Reset state
-    self._Windows = {}; self._Notifications = {}; self._Keybinds = {}
+    self._Windows = {}; self._Notifications = {}; self._Keybinds = {}; self._KeybindsMap = {}
     self._Initialized = false; self._MenuOpen = false
     self._WatermarkFrame = nil; self._KeybindListFrame = nil
     self._KeybindListContent = nil; self._RefreshKeybindList = nil
@@ -2743,6 +2755,7 @@ function MIDNIGHT:_AddKeybindToList(name, key, mode, callback, visible)
     self:_InitKeybindDispatcher()
     local kd = {_Name=name,_Key=key,_Mode=mode or "Press",_Callback=callback,_Active=false,_Visible=visible~=false}
     table.insert(self._Keybinds, kd)
+    self._KeybindsMap[name] = kd
     if self._RefreshKeybindList then self._RefreshKeybindList() end
     return kd
 end
@@ -3248,27 +3261,17 @@ function MIDNIGHT:MakeWindow(config)
             local function update(anim)
                 if on then
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=col},0.2)
-                        -- Squash knob horizontally as it slides (squeeze → snap to round)
-                        TweenObject(knob,{Size=UDim2.new(0,11,0,14),Position=UDim2.new(0,21,0.5,-7)},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-                        task.delay(0.1,function()
-                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,20,0.5,-7)},0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        end)
-                        TweenObject(knob,{BackgroundColor3=Color3.fromRGB(255,255,255)},0.06)
-                        task.delay(0.12,function() TweenObject(knob,{BackgroundColor3=Color3.fromRGB(230,230,240)},0.2) end)
+                        TweenObject(sw,{BackgroundColor3=col},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,20,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                     else
                         sw.BackgroundColor3=col
                         knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,20,0.5,-7)
-                        knob.BackgroundColor3=Color3.fromRGB(230,230,240)
+                        knob.BackgroundColor3=Theme.ToggleKnob
                     end
                 else
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.2)
-                        TweenObject(knob,{Size=UDim2.new(0,11,0,14),Position=UDim2.new(0,2,0.5,-7)},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-                        task.delay(0.1,function()
-                            TweenObject(knob,{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,2,0.5,-7)},0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        end)
-                        TweenObject(knob,{BackgroundColor3=Theme.ToggleKnob},0.18)
+                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                     else
                         sw.BackgroundColor3=Theme.ToggleOff
                         knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,2,0.5,-7)
@@ -3291,34 +3294,22 @@ function MIDNIGHT:MakeWindow(config)
             clickBtn.MouseButton2Click:Connect(function()
                 local ap = item.AbsolutePosition; local as = item.AbsoluteSize
                 local curVis = true
-                for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                    if kk._Name==nm then curVis=kk._Visible; break end
-                end
+                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then curVis=kk._Visible end end
                 MIDNIGHT:_ShowKeybindSettings({
                     Position=Vector2.new(ap.X+as.X,ap.Y),
                     Mode=data._Mode, Visible=curVis,
                     CurrentKeyStr=bindKey~=Enum.KeyCode.Unknown and KeyCodeToName(bindKey) or "None",
                     OnKeyChange=function(newKey,newKeyStr)
                         bindKey=newKey; keyBadgeLabel.Text=newKeyStr; data._Key=newKey
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                            if kk._Name==nm then kk._Key=newKey; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; break end
-                        end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=newKey; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
                         if isMenuKey then MIDNIGHT:SetMenuKey(newKeyStr) end
                     end,
                     OnModeChange=function(newMode)
                         data._Mode=newMode; bindMode=newMode
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                            if kk._Name==nm then
-                                -- Reset active Hold state when switching away from Hold
-                                if kk._Mode == "Hold" and kk._Active and newMode ~= "Hold" then
-                                    kk._Active=false; if kk._Callback then kk._Callback(false) end
-                                end
-                                kk._Mode=newMode; break
-                            end
-                        end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and newMode~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=newMode end end
                     end,
                     OnVisibleChange=function(vis)
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do if kk._Name==nm then kk._Visible=vis; break end end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Visible=vis end end
                         if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                     end,
                 })
@@ -3337,9 +3328,7 @@ function MIDNIGHT:MakeWindow(config)
             function data:SetKey(k)
                 local nk=ParseKeyCode(k); if nk==Enum.KeyCode.Unknown then return end
                 bindKey=nk; keyBadgeLabel.Text=KeyCodeToName(nk); data._Key=nk
-                for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                    if kk._Name==nm then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; break end
-                end
+                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
             return data
@@ -3538,9 +3527,7 @@ function MIDNIGHT:MakeWindow(config)
                     if inp.KeyCode~=Enum.KeyCode.Unknown then
                         key=inp.KeyCode; kbLabel.Text=KeyCodeToName(key); kbLabel.TextColor3=Theme.Accent
                         listening2=false; conn:Disconnect()
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                            if kk._Name==nm then kk._Key=key; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; break end
-                        end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=key; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
                         if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(key)) end
                     end
                 end)
@@ -3554,27 +3541,19 @@ function MIDNIGHT:MakeWindow(config)
             kbBtn.MouseButton2Click:Connect(function()
                 local ap=kbBadge.AbsolutePosition; local as=kbBadge.AbsoluteSize
                 local curVis=true
-                for _, kk in ipairs(MIDNIGHT._Keybinds) do if kk._Name==nm then curVis=kk._Visible; break end end
+                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then curVis=kk._Visible end end
                 MIDNIGHT:_ShowKeybindSettings({
                     Position=Vector2.new(ap.X,ap.Y),Mode=mode,Visible=curVis,
                     CurrentKeyStr=key~=Enum.KeyCode.Unknown and KeyCodeToName(key) or "None",
                     OnKeyChange=function(nk,ns) key=nk; kbLabel.Text=ns
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do if kk._Name==nm then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; break end end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
                         if isMenuKey then MIDNIGHT:SetMenuKey(ns) end
                     end,
                     OnModeChange=function(nm2) updateModeLabel(nm2)
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                            if kk._Name==nm then
-                                -- Reset active Hold state when switching away from Hold
-                                if kk._Mode == "Hold" and kk._Active and nm2 ~= "Hold" then
-                                    kk._Active=false; if kk._Callback then kk._Callback(false) end
-                                end
-                                kk._Mode=nm2; break
-                            end
-                        end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and nm2~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=nm2 end end
                     end,
                     OnVisibleChange=function(vis)
-                        for _, kk in ipairs(MIDNIGHT._Keybinds) do if kk._Name==nm then kk._Visible=vis; break end end
+                        do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Visible=vis end end
                         if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
                     end,
                 })
@@ -3584,19 +3563,12 @@ function MIDNIGHT:MakeWindow(config)
             kd._Frame=item; kd._KeyLabel=kbLabel; kd._ModeLabel=modeLbl
             function kd:Set(k2)
                 local nk=ParseKeyCode(k2); kbLabel.Text=KeyCodeToName(nk); key=nk
-                for _, kk in ipairs(MIDNIGHT._Keybinds) do if kk._Name==nm then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; break end end
+                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then kk._Key=nk; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end end end
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
             function kd:SetMode(m)
                 updateModeLabel(m)
-                for _, kk in ipairs(MIDNIGHT._Keybinds) do
-                    if kk._Name==nm then
-                        if kk._Mode == "Hold" and kk._Active and m ~= "Hold" then
-                            kk._Active=false; if kk._Callback then kk._Callback(false) end
-                        end
-                        kk._Mode=m; break
-                    end
-                end
+                do local kk=MIDNIGHT._KeybindsMap[nm]; if kk then if kk._Mode=="Hold" and kk._Active and m~="Hold" then kk._Active=false; if kk._Callback then kk._Callback(false) end end; kk._Mode=m end end
             end
             return kd
         end
