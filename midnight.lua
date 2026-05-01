@@ -2338,7 +2338,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     local _dragging   = false
     local _dragInput  = nil
     local _dragStart  = nil
-    local _startAbsPos = nil  -- BUG #3 FIX: store absolute pixel position at drag start
+    local _startPos   = nil
     local _isDragged  = false  -- true после первого ручного перетаскивания
 
     RegConn(dragHandle.InputBegan:Connect(function(input)
@@ -2346,14 +2346,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         or input.UserInputType == Enum.UserInputType.Touch then
             _dragging  = true
             _dragStart = input.Position
-            -- BUG #3 FIX: snapshot the absolute position NOW (before AnchorPoint changes).
-            -- Using AbsolutePosition directly avoids the Scale→Offset mis-conversion that
-            -- caused the HUD to jump on the first drag when AnchorPoint ≠ (0,0).
-            _startAbsPos = hf.AbsolutePosition
-            -- Immediately normalize to AnchorPoint=(0,0) so subsequent position writes
-            -- are in pure offset space.
-            hf.AnchorPoint = Vector2.new(0, 0)
-            hf.Position    = UDim2.new(0, _startAbsPos.X, 0, _startAbsPos.Y)
+            _startPos  = hf.Position
             -- После ручного drag — отключаем preset-позиционирование
             _isDragged = true
             POS = nil
@@ -2373,10 +2366,12 @@ function MIDNIGHT:CreateTargetHUD(config)
     end))
 
     RegConn(UserInputService.InputChanged:Connect(function(input)
-        if input == _dragInput and _dragging and _startAbsPos then
+        if input == _dragInput and _dragging and _startPos then
             local delta = input.Position - _dragStart
-            -- AnchorPoint is already (0,0) — just apply delta to the snapshotted abs position
-            hf.Position = UDim2.new(0, _startAbsPos.X + delta.X, 0, _startAbsPos.Y + delta.Y)
+            -- Сбрасываем AnchorPoint в (0,0) чтобы offset был предсказуем
+            hf.AnchorPoint = Vector2.new(0, 0)
+            hf.Position = UDim2.new(0, _startPos.X.Offset + _startPos.X.Scale * hf.Parent.AbsoluteSize.X + delta.X,
+                                     0, _startPos.Y.Offset + _startPos.Y.Scale * hf.Parent.AbsoluteSize.Y + delta.Y)
         end
     end))
 
@@ -2402,12 +2397,6 @@ function MIDNIGHT:CreateTargetHUD(config)
         if not self._Visible then return end
         self._Visible = false
         self._CurrentPlayer = nil
-        -- BUG #2 FIX: disconnect HealthChanged listener on ClearTarget so it
-        -- doesn't keep firing refreshHP() while the HUD is hidden.
-        if self._HPConn then
-            pcall(function() self._HPConn:Disconnect() end)
-            self._HPConn = nil
-        end
         -- Cancel pending auto-hide
         if MIDNIGHT._TargetHUDHideThread then
             if typeof(MIDNIGHT._TargetHUDHideThread) == "thread" then
@@ -3120,15 +3109,24 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         -- Scrollbar auto-hide per scrolling frame
+        -- FIX #2: Register via RegConn so the CanvasPosition listener is disconnected on
+        -- MIDNIGHT:Destroy(). Previously this connection leaked forever — every tab ever
+        -- created kept a live CanvasPosition listener even after the GUI was torn down,
+        -- causing memory bloat and potential nil-indexing crashes after Destroy().
         local function setupScrollbarAutoHide(scrollFrame)
             if not scrollFrame then return end
             local fadeTimer = nil
-            scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+            RegConn(scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+                if not scrollFrame.Parent then return end
                 scrollFrame.ScrollBarThickness = 3
                 scrollFrame.ScrollBarImageTransparency = 0
-                if fadeTimer and typeof(fadeTimer) == "thread" then pcall(function() task.cancel(fadeTimer) end); fadeTimer = nil end
+                if fadeTimer and typeof(fadeTimer) == "thread" then
+                    pcall(function() task.cancel(fadeTimer) end)
+                    fadeTimer = nil
+                end
                 fadeTimer = task.delay(1.5, function()
                     fadeTimer = nil
+                    if not scrollFrame.Parent then return end
                     TweenObject(scrollFrame, {ScrollBarImageTransparency=1}, 0.4)
                     task.delay(0.45, function()
                         if scrollFrame and scrollFrame.Parent then
@@ -3137,7 +3135,7 @@ function MIDNIGHT:MakeWindow(config)
                         end
                     end)
                 end)
-            end)
+            end))
         end
 
         -- Page (tab content) — uses a ClipsDescendants frame for slide animation
@@ -3529,33 +3527,40 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
+            -- FIX #1: Use the shared global slider dispatcher (_SliderSetDrag/_SliderClearDrag)
+            -- instead of registering two new global UIS connections per slider instance.
+            -- Previously each AddSlider() added RegConn(UIS.InputEnded) + RegConn(UIS.InputChanged),
+            -- meaning N sliders = N*2 global mouse-event listeners firing every frame —
+            -- a direct FPS killer on tabs with many sliders. Now we route through the
+            -- single permanent dispatcher pair registered at module load time.
+            local function onGrabStart(inp)
+                drag = true; onInp(inp)
+                TweenObject(k,{Size=UDim2.new(0,18,0,18)},0.12,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                TweenObject(tooltip,{BackgroundTransparency=0},0.15)
+                TweenObject(tooltipLabel,{TextTransparency=0},0.15)
+                -- Register with shared dispatcher so only this slider gets move/end events
+                _SliderSetDrag(
+                    function(mi) onInp(mi) end,
+                    function()
+                        drag = false
+                        _SliderClearDrag()
+                        TweenObject(k,{Size=UDim2.new(0,14,0,14)},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        TweenObject(tooltip,{BackgroundTransparency=1},0.2)
+                        TweenObject(tooltipLabel,{TextTransparency=1},0.2)
+                    end
+                )
+            end
+
             track.InputBegan:Connect(function(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    drag=true; onInp(inp)
-                    -- Knob grows on grab
-                    TweenObject(k,{Size=UDim2.new(0,18,0,18)},0.12,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                    TweenObject(tooltip,{BackgroundTransparency=0},0.15)
-                    TweenObject(tooltipLabel,{TextTransparency=0},0.15)
+                    onGrabStart(inp)
                 end
             end)
             k.InputBegan:Connect(function(inp)
                 if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then
-                    drag=true
-                    TweenObject(k,{Size=UDim2.new(0,18,0,18)},0.12,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                    TweenObject(tooltip,{BackgroundTransparency=0},0.15)
-                    TweenObject(tooltipLabel,{TextTransparency=0},0.15)
+                    onGrabStart(inp)
                 end
             end)
-            RegConn(UserInputService.InputEnded:Connect(function(inp)
-                if drag and (inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch) then
-                    drag=false
-                    -- Knob snaps back to normal size with spring
-                    TweenObject(k,{Size=UDim2.new(0,14,0,14)},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                    TweenObject(tooltip,{BackgroundTransparency=1},0.2)
-                    TweenObject(tooltipLabel,{TextTransparency=1},0.2)
-                end
-            end))
-            RegConn(UserInputService.InputChanged:Connect(function(inp) if drag then onInp(inp) end end))
 
             -- Click value label to open manual input
             tooltip.BackgroundTransparency=1; tooltipLabel.TextTransparency=1
@@ -4523,24 +4528,13 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         local trackLoop = nil  -- Connection (RunService.Heartbeat), не поток
-        -- BUG #1 FIX: track PlayerAdded/PlayerRemoving connections so they are
-        -- disconnected in stopTracking(). Previously they leaked on every toggle ON.
-        local trackJoinConn  = nil
-        local trackLeaveConn = nil
-        -- per-player CharacterAdded connections, cleaned up in stopTracking
-        local _trackCharConns = {}
 
         local function stopTracking()
             if trackLoop then
+                -- Теперь это Connection, не thread — надёжный Disconnect на любом экзекьюторе
                 pcall(function() trackLoop:Disconnect() end)
                 trackLoop = nil
             end
-            -- BUG #1 FIX: disconnect player-lifecycle connections
-            if trackJoinConn  then pcall(function() trackJoinConn:Disconnect()  end); trackJoinConn  = nil end
-            if trackLeaveConn then pcall(function() trackLeaveConn:Disconnect() end); trackLeaveConn = nil end
-            -- Clean up per-player char connections
-            for _, conn in pairs(_trackCharConns) do pcall(function() conn:Disconnect() end) end
-            _trackCharConns = {}
             hud:ClearTarget()
         end
 
@@ -4563,11 +4557,9 @@ function MIDNIGHT:MakeWindow(config)
             local function cachePlayer(p)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
                 charCache[p] = nil
-                local conn = p.CharacterAdded:Connect(function()
+                charConns[p] = p.CharacterAdded:Connect(function()
                     charCache[p] = nil  -- invalidate on respawn
                 end)
-                charConns[p] = conn
-                _trackCharConns[p] = conn  -- BUG #1 FIX: also store in outer table for cleanup
             end
 
             local function getCache(p)
@@ -4589,16 +4581,14 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             -- Track new joiners
-            -- BUG #1 FIX: assign to outer trackJoinConn/trackLeaveConn so stopTracking() can disconnect them
-            trackJoinConn = plrs.PlayerAdded:Connect(function(p)
+            local joinConn = plrs.PlayerAdded:Connect(function(p)
                 cachePlayer(p)
             end)
             -- Clean up when players leave
-            trackLeaveConn = plrs.PlayerRemoving:Connect(function(p)
+            local leaveConn = plrs.PlayerRemoving:Connect(function(p)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
                 charCache[p]  = nil
                 charConns[p]  = nil
-                _trackCharConns[p] = nil
             end)
 
             -- Throttle-аккумулятор: обновляем ~10 раз/сек (0.1s), не каждый фрейм
