@@ -3222,42 +3222,163 @@ function MIDNIGHT:MakeWindow(config)
     end
 
     function wd:CreateAdminLogs(config)
-        config=config or {}; local groupId=config.GroupId or 0; local ranks=config.Ranks or {}
-        local aw=self:MakeFloatingWindow({Name="Admin Logs",Size={260,340},Resizable=true})
+        config=config or {}
+        local groupId = config.GroupId or 0
+        local ranks   = config.Ranks or {}
+        local midnight = MIDNIGHT
+
+        local aw = self:MakeFloatingWindow({Name="Admin Logs", Size={300,380}, Resizable=true})
         if not aw then return nil end
-        local function refreshAdmins()
-            aw:Clear(); aw:AddRichLine("Group",tostring(groupId),Theme.TextMuted,Theme.TextMuted)
-            for _,p in ipairs(Players:GetPlayers()) do
-                if p~=LocalPlayer then pcall(function()
-                    local rank=p:GetRankInGroup(groupId)
-                    if rank>0 and ranks[rank] then
-                        local nc=rank>=200 and Theme.Error or rank>=100 and Theme.Warning or rank>=50 and Theme.Success or Theme.TextAccent
-                        aw:AddRichLine(p.DisplayName,ranks[rank],nc,Theme.TextSecondary)
-                    end
-                end) end
+
+        -- Открыть сразу видимым
+        aw._Visible = true
+        aw._Frame.Visible = true
+        aw._Frame.BackgroundTransparency = 0
+
+        local logOrder = 0
+        local function addLog(tag, text, tagColor, textColor)
+            logOrder = logOrder + 1
+            local time = os.date("%H:%M:%S")
+            aw:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
+            -- Скроллим вниз
+            task.defer(function()
+                if aw._Scroll and aw._Scroll.Parent then
+                    aw._Scroll.CanvasPosition = Vector2.new(0, aw._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
+        end
+
+        -- Проверка является ли игрок админом
+        local adminCache = {}
+        local function isAdmin(player)
+            if adminCache[player.UserId] ~= nil then return adminCache[player.UserId], adminCache[player.UserId .. "_rank"] end
+            local ok, rank = pcall(function() return player:GetRankInGroup(groupId) end)
+            if ok and rank > 0 and ranks[rank] then
+                adminCache[player.UserId] = true
+                adminCache[player.UserId .. "_rank"] = ranks[rank]
+                return true, ranks[rank]
+            end
+            adminCache[player.UserId] = false
+            return false
+        end
+
+        -- Цвет по рангу
+        local function rankColor(player)
+            local ok, rank = pcall(function() return player:GetRankInGroup(groupId) end)
+            if not ok then return Theme.TextAccent end
+            return rank>=200 and Theme.Error or rank>=100 and Theme.Warning or rank>=50 and Theme.Success or Theme.TextAccent
+        end
+
+        -- Подписка на чат игрока
+        local chatConns = {}
+        local function watchChat(player)
+            if chatConns[player.UserId] then return end
+            local ok2, admin, rankName = pcall(isAdmin, player)
+            if not (ok2 and admin) then return end
+            local conn = player.Chatted:Connect(function(msg)
+                local nc = rankColor(player)
+                addLog(player.DisplayName, msg, nc, Theme.TextSecondary)
+            end)
+            chatConns[player.UserId] = conn
+            RegConn(conn)
+        end
+
+        -- Подписка на спавн/деспавн
+        local function watchSpawn(player)
+            local ok2, admin, rankName = pcall(isAdmin, player)
+            if not (ok2 and admin) then return end
+            local nc = rankColor(player)
+            RegConn(player.CharacterAdded:Connect(function()
+                addLog(player.DisplayName, "spawned ["..tostring(rankName).."]", nc, Theme.Success)
+                midnight:Notify({Title="Admin Spawned", Content=player.DisplayName.." ("..tostring(rankName)..")", Type="warning", Duration=6})
+            end))
+            RegConn(player.CharacterRemoving:Connect(function()
+                addLog(player.DisplayName, "despawned", nc, Theme.TextMuted)
+            end))
+        end
+
+        -- Обработка входа игрока
+        local function onPlayerAdded(player)
+            task.delay(2, function()
+                if not player or not player.Parent then return end
+                local ok2, admin, rankName = pcall(isAdmin, player)
+                if not (ok2 and admin) then return end
+                local nc = rankColor(player)
+                addLog(player.DisplayName, "joined ["..tostring(rankName).."]", nc, Theme.Warning)
+                midnight:Notify({
+                    Title = "⚠ Admin Joined",
+                    Content = player.DisplayName .. " — " .. tostring(rankName),
+                    Type = "warning",
+                    Duration = 8,
+                })
+                -- Открыть окно автоматически
+                if not aw._Visible then aw:Toggle() end
+                watchChat(player)
+                watchSpawn(player)
+            end)
+        end
+
+        -- Обработка выхода
+        local function onPlayerRemoving(player)
+            local ok2, admin, rankName = pcall(isAdmin, player)
+            if not (ok2 and admin) then return end
+            local nc = rankColor(player)
+            addLog(player.DisplayName, "left ["..tostring(rankName).."]", nc, Theme.Error)
+            midnight:Notify({
+                Title = "Admin Left",
+                Content = player.DisplayName .. " disconnected",
+                Type = "info",
+                Duration = 5,
+            })
+            chatConns[player.UserId] = nil
+            adminCache[player.UserId] = nil
+            adminCache[player.UserId .. "_rank"] = nil
+        end
+
+        -- Инициализация текущих игроков
+        addLog("SYSTEM", "Admin monitor started", Theme.Accent, Theme.TextSecondary)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                local ok2, admin, rankName = pcall(isAdmin, p)
+                if ok2 and admin then
+                    local nc = rankColor(p)
+                    addLog(p.DisplayName, "online ["..tostring(rankName).."]", nc, Theme.TextAccent)
+                    watchChat(p)
+                    watchSpawn(p)
+                end
             end
         end
-        refreshAdmins()
-        RegConn(Players.PlayerAdded:Connect(function() task.delay(2,refreshAdmins) end))
-        RegConn(Players.PlayerRemoving:Connect(function() task.delay(1,refreshAdmins) end))
+
+        RegConn(Players.PlayerAdded:Connect(onPlayerAdded))
+        RegConn(Players.PlayerRemoving:Connect(onPlayerRemoving))
         return aw
     end
     function wd:CreateAdminChecker(c) return self:CreateAdminLogs(c) end
 
     function wd:CreateChatLogger()
-        local cw=self:MakeFloatingWindow({Name="Chat Logger",Size={320,350},Resizable=true})
+        local cw = self:MakeFloatingWindow({Name="Chat Logger", Size={320,350}, Resizable=true})
         if not cw then return nil end
-        local function onChat(player,message)
-            if not cw._Visible then return end
-            local nc=Theme.TextSecondary
-            pcall(function() if player.TeamColor then nc=player.TeamColor.Color end end)
-            cw:AddRichLine(player.DisplayName,message,nc,Theme.TextSecondary)
+
+        local function onChat(player, message)
+            local time = os.date("%H:%M:%S")
+            local nc = Theme.TextSecondary
+            pcall(function() if player.TeamColor then nc = player.TeamColor.Color end end)
+            cw:AddRichLine("["..time.."] "..player.DisplayName, message, nc, Theme.TextSecondary)
+            task.defer(function()
+                if cw._Scroll and cw._Scroll.Parent then
+                    cw._Scroll.CanvasPosition = Vector2.new(0, cw._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
         end
-        RegConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer,msg) end))
-        RegConn(Players.PlayerAdded:Connect(function(p) RegConn(p.Chatted:Connect(function(msg) onChat(p,msg) end)) end))
-        for _,p in ipairs(Players:GetPlayers()) do
-            RegConn(p.Chatted:Connect(function(msg) onChat(p,msg) end))
+
+        -- Ловим чат всех включая LocalPlayer
+        RegConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer, msg) end))
+        for _, p in ipairs(Players:GetPlayers()) do
+            RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
         end
+        RegConn(Players.PlayerAdded:Connect(function(p)
+            RegConn(p.Chatted:Connect(function(msg) onChat(p, msg) end))
+        end))
         return cw
     end
 
