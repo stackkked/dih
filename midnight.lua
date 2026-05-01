@@ -853,6 +853,10 @@ local MIDNIGHT = {
     _KeybindSettingsCb      = nil,
     _MenuCloseThreads       = {},
     _KeybindDispatcherInit  = false,
+
+    _TargetHUD              = nil,   -- frame
+    _TargetHUDVisible       = false,
+    _TargetHUDHideThread    = nil,
 }
 
 --// Helper: register a connection for cleanup
@@ -1686,18 +1690,28 @@ function MIDNIGHT:CreateWatermark(config)
     local function updateSize()
         task.defer(function()
             if not wmFrame or not wmFrame.Parent then return end
-            local tw = 14
-            for _, child in ipairs(content:GetChildren()) do
+            local tw = 14  -- left+right padding (7px each)
+            local lastVisible = 0
+            local children = content:GetChildren()
+            -- first pass: collect visible widths
+            local widths = {}
+            for _, child in ipairs(children) do
                 if (child:IsA("TextLabel") or child:IsA("ImageLabel")) and child.Visible then
                     local cw = child:IsA("TextLabel") and child.TextBounds.X or child.AbsoluteSize.X
                     if cw > 0 then
-                        tw = tw + cw + 6
+                        widths[#widths+1] = cw
+                        lastVisible = #widths
                     end
                 end
             end
+            -- second pass: sum with gap only between elements, not after last
+            for i, cw in ipairs(widths) do
+                tw = tw + cw
+                if i < lastVisible then tw = tw + 6 end  -- gap between items only
+            end
             -- Clamp minimum size so watermark doesn't collapse to zero
             if tw < 60 then tw = 500 end
-            wmFrame.Size = UDim2.new(0,tw,0,28)
+            wmFrame.Size = UDim2.new(0, tw, 0, 28)
             task.defer(positionWM)
         end)
     end
@@ -1815,8 +1829,361 @@ function MIDNIGHT:_UpdateWatermark()
 end
 
 --// ═══════════════════════════════════════════════════════════
---// NOTIFICATIONS
+--// TARGET HUD
 --// ═══════════════════════════════════════════════════════════
+--[[
+    MIDNIGHT:CreateTargetHUD(config)
+    Config: Position — "BottomLeft" (default) | "BottomRight" | "BottomCenter"
+                       "TopLeft" | "TopRight"
+
+    Returns: hud object
+      hud:SetTarget(player)   — show HUD for given Player instance
+      hud:ClearTarget()       — hide HUD immediately
+      hud:SetTarget(player, autoClearSeconds)  — auto-hide after N seconds
+
+    Usage example (silent-aim loop):
+        local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
+        -- когда цель в FOV:
+        hud:SetTarget(targetPlayer, 2)
+        -- когда потерял цель:
+        hud:ClearTarget()
+]]
+function MIDNIGHT:CreateTargetHUD(config)
+    config = config or {}
+    self:_InitScreenGui()
+
+    local POS   = config.Position or "BottomLeft"
+    local W, H  = 260, 72
+
+    -- ── Root frame ────────────────────────────────────────────
+    local hf = Create("Frame", {
+        Name = "TargetHUD",
+        Size = UDim2.new(0, W, 0, H),
+        BackgroundColor3 = Theme.WindowBg,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ClipsDescendants = false,
+        Visible = false,
+        ZIndex = ZIndex.OVERLAY,
+        Parent = self._ScreenGui,
+    })
+    ApplyCorner(hf, 8)
+    ApplyStroke(hf, Theme.Border, 1)
+
+    -- Drop shadow
+    Create("ImageLabel", {
+        Size = UDim2.new(1, 24, 1, 24),
+        Position = UDim2.new(0, -12, 0, -12),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://6015897843",
+        ImageColor3 = Theme.Shadow,
+        ImageTransparency = 0.55,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(49, 49, 450, 450),
+        ZIndex = ZIndex.OVERLAY - 1,
+        Parent = hf,
+    })
+
+    -- Accent line top
+    CreateAccentLine(hf, 8)
+
+    -- ── Avatar frame (left column) ───────────────────────────
+    local avatarFrame = Create("Frame", {
+        Size = UDim2.new(0, 52, 0, 52),
+        Position = UDim2.new(0, 10, 0.5, -26),
+        BackgroundColor3 = Theme.InputBg,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.OVERLAY + 1,
+        Parent = hf,
+    })
+    ApplyCorner(avatarFrame, 6)
+    ApplyStroke(avatarFrame, Theme.BorderLight, 1)
+
+    local avatarImg = Create("ImageLabel", {
+        Name = "Avatar",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Image = "",
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = avatarFrame,
+    })
+    ApplyCorner(avatarImg, 5)
+
+    -- Avatar placeholder icon while loading
+    local avatarIcon = CreateIconOrText(avatarFrame, "user", nil,
+        UDim2.new(0, 22, 0, 22), UDim2.new(0.5, -11, 0.5, -11),
+        Theme.TextMuted, FontBold, 18)
+
+    -- ── Info column (right of avatar) ────────────────────────
+    local infoFrame = Create("Frame", {
+        Size = UDim2.new(1, -74, 1, -16),
+        Position = UDim2.new(0, 70, 0, 10),
+        BackgroundTransparency = 1,
+        ZIndex = ZIndex.OVERLAY + 1,
+        Parent = hf,
+    })
+
+    -- Player name
+    local nameLabel = Create("TextLabel", {
+        Name = "NameLabel",
+        Text = "",
+        Font = FontBold,
+        TextSize = 13,
+        TextColor3 = Theme.TextPrimary,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Size = UDim2.new(1, 0, 0, 16),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = infoFrame,
+    })
+
+    -- Team badge row
+    local teamRow = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 0, 18),
+        BackgroundTransparency = 1,
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = infoFrame,
+    })
+    Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5),
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        Parent = teamRow,
+    })
+
+    -- Team color dot
+    local teamDot = Create("Frame", {
+        Size = UDim2.new(0, 8, 0, 8),
+        BackgroundColor3 = Theme.TextMuted,
+        BorderSizePixel = 0,
+        LayoutOrder = 1,
+        Parent = teamRow,
+    })
+    ApplyCorner(teamDot, 4)
+
+    local teamLabel = Create("TextLabel", {
+        Name = "TeamLabel",
+        Text = "No Team",
+        Font = FontRegular,
+        TextSize = 10,
+        TextColor3 = Theme.TextMuted,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        LayoutOrder = 2,
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = teamRow,
+    })
+
+    -- HP bar background
+    local hpBg = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 7),
+        Position = UDim2.new(0, 0, 0, 36),
+        BackgroundColor3 = Theme.SliderTrack,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = infoFrame,
+    })
+    ApplyCorner(hpBg, 3)
+
+    local hpFill = Create("Frame", {
+        Name = "HPFill",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.Success,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.OVERLAY + 3,
+        Parent = hpBg,
+    })
+    ApplyCorner(hpFill, 3)
+
+    -- HP value label (right of bar)
+    local hpLabel = Create("TextLabel", {
+        Name = "HPLabel",
+        Text = "100 HP",
+        Font = FontBold,
+        TextSize = 9,
+        TextColor3 = Theme.TextSecondary,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        Size = UDim2.new(1, 0, 0, 11),
+        Position = UDim2.new(0, 0, 0, 44),
+        BackgroundTransparency = 1,
+        ZIndex = ZIndex.OVERLAY + 2,
+        Parent = infoFrame,
+    })
+
+    -- ── Positioning helper ───────────────────────────────────
+    local function positionHUD()
+        local vs = workspace.CurrentCamera.ViewportSize
+        local margin = 14
+        if POS == "BottomLeft" then
+            hf.AnchorPoint = Vector2.new(0, 1)
+            hf.Position = UDim2.new(0, margin, 1, -margin)
+        elseif POS == "BottomRight" then
+            hf.AnchorPoint = Vector2.new(1, 1)
+            hf.Position = UDim2.new(1, -margin, 1, -margin)
+        elseif POS == "BottomCenter" then
+            hf.AnchorPoint = Vector2.new(0.5, 1)
+            hf.Position = UDim2.new(0.5, 0, 1, -margin)
+        elseif POS == "TopLeft" then
+            hf.AnchorPoint = Vector2.new(0, 0)
+            hf.Position = UDim2.new(0, margin, 0, margin + 34)
+        elseif POS == "TopRight" then
+            hf.AnchorPoint = Vector2.new(1, 0)
+            hf.Position = UDim2.new(1, -margin, 0, margin + 34)
+        end
+    end
+    positionHUD()
+
+    -- ── HP color helper ─────────────────────────────────────
+    local function hpColor(pct)
+        if pct > 0.6 then return Theme.Success
+        elseif pct > 0.3 then return Theme.Warning
+        else return Theme.Error end
+    end
+
+    -- ── HUD object ──────────────────────────────────────────
+    local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil }
+
+    function hud:SetPosition(pos)
+        POS = pos
+        positionHUD()
+    end
+
+    function hud:ClearTarget()
+        if not self._Visible then return end
+        self._Visible = false
+        self._CurrentPlayer = nil
+        -- Cancel pending auto-hide
+        if MIDNIGHT._TargetHUDHideThread then
+            if typeof(MIDNIGHT._TargetHUDHideThread) == "thread" then
+                pcall(task.cancel, MIDNIGHT._TargetHUDHideThread)
+            end
+            MIDNIGHT._TargetHUDHideThread = nil
+        end
+        TweenObject(hf, {BackgroundTransparency = 1}, 0.2)
+        task.delay(0.22, function()
+            if not self._Visible then hf.Visible = false end
+        end)
+    end
+
+    function hud:SetTarget(player, autoClearSecs)
+        if not player or not player.Parent then return end
+
+        -- Cancel existing auto-hide thread
+        if MIDNIGHT._TargetHUDHideThread then
+            if typeof(MIDNIGHT._TargetHUDHideThread) == "thread" then
+                pcall(task.cancel, MIDNIGHT._TargetHUDHideThread)
+            end
+            MIDNIGHT._TargetHUDHideThread = nil
+        end
+
+        local isSame = (self._CurrentPlayer == player)
+        self._CurrentPlayer = player
+        self._Visible = true
+
+        -- ── Name ──────────────────────────────────────────
+        nameLabel.Text = player.DisplayName ~= player.Name
+            and (player.DisplayName .. "  @" .. player.Name)
+            or player.Name
+
+        -- ── Team ──────────────────────────────────────────
+        local teamColor = Theme.TextMuted
+        local teamName  = "No Team"
+        pcall(function()
+            if player.Team then
+                teamName  = player.Team.Name
+                teamColor = player.Team.TeamColor.Color
+            end
+        end)
+        teamDot.BackgroundColor3   = teamColor
+        teamLabel.Text             = teamName
+        teamLabel.TextColor3       = teamColor
+
+        -- ── HP ────────────────────────────────────────────
+        local function refreshHP()
+            if not hf.Parent then return end
+            pcall(function()
+                local char = player.Character
+                if not char then
+                    hpFill.Size = UDim2.new(0, 0, 1, 0)
+                    hpLabel.Text = "? HP"
+                    hpFill.BackgroundColor3 = Theme.TextMuted
+                    return
+                end
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hum then return end
+                local pct = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+                TweenObject(hpFill, {Size = UDim2.new(pct, 0, 1, 0)}, 0.15)
+                TweenObject(hpFill, {BackgroundColor3 = hpColor(pct)}, 0.15)
+                hpLabel.Text = math.ceil(hum.Health) .. " / " .. math.ceil(hum.MaxHealth) .. " HP"
+                hpLabel.TextColor3 = hpColor(pct)
+            end)
+        end
+        refreshHP()
+
+        -- Pulse HP bar on damage
+        if not isSame then
+            pcall(function()
+                local char = player.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        RegConn(hum.HealthChanged:Connect(function()
+                            if self._CurrentPlayer == player then
+                                refreshHP()
+                            end
+                        end))
+                    end
+                end
+            end)
+        end
+
+        -- ── Avatar ────────────────────────────────────────
+        if not isSame then
+            avatarImg.Image = ""
+            if avatarIcon then avatarIcon.Visible = true end
+            task.spawn(function()
+                local ok, result = pcall(function()
+                    return game:GetService("Players"):GetUserThumbnailAsync(
+                        player.UserId,
+                        Enum.ThumbnailType.HeadShot,
+                        Enum.ThumbnailSize.Size60x60
+                    )
+                end)
+                if ok and result and self._CurrentPlayer == player then
+                    avatarImg.Image = result
+                    if avatarIcon then avatarIcon.Visible = false end
+                end
+            end)
+        end
+
+        -- ── Show animation ────────────────────────────────
+        if not hf.Visible then
+            hf.Visible = true
+            hf.BackgroundTransparency = 1
+            TweenObject(hf, {BackgroundTransparency = 0}, 0.25,
+                Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        end
+
+        -- ── Auto-hide ─────────────────────────────────────
+        if autoClearSecs and autoClearSecs > 0 then
+            MIDNIGHT._TargetHUDHideThread = task.delay(autoClearSecs, function()
+                MIDNIGHT._TargetHUDHideThread = nil
+                self:ClearTarget()
+            end)
+        end
+    end
+
+    self._TargetHUD = hud
+    return hud
+end
+
+
 function MIDNIGHT:SetNotificationPosition(pos)
     self._NotificationPosition = pos
     self:_RepositionNotifications()
@@ -2262,12 +2629,21 @@ function MIDNIGHT:MakeWindow(config)
     ApplyPadding(tabList,4,4,6,6)
 
     -- Sidebar footer: version + fps/ping
+    -- Uses UICorner with CornerRadiusMode to only round the bottom-left corner
     local sidebarFooterBg = Create("Frame",{
         Size=UDim2.new(0,130,0,28),Position=UDim2.new(0,0,1,-28),
-        BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,Parent=body,
+        BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,
+        ClipsDescendants=true, Parent=body,
     })
-    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=sidebarFooterBg})
-    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=sidebarFooterBg})
+    -- Bottom-left rounded corner: cover top-left, top-right, bottom-right with a square overlay
+    -- The window frame (wf) already has radius=10 at bottom-left — we need footer to match
+    Create("UICorner",{CornerRadius=UDim.new(0,10),Parent=sidebarFooterBg})
+    -- Square off top-left, top-right, bottom-right by overlaying flush rectangles
+    Create("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(0.5,0,1,0),Position=UDim2.new(0.5,0,0,0),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
+    -- Border lines
+    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
     local footerLabel = Create("TextLabel",{
         Text="v"..self.Version.."  |  0 fps  0ms",
         Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
@@ -3267,13 +3643,16 @@ function MIDNIGHT:MakeWindow(config)
         local aw = self:MakeFloatingWindow({Name="Admin Logs", Size={300,380}, Resizable=true})
         if not aw then return nil end
 
-        -- Открыть сразу видимым
-        aw._Visible = true
-        aw._Frame.Visible = true
-        aw._Frame.BackgroundTransparency = 0
+        -- Скрыт по умолчанию — откроется сам при первом событии
+        aw._Visible = false
+        aw._Frame.Visible = false
 
         local logOrder = 0
         local function addLog(tag, text, tagColor, textColor)
+            -- Авто-открытие при первом логе
+            if not aw._Visible then
+                aw:Toggle()
+            end
             logOrder = logOrder + 1
             local time = os.date("%H:%M:%S")
             aw:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
