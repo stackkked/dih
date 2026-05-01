@@ -2338,7 +2338,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     local _dragging   = false
     local _dragInput  = nil
     local _dragStart  = nil
-    local _startPos   = nil
+    local _startAbsPos = nil  -- BUG #3 FIX: store absolute pixel position at drag start
     local _isDragged  = false  -- true после первого ручного перетаскивания
 
     RegConn(dragHandle.InputBegan:Connect(function(input)
@@ -2346,7 +2346,14 @@ function MIDNIGHT:CreateTargetHUD(config)
         or input.UserInputType == Enum.UserInputType.Touch then
             _dragging  = true
             _dragStart = input.Position
-            _startPos  = hf.Position
+            -- BUG #3 FIX: snapshot the absolute position NOW (before AnchorPoint changes).
+            -- Using AbsolutePosition directly avoids the Scale→Offset mis-conversion that
+            -- caused the HUD to jump on the first drag when AnchorPoint ≠ (0,0).
+            _startAbsPos = hf.AbsolutePosition
+            -- Immediately normalize to AnchorPoint=(0,0) so subsequent position writes
+            -- are in pure offset space.
+            hf.AnchorPoint = Vector2.new(0, 0)
+            hf.Position    = UDim2.new(0, _startAbsPos.X, 0, _startAbsPos.Y)
             -- После ручного drag — отключаем preset-позиционирование
             _isDragged = true
             POS = nil
@@ -2366,12 +2373,10 @@ function MIDNIGHT:CreateTargetHUD(config)
     end))
 
     RegConn(UserInputService.InputChanged:Connect(function(input)
-        if input == _dragInput and _dragging and _startPos then
+        if input == _dragInput and _dragging and _startAbsPos then
             local delta = input.Position - _dragStart
-            -- Сбрасываем AnchorPoint в (0,0) чтобы offset был предсказуем
-            hf.AnchorPoint = Vector2.new(0, 0)
-            hf.Position = UDim2.new(0, _startPos.X.Offset + _startPos.X.Scale * hf.Parent.AbsoluteSize.X + delta.X,
-                                     0, _startPos.Y.Offset + _startPos.Y.Scale * hf.Parent.AbsoluteSize.Y + delta.Y)
+            -- AnchorPoint is already (0,0) — just apply delta to the snapshotted abs position
+            hf.Position = UDim2.new(0, _startAbsPos.X + delta.X, 0, _startAbsPos.Y + delta.Y)
         end
     end))
 
@@ -2397,6 +2402,12 @@ function MIDNIGHT:CreateTargetHUD(config)
         if not self._Visible then return end
         self._Visible = false
         self._CurrentPlayer = nil
+        -- BUG #2 FIX: disconnect HealthChanged listener on ClearTarget so it
+        -- doesn't keep firing refreshHP() while the HUD is hidden.
+        if self._HPConn then
+            pcall(function() self._HPConn:Disconnect() end)
+            self._HPConn = nil
+        end
         -- Cancel pending auto-hide
         if MIDNIGHT._TargetHUDHideThread then
             if typeof(MIDNIGHT._TargetHUDHideThread) == "thread" then
@@ -4512,13 +4523,24 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         local trackLoop = nil  -- Connection (RunService.Heartbeat), не поток
+        -- BUG #1 FIX: track PlayerAdded/PlayerRemoving connections so they are
+        -- disconnected in stopTracking(). Previously they leaked on every toggle ON.
+        local trackJoinConn  = nil
+        local trackLeaveConn = nil
+        -- per-player CharacterAdded connections, cleaned up in stopTracking
+        local _trackCharConns = {}
 
         local function stopTracking()
             if trackLoop then
-                -- Теперь это Connection, не thread — надёжный Disconnect на любом экзекьюторе
                 pcall(function() trackLoop:Disconnect() end)
                 trackLoop = nil
             end
+            -- BUG #1 FIX: disconnect player-lifecycle connections
+            if trackJoinConn  then pcall(function() trackJoinConn:Disconnect()  end); trackJoinConn  = nil end
+            if trackLeaveConn then pcall(function() trackLeaveConn:Disconnect() end); trackLeaveConn = nil end
+            -- Clean up per-player char connections
+            for _, conn in pairs(_trackCharConns) do pcall(function() conn:Disconnect() end) end
+            _trackCharConns = {}
             hud:ClearTarget()
         end
 
@@ -4541,9 +4563,11 @@ function MIDNIGHT:MakeWindow(config)
             local function cachePlayer(p)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
                 charCache[p] = nil
-                charConns[p] = p.CharacterAdded:Connect(function()
+                local conn = p.CharacterAdded:Connect(function()
                     charCache[p] = nil  -- invalidate on respawn
                 end)
+                charConns[p] = conn
+                _trackCharConns[p] = conn  -- BUG #1 FIX: also store in outer table for cleanup
             end
 
             local function getCache(p)
@@ -4565,14 +4589,16 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             -- Track new joiners
-            local joinConn = plrs.PlayerAdded:Connect(function(p)
+            -- BUG #1 FIX: assign to outer trackJoinConn/trackLeaveConn so stopTracking() can disconnect them
+            trackJoinConn = plrs.PlayerAdded:Connect(function(p)
                 cachePlayer(p)
             end)
             -- Clean up when players leave
-            local leaveConn = plrs.PlayerRemoving:Connect(function(p)
+            trackLeaveConn = plrs.PlayerRemoving:Connect(function(p)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
                 charCache[p]  = nil
                 charConns[p]  = nil
+                _trackCharConns[p] = nil
             end)
 
             -- Throttle-аккумулятор: обновляем ~10 раз/сек (0.1s), не каждый фрейм
