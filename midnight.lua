@@ -328,12 +328,13 @@ end
 local function CreateAccentLine(parent, radius, color)
     if not parent then return nil end
     local inset = math.min(radius or 6, 4)
+    local parentZ = pcall(function() return parent.ZIndex end) and parent.ZIndex or ZIndex.CONTENT
     local line = Create("Frame", {
         Size     = UDim2.new(1, -(inset * 2), 0, 2),
         Position = UDim2.new(0, inset, 0, 0),
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
         BorderSizePixel  = 0,
-        ZIndex = ZIndex.CONTENT,
+        ZIndex = parentZ + 2,
         Parent = parent,
     })
     local accent = color or Theme.Accent
