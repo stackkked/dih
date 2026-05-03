@@ -376,7 +376,8 @@ end
 local function CreateAccentLine(parent, radius, color)
     if not parent then return nil end
     local inset = math.min(radius or 6, 4)
-    local parentZ = pcall(function() return parent.ZIndex end) and parent.ZIndex or ZIndex.CONTENT
+    local _pzOk, _pzVal = pcall(function() return parent.ZIndex end)
+    local parentZ = (_pzOk and type(_pzVal) == "number") and _pzVal or ZIndex.CONTENT
     local line = Create("Frame", {
         Size     = UDim2.new(1, -(inset * 2), 0, 2),
         Position = UDim2.new(0, inset, 0, 0),
@@ -523,9 +524,20 @@ local function DarkenColor(color, amount)
 end
 
 local function AccentTint(color, factor)
+    -- BUG-F FIX: pure multiplication (r * 0.15 = 20) produces near-black because the colors
+    -- are already dark (R=139, G=92, B=246 → tint bg R=20). Instead, blend between
+    -- WindowBg and the color — this gives a subtle but still colored background.
     factor = factor or 0.15
     local r, g, b = ColorToRGB(color)
-    return Color3.fromRGB(math.floor(r * factor), math.floor(g * factor), math.floor(b * factor))
+    local bg = Theme and Theme.WindowBg or Color3.fromRGB(18,18,23)
+    local br = math.floor(bg.R * 255)
+    local bgg = math.floor(bg.G * 255)
+    local bb = math.floor(bg.B * 255)
+    return Color3.fromRGB(
+        math.floor(br + (r - br) * factor),
+        math.floor(bgg + (g - bgg) * factor),
+        math.floor(bb + (b - bb) * factor)
+    )
 end
 
 local function GetViewportSize()
@@ -537,7 +549,9 @@ local function GetViewportSize()
 end
 
 local function LetterSpace(text)
-    -- #5 OPT: gsub instead of table alloc per call
+    -- Adds a space after each character, then strips the trailing space.
+    -- Note: in Lua, $ in a pattern anchors to end-of-string, so " $" correctly
+    -- matches a trailing space. The outer () ensures only the string is returned.
     return (text:gsub(".", function(c) return c .. " " end):gsub(" $", ""))
 end
 
@@ -1434,14 +1448,22 @@ function MIDNIGHT:_ShowKeybindSettings(config)
                 if onKeyChange then onKeyChange(inp.KeyCode, ns) end
             end
         end)
-        RegConn(conn2)
-        -- Auto-cleanup if panel is destroyed while listening
-        if pf and pf.Destroying then
-            pf.Destroying:Connect(function() if conn2 then conn2:Disconnect() end; listening = false end)
-        end
-        -- Store conn2 reference so _CloseKeybindSettings can disconnect it
+        -- Store conn2 reference so _CloseKeybindSettings can disconnect it.
+        -- Do NOT add to RegConn: conn2 is either self-disconnecting (on key pick)
+        -- or cleaned up via _KeybindSettingsKeyConn in _CloseKeybindSettings.
+        -- RegConn here would accumulate a dead ref on every button click.
         self._KeybindSettingsKeyConn = conn2
         self._KeybindSettingsListening = true
+        -- Auto-cleanup if panel is destroyed while still listening
+        if pf and pf.Destroying then
+            pf.Destroying:Connect(function()
+                if self._KeybindSettingsKeyConn == conn2 then
+                    pcall(function() conn2:Disconnect() end)
+                    self._KeybindSettingsKeyConn = nil
+                end
+                listening = false
+            end)
+        end
     end)
 
     -- MODE label
@@ -1585,10 +1607,19 @@ function MIDNIGHT:_OpenDropdown(config)
     local dropdownBtn = config.DropdownBtn
     local isMulti     = config.Multi or false
 
-    -- For multiselect: currentSel is a table of selected values
+    -- For multiselect: currentSel is a map {value=true} (from AddDropdown's selSet).
+    -- BUG-C FIX: was using ipairs() which yields nothing on a map — initial checked state
+    -- was always empty regardless of what the user had already selected.
     local multiSel = {}
     if isMulti and type(currentSel) == "table" then
-        for _, v in ipairs(currentSel) do multiSel[v] = true end
+        -- Support both map {v=true} and array {"v1","v2"} formats for flexibility
+        if currentSel[1] ~= nil then
+            -- Array format
+            for _, v in ipairs(currentSel) do multiSel[v] = true end
+        else
+            -- Map format (the normal case from AddDropdown)
+            for k, v in pairs(currentSel) do if v then multiSel[k] = true end end
+        end
     end
 
     local rowH  = 26
@@ -1901,8 +1932,9 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                     if self._MenuOpen then
                         w._Frame.Visible = true
                         w._Frame.BackgroundTransparency = 1
-                        w._Frame.Size = UDim2.new(0, 600, 0, 440)
-                        -- Smooth scale+fade in
+                        -- BUG-E FIX: respect minimized state — don't force full height if window was minimized
+                        w._Frame.Size = w._IsMinimized and UDim2.new(0,600,0,40) or UDim2.new(0,600,0,440)
+                        -- Smooth fade in
                         TweenObject(w._Frame, {BackgroundTransparency=0}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
                         TweenObject(w._Frame, {BackgroundTransparency=1}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
@@ -2859,7 +2891,10 @@ function MIDNIGHT:Notify(config)
     for _, n in ipairs(self._Notifications) do
         if n._Frame and n._Frame.Parent then totalH = totalH + n._Frame.AbsoluteSize.Y + 8 end
     end
-    local finalPos = self:_GetNotifPos(#self._Notifications, totalH - nf.AbsoluteSize.Y - 8)
+    -- BUG-G FIX: nf.AbsoluteSize.Y is 0 before the first render pass.
+    -- The notification height is fixed at 72px — use the literal value.
+    local nfH = 72
+    local finalPos = self:_GetNotifPos(#self._Notifications, totalH - nfH - 8)
     local slideOffset = self:_GetNotifSlideOffset(self._NotificationPosition)
     nf.Position = finalPos + slideOffset
     TweenObject(nf,{Position=finalPos},0.45,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
@@ -3134,6 +3169,7 @@ function MIDNIGHT:MakeWindow(config)
     local isMinimized = false
     minBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
+        wd._IsMinimized = isMinimized  -- BUG-E FIX: keep wd in sync so MenuKey open restores right size
         if isMinimized then
             TweenObject(wf,{Size=UDim2.new(0,600,0,40)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
         else
@@ -3206,6 +3242,7 @@ function MIDNIGHT:MakeWindow(config)
         _Tabs={}, _ActiveTab=nil, _FloatingWindows={},
         _AdminLogsWindow=nil, _ChatLoggerWindow=nil,
         _TabCount=0,
+        _IsMinimized=false,  -- BUG-E FIX: track minimized state in wd so MenuKey open restores correctly
     }
     table.insert(self._Windows, wd)
 
@@ -3288,8 +3325,10 @@ function MIDNIGHT:MakeWindow(config)
                     scrollFrame.ScrollBarImageTransparency = 0
                 end
 
-                -- Cancel previous hide timer
-                if fadeTimer and typeof(fadeTimer) == "thread" then
+                -- Cancel previous hide timer — use pcall in case the thread is already dead
+                -- BUG-D FIX: some executors return nil or userdata from task.delay, not a thread.
+                -- Unconditionally pcall-cancel and nil the ref; typeof guard would silently skip it.
+                if fadeTimer ~= nil then
                     pcall(function() task.cancel(fadeTimer) end)
                     fadeTimer = nil
                 end
@@ -3606,7 +3645,14 @@ function MIDNIGHT:MakeWindow(config)
             update(false)
             syncKeybindData()
 
-            function data:Set(v) on=v; data._Value=v; update(true); if data._KeybindData then data._KeybindData._Active=v end; if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end; if cb then cb(v) end end
+            function data:Set(v)
+                -- BUG-6 FIX: only fire callback when value actually changes
+                local changed = (v ~= on)
+                on = v; data._Value = v; update(true)
+                if data._KeybindData then data._KeybindData._Active = v end
+                if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
+                if cb and changed then cb(v) end
+            end
             function data:SetKey(k)
                 local nk=ParseKeyCode(k); if nk==Enum.KeyCode.Unknown then return end
                 bindKey=nk; keyBadgeLabel.Text=KeyCodeToName(nk); data._Key=nk
@@ -3828,10 +3874,14 @@ function MIDNIGHT:MakeWindow(config)
                         if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(key)) end
                     end
                 end)
-                RegConn(conn)
-                -- Auto-cleanup if item is destroyed while listening
+                -- BUG-10 FIX: do NOT add to RegConn — conn self-disconnects when user picks a key.
+                -- RegConn here accumulates a dead ref on every click. Lifetime is managed by
+                -- item.Destroying so the conn is cleaned up if the widget is destroyed mid-listen.
                 if item and item.Destroying then
-                    item.Destroying:Connect(function() if conn then conn:Disconnect() end; listening2 = false end)
+                    item.Destroying:Connect(function()
+                        pcall(function() conn:Disconnect() end)
+                        listening2 = false
+                    end)
                 end
             end)
 
@@ -3903,10 +3953,10 @@ function MIDNIGHT:MakeWindow(config)
                 ClipsDescendants=true,
             })
             ApplyCorner(sb,5); ApplyStroke(sb,Theme.Border,1)
-            CreateIconOrText(sb,"chevron-down",nil,UDim2.new(0,10,0,10),UDim2.new(1,-14,0.5,-5),Theme.TextMuted,FontBold,8)
-
-            -- Chevron rotation indicator
-            local chevIcon = sb:FindFirstChildWhichIsA("TextLabel") or sb:FindFirstChildWhichIsA("ImageLabel")
+            -- BUG-5 FIX: capture the chevron element directly from the return value.
+            -- FindFirstChildWhichIsA("TextLabel") could return any TextLabel child (e.g. the sb's
+            -- own Text property rendered as a child), picking the wrong element for rotation.
+            local chevIcon = CreateIconOrText(sb,"chevron-down",nil,UDim2.new(0,10,0,10),UDim2.new(1,-14,0.5,-5),Theme.TextMuted,FontBold,8)
 
             -- Multi: track selected set; Single: track string
             local selSet = {}  -- for multi
@@ -4178,6 +4228,11 @@ function MIDNIGHT:MakeWindow(config)
                 if multi then
                     selSet = {}
                     if type(v)=="table" then for _, x in ipairs(v) do selSet[x]=true end end
+                    -- BUG-B FIX: getLabel() updates data._Value as a side-effect, but call it
+                    -- explicitly so _Value is correct even if selLabel is not yet visible.
+                    local parts = {}
+                    for _, o in ipairs(opts) do if selSet[o] then table.insert(parts, o) end end
+                    data._Value = parts
                     selLabel.Text = getLabel()
                 else sel=v; data._Value=v; selLabel.Text=v end
             end
@@ -4313,7 +4368,9 @@ function MIDNIGHT:MakeWindow(config)
             Create("TextLabel",{Text=nm,Font=FontBold,TextSize=12,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(1,0,0,16),BackgroundTransparency=1,Parent=item})
 
             local grid=Create("Frame",{Size=UDim2.new(1,0,0,80),Position=UDim2.new(0,0,0,20),BackgroundTransparency=1,Parent=item})
-            Create("UIGridLayout",{CellSize=UDim2.new(0,0,0,22),SizeConstraint=Enum.SizeConstraint.RelativeXX,CellPadding=UDim2.new(0,4,0,4),SortOrder=Enum.SortOrder.LayoutOrder,Parent=grid})
+            -- BUG-4 FIX: RelativeXX with X=0 makes cells zero-width (invisible/unclickable).
+            -- Use absolute pixel size: 4 columns × 30px + 3 × 4px gap = 132px — fits the item width.
+            Create("UIGridLayout",{CellSize=UDim2.new(0,30,0,22),CellPadding=UDim2.new(0,4,0,4),SortOrder=Enum.SortOrder.LayoutOrder,Parent=grid})
 
             local currentColor = def
             local previewBtn
@@ -4475,7 +4532,13 @@ function MIDNIGHT:MakeWindow(config)
             if self._Destroyed or not self._Frame then return end
             self._Visible = not self._Visible
             if self._Visible then
-                fw.Visible=true; fw.BackgroundTransparency=1; fw.Size=UDim2.new(0,0,0,0)
+                -- BUG-7 FIX: only collapse to Size=0 when the window is actually hidden.
+                -- Resetting Size=0 on a partially-visible window causes a visual pop.
+                if not fw.Visible then
+                    fw.Size = UDim2.new(0, 0, 0, 0)
+                end
+                fw.Visible = true
+                fw.BackgroundTransparency = 1
                 TweenObject(fw,{Size=UDim2.new(0,sz[1],0,sz[2])},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                 TweenObject(fw,{BackgroundTransparency=0},0.25)
             else
