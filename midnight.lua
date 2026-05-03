@@ -1,5 +1,19 @@
 --[[
-    MIDNIGHT UI Library v6.4.0 → v7.0.0
+    MIDNIGHT UI Library v6.4.0 → v7.1.0
+
+    v7.1 Changelog:
+    - FEAT: Config system — MIDNIGHT:SetupConfig(key) / SaveConfig() / LoadConfig() / ResetConfig()
+    - FEAT: Per-widget Flag= parameter for Toggle, Slider, Dropdown, InlineDropdown, TextBox, ColorPicker, Keybind, Table
+    - FEAT: MakeWindow now accepts Width=, Height=, Resizable=, MinWidth=, MinHeight= config fields
+    - FEAT: wd:SetSize(w, h) — programmatic animated window resize
+    - FEAT: Resizable windows get a bottom-right grip handle (3 diagonal stripes)
+    - FEAT: td:AddTable(config) — DataGrid widget with sortable columns, search, alternating rows, auto-width columns
+    - FEAT: AddTable supports :SetRows(), :AddRow(), :RemoveRow(), :GetRows(), :Clear(), :SetColumnWidth()
+    - FEAT: AddTable has Searchable= option for live text filter
+    - FEAT: Config serializer handles toggle/slider/dropdown/multiselect/textbox/color/keybind types
+    - FEAT: Config falls back to ScreenGui attribute storage when writefile/readfile unavailable
+    - FIX:  Intro animation Position now computed from actual winW/winH
+    - FIX:  Minimize restores to actual winW/winH instead of hardcoded 600×440
 
     v7.0 Changelog:
     - FEAT: AddDropdown now supports Multi=true for multiselect mode
@@ -911,7 +925,7 @@ end
 --// MIDNIGHT LIBRARY
 --// ═══════════════════════════════════════════════════════════
 local MIDNIGHT = {
-    Version = "7.0.0",
+    Version = "7.1.0",
 
     _ScreenGui  = nil,
     _Windows    = {},
@@ -957,6 +971,10 @@ local MIDNIGHT = {
     _TargetHUD              = nil,   -- frame
     _TargetHUDVisible       = false,
     _TargetHUDHideThread    = nil,
+
+    -- Config system
+    _ConfigKey              = nil,   -- current config save key
+    _ConfigWidgets          = {},    -- {id -> {get=fn, set=fn, type=str}}
 }
 
 --// Helper: register a connection for cleanup
@@ -1269,6 +1287,7 @@ function MIDNIGHT:Reset()
     self._MenuCloseThreads = {}
     self._KeybindDispatcherInit = false
     self._SliderDispatcherInit = false
+    self._ConfigWidgets = {}  -- v7.1: reset widget registry (config key is preserved)
     -- Re-initialize
     self:_InitScreenGui()
     _InitSliderDispatcher()
@@ -3052,6 +3071,12 @@ function MIDNIGHT:MakeWindow(config)
     local windowName  = config.Name    or "MIDNIGHT"
     local menuKeyStr  = config.MenuKey or "RightShift"
     local menuKey     = ParseKeyCode(menuKeyStr)
+    -- v7.1: configurable window size + optional resize handle
+    local winW        = math.max(400, config.Width  or 600)
+    local winH        = math.max(200, config.Height or 440)
+    local resizable   = config.Resizable or false
+    local minWinW     = config.MinWidth  or 400
+    local minWinH     = config.MinHeight or 200
 
     self:_InitScreenGui()
     if not self._Initialized then
@@ -3065,8 +3090,8 @@ function MIDNIGHT:MakeWindow(config)
     -- Open animation: starts transparent
     local wf = Create("Frame",{
         Name = "Window_"..windowName,
-        Size = UDim2.new(0,600,0,440),
-        Position = UDim2.new(0.5,-300,0.5,-220),
+        Size = UDim2.new(0,winW,0,winH),
+        Position = UDim2.new(0.5,-winW/2,0.5,-winH/2),
         BackgroundColor3 = Theme.WindowBg,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -3088,13 +3113,13 @@ function MIDNIGHT:MakeWindow(config)
     -- ═══ INTRO ANIMATION ═══
     -- Start: fully transparent + shifted slightly down
     wf.BackgroundTransparency = 1
-    wf.Position = UDim2.new(0.5, -300, 0.5, -200)
+    wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2+20)
     self._MenuOpen = true
 
     -- Slide up + fade in (Back easing for a nice elastic feel)
     TweenObject(wf, {
         BackgroundTransparency = 0,
-        Position = UDim2.new(0.5, -300, 0.5, -220),
+        Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2),
     }, 0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
     -- Accent border pulse: brief accent flash then settle to normal border
@@ -3171,13 +3196,55 @@ function MIDNIGHT:MakeWindow(config)
         isMinimized = not isMinimized
         wd._IsMinimized = isMinimized  -- BUG-E FIX: keep wd in sync so MenuKey open restores right size
         if isMinimized then
-            TweenObject(wf,{Size=UDim2.new(0,600,0,40)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            TweenObject(wf,{Size=UDim2.new(0,winW,0,40)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
         else
-            TweenObject(wf,{Size=UDim2.new(0,600,0,440)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            TweenObject(wf,{Size=UDim2.new(0,winW,0,winH)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
         end
     end)
 
     MakeDraggable(wf, tb, function() self:_CloseAllPopups() end)
+
+    -- v7.1: Resize handle (bottom-right corner grip)
+    if resizable then
+        local rh = Create("TextButton",{
+            Text="",Size=UDim2.new(0,18,0,18),
+            Position=UDim2.new(1,-18,1,-18),
+            BackgroundTransparency=1,ZIndex=ZIndex.CONTENT+4,Parent=wf,
+        })
+        -- Draw the three diagonal lines of the grip
+        for i=1,3 do
+            local off=(i-1)*5
+            Create("Frame",{
+                Size=UDim2.new(0,i*4,0,1),
+                Position=UDim2.new(1,-2-i*4,1,-3-off),
+                BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,
+                Rotation=-45,ZIndex=ZIndex.CONTENT+5,Parent=rh,
+            })
+        end
+        local resDrag=false; local resStart; local resStartSize; local resEndConn=nil
+        rh.InputBegan:Connect(function(inp)
+            if inp.UserInputType==Enum.UserInputType.MouseButton1 then
+                if resEndConn then resEndConn:Disconnect(); resEndConn=nil end
+                resDrag=true; resStart=inp.Position
+                resStartSize=wf.Size
+                resEndConn=inp.Changed:Connect(function()
+                    if inp.UserInputState==Enum.UserInputState.End then
+                        resDrag=false
+                        if resEndConn then resEndConn:Disconnect(); resEndConn=nil end
+                    end
+                end)
+            end
+        end)
+        RegConn(UserInputService.InputChanged:Connect(function(inp)
+            if resDrag and inp.UserInputType==Enum.UserInputType.MouseMovement then
+                local d=inp.Position-resStart
+                local nw=math.max(minWinW, resStartSize.X.Offset+d.X)
+                local nh=math.max(minWinH, resStartSize.Y.Offset+d.Y)
+                winW=nw; winH=nh
+                wf.Size=UDim2.new(0,nw,0,nh)
+            end
+        end))
+    end
 
     -- BODY
     local body = Create("Frame",{
@@ -3244,6 +3311,15 @@ function MIDNIGHT:MakeWindow(config)
         _TabCount=0,
         _IsMinimized=false,  -- BUG-E FIX: track minimized state in wd so MenuKey open restores correctly
     }
+
+    -- v7.1: public resize API on wd
+    function wd:SetSize(w, h)
+        w = math.max(minWinW, w or winW)
+        h = math.max(minWinH, h or winH)
+        winW, winH = w, h
+        TweenObject(wf,{Size=UDim2.new(0,w,0,h)},0.25,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+    end
+
     table.insert(self._Windows, wd)
 
     --// ═══ MAKE TAB ═══
@@ -3528,7 +3604,7 @@ function MIDNIGHT:MakeWindow(config)
             local bindKey = ParseKeyCode(tc.Key or "Unknown")
             local bindMode = tc.Mode   or "Press"
             local isMenuKey = tc.IsMenuKey or false
-            local bindVisible = not isMenuKey
+            local cfgFlag  = tc.Flag
 
             local item = Create("Frame",{
                 Size=UDim2.new(1,0,0,36),BackgroundColor3=Theme.ItemBg,
@@ -3565,6 +3641,7 @@ function MIDNIGHT:MakeWindow(config)
 
             local on = def
             local data = {_Value=on,_Key=bindKey,_Mode=bindMode,_KeyBadge=keyBadgeLabel}
+            local bindVisible = not isMenuKey
 
             local function update(anim)
                 if on then
@@ -3659,6 +3736,14 @@ function MIDNIGHT:MakeWindow(config)
                 syncKeybindData()
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) data:Set(v) end,
+                    "toggle"
+                )
+            end
             return data
         end
 
@@ -3673,6 +3758,7 @@ function MIDNIGHT:MakeWindow(config)
             local step = sc.Step         or 1
             local dec  = sc.DecimalPlaces or (pct and 1 or 0)
             local cb   = sc.Callback
+            local cfgFlag = sc.Flag
 
             if mx < mn then mn, mx = mx, mn end
             if mx == mn then mx = mn + 1 end
@@ -3820,6 +3906,14 @@ function MIDNIGHT:MakeWindow(config)
 
             upd(def,false,true)
             function data:Set(v) upd(v,true,false) end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) if tonumber(v) then data:Set(tonumber(v)) end end,
+                    "slider"
+                )
+            end
             return data
         end
 
@@ -3828,6 +3922,7 @@ function MIDNIGHT:MakeWindow(config)
             kc = kc or {}
             local nm = kc.Name or "Keybind"; local key = ParseKeyCode(kc.Key or "Unknown")
             local mode = kc.Mode or "Press"; local cb = kc.Callback; local isMenuKey = kc.IsMenuKey or false
+            local cfgFlag = kc.Flag
 
             local item = Create("Frame",{Size=UDim2.new(1,0,0,38),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,Active=true,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,10,10)
@@ -3925,6 +4020,16 @@ function MIDNIGHT:MakeWindow(config)
                 end
                 kd._Mode=m
             end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function()
+                        return kd._Key ~= Enum.KeyCode.Unknown and KeyCodeToName(kd._Key) or "Unknown"
+                    end,
+                    function(v) kd:Set(v) end,
+                    "keybind"
+                )
+            end
             return kd
         end
 
@@ -3936,6 +4041,7 @@ function MIDNIGHT:MakeWindow(config)
             local def   = dc.Default or opts[1]
             local cb    = dc.Callback
             local multi = dc.Multi or false  -- NEW: multiselect mode
+            local cfgFlag = dc.Flag
 
             -- Height: single=34, multi can show tags so also 34 base
             local item=Create("Frame",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
@@ -4033,6 +4139,14 @@ function MIDNIGHT:MakeWindow(config)
                 if not multi and not table.find(opts, sel) then sel=opts[1] end
                 refreshLabel()
             end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) data:Set(v) end,
+                    "dropdown"
+                )
+            end
             return data
         end
 
@@ -4044,6 +4158,7 @@ function MIDNIGHT:MakeWindow(config)
             local def   = dc.Default or opts[1]
             local cb    = dc.Callback
             local multi = dc.Multi or false  -- NEW: multiselect mode
+            local cfgFlag = dc.Flag
 
             local sel    = multi and {} or def
             local selSet = {}  -- for multi
@@ -4236,6 +4351,14 @@ function MIDNIGHT:MakeWindow(config)
                     selLabel.Text = getLabel()
                 else sel=v; data._Value=v; selLabel.Text=v end
             end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) data:Set(v) end,
+                    "dropdown"
+                )
+            end
             return data
         end
 
@@ -4292,6 +4415,7 @@ function MIDNIGHT:MakeWindow(config)
             local def = tbc.Default     or ""
             local cb  = tbc.Callback
             local multiLine = tbc.MultiLine or false
+            local cfgFlag = tbc.Flag
 
             local h = multiLine and 54 or 36
             local item=Create("Frame",{Size=UDim2.new(1,0,0,h),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
@@ -4324,12 +4448,20 @@ function MIDNIGHT:MakeWindow(config)
                 if cb then cb(box.Text) end
             end)
 
-            return {_Box=box, Set=function(_,t) box.Text=t end, Get=function() return box.Text end}
+            local tdata = {_Box=box, Set=function(_,t) box.Text=t end, Get=function() return box.Text end}
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return box.Text end,
+                    function(v) box.Text = tostring(v or "") end,
+                    "textbox"
+                )
+            end
+            return tdata
         end
 
         --// ADDCOLORPICKER (popup)
         function td:AddColorPicker(cc)
-            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Color3.fromRGB(139,92,246); local cb=cc.Callback
+            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Color3.fromRGB(139,92,246); local cb=cc.Callback; local cfgFlag=cc.Flag
             local item=Create("Frame",{Size=UDim2.new(1,0,0,36),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,10,10)
             ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
@@ -4345,6 +4477,14 @@ function MIDNIGHT:MakeWindow(config)
                 })
             end)
             function data:Set(c) cBtn.BackgroundColor3=c; data._Value=c; if cb then cb(c) end end
+            -- Config system
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) if typeof(v)=="Color3" then data:Set(v) end end,
+                    "color"
+                )
+            end
             return data
         end
 
@@ -4428,6 +4568,333 @@ function MIDNIGHT:MakeWindow(config)
                 Default=ic2.Default or "", MultiLine=false,
             })
         end
+
+        --// ADDTABLE  (v7.1)
+        --[[
+            DataGrid widget with sortable columns, optional search, and pagination.
+
+            Config fields:
+              Name        string          Widget label (shown as section header)
+              Columns     {string,...}    Column header names (required)
+              Rows        {{string,...}}  Initial row data (optional)
+              RowHeight   number          Pixel height per row (default 24)
+              MaxVisible  number          Rows visible without scrolling (default 8)
+              Searchable  bool            Show search box above table (default false)
+              Flag        string          Config system flag key (optional)
+
+            Returned object methods:
+              :SetRows(rows)             Replace all rows
+              :AddRow(row)               Append one row
+              :RemoveRow(index)          Remove row by 1-based index
+              :GetRows()                 Return current rows table
+              :SetColumnWidth(col, px)   Override column pixel width
+              :Clear()                   Remove all rows
+        ]]
+        function td:AddTable(tc)
+            tc = tc or {}
+            local nm        = tc.Name       or "Table"
+            local cols      = tc.Columns    or {"Col1","Col2"}
+            local initRows  = tc.Rows       or {}
+            local rowH      = tc.RowHeight  or 24
+            local maxVis    = tc.MaxVisible or 8
+            local searchable= tc.Searchable or false
+            local flag      = tc.Flag
+
+            local ncols = #cols
+            local colWidths = {}  -- px overrides; nil = equal distribution
+            for i=1,ncols do colWidths[i] = nil end
+
+            -- Helper: compute absolute col widths given container px width
+            local function resolveWidths(totalPx)
+                local fixed, flexCount = 0, 0
+                for i=1,ncols do
+                    if colWidths[i] then fixed=fixed+colWidths[i] else flexCount=flexCount+1 end
+                end
+                local flexW = flexCount>0 and math.floor((totalPx-fixed)/flexCount) or 0
+                local ws = {}
+                for i=1,ncols do ws[i] = colWidths[i] or flexW end
+                return ws
+            end
+
+            -- ── outer frame ────────────────────────────────────────────
+            local totalH = 20 -- section label
+                + (searchable and 30 or 0)
+                + 28           -- header row
+                + rowH*maxVis  -- body rows
+                + 4            -- bottom pad
+
+            local outer = Create("Frame",{
+                Size=UDim2.new(1,0,0,totalH),
+                BackgroundTransparency=1,
+                LayoutOrder=nextOrder(),Parent=page,
+            })
+
+            -- Section label
+            local sLbl = Create("TextLabel",{
+                Text=nm, Font=FontBold, TextSize=11,
+                TextColor3=Theme.Accent,
+                TextXAlignment=Enum.TextXAlignment.Left,
+                Size=UDim2.new(1,0,0,16),
+                BackgroundTransparency=1, Parent=outer,
+            })
+
+            local yOff = 20
+
+            -- Search box
+            local searchText = ""
+            if searchable then
+                local sBox = Create("TextBox",{
+                    Text="", PlaceholderText="🔍  Search...",
+                    Font=Font, TextSize=11, TextColor3=Theme.TextPrimary,
+                    PlaceholderColor3=Theme.TextMuted,
+                    Size=UDim2.new(1,0,0,22),
+                    Position=UDim2.new(0,0,0,yOff),
+                    BackgroundColor3=Theme.InputBg, BorderSizePixel=0,
+                    ClearTextOnFocus=false, Parent=outer,
+                })
+                ApplyCorner(sBox,5); ApplyStroke(sBox,Theme.Border,1)
+                ApplyPadding(sBox,2,2,6,6)
+                sBox.Changed:Connect(function(prop)
+                    if prop=="Text" then searchText=sBox.Text:lower(); rebuild() end
+                end)
+                yOff = yOff + 28
+            end
+
+            -- ── header row ─────────────────────────────────────────────
+            local headerFrame = Create("Frame",{
+                Size=UDim2.new(1,0,0,28),
+                Position=UDim2.new(0,0,0,yOff),
+                BackgroundColor3=Theme.TabBg,
+                BorderSizePixel=0, Parent=outer,
+            })
+            ApplyCorner(headerFrame,6)
+            ApplyStroke(headerFrame,Theme.Border,1)
+
+            -- ── scrolling body ─────────────────────────────────────────
+            local bodyScroll = Create("ScrollingFrame",{
+                Size=UDim2.new(1,0,0,rowH*maxVis),
+                Position=UDim2.new(0,0,0,yOff+28),
+                BackgroundColor3=Theme.ContentBg,
+                BorderSizePixel=0,
+                ScrollBarThickness=3,
+                ScrollBarImageColor3=Theme.ScrollBarColor,
+                AutomaticCanvasSize=Enum.AutomaticSize.Y,
+                ZIndex=ZIndex.CONTENT, Parent=outer,
+            })
+            ApplyCorner(bodyScroll,6)
+            ApplyStroke(bodyScroll,Theme.Border,1)
+
+            -- ── data state ─────────────────────────────────────────────
+            local allRows     = {}  -- master copy
+            local sortCol     = nil -- 1-based or nil
+            local sortAsc     = true
+            local headerCells = {}  -- TextLabel refs for sort indicators
+
+            -- Shallow-copy + filter + sort into display list
+            local function getDisplayRows()
+                local disp = {}
+                for _, row in ipairs(allRows) do
+                    if searchText == "" then
+                        disp[#disp+1] = row
+                    else
+                        for _, cell in ipairs(row) do
+                            if tostring(cell):lower():find(searchText, 1, true) then
+                                disp[#disp+1] = row; break
+                            end
+                        end
+                    end
+                end
+                if sortCol then
+                    table.sort(disp, function(a,b)
+                        local av = tostring(a[sortCol] or "")
+                        local bv = tostring(b[sortCol] or "")
+                        -- numeric-aware compare
+                        local na, nb = tonumber(av), tonumber(bv)
+                        if na and nb then
+                            return sortAsc and na<nb or na>nb
+                        end
+                        return sortAsc and av<bv or av>bv
+                    end)
+                end
+                return disp
+            end
+
+            -- ── row rendering ──────────────────────────────────────────
+            local rowFrames = {}
+
+            function rebuild()  -- upvalue; referenced by search box closure above
+                -- Clear old row frames
+                for _, rf in ipairs(rowFrames) do
+                    pcall(function() rf:Destroy() end)
+                end
+                rowFrames = {}
+
+                local disp   = getDisplayRows()
+                local contW  = bodyScroll.AbsoluteSize.X
+                if contW < 10 then contW = 400 end -- fallback before first layout
+                local ws     = resolveWidths(contW)
+
+                for ri, row in ipairs(disp) do
+                    local even = (ri % 2 == 0)
+                    local rf = Create("Frame",{
+                        Size=UDim2.new(1,0,0,rowH),
+                        BackgroundColor3=even and Theme.TabBg or Theme.ItemBg,
+                        BorderSizePixel=0,
+                        LayoutOrder=ri, Parent=bodyScroll,
+                    })
+                    rowFrames[ri] = rf
+
+                    -- Hover effect
+                    rf.MouseEnter:Connect(function()
+                        TweenObject(rf,{BackgroundColor3=Theme.ItemHoverBg},0.1)
+                    end)
+                    rf.MouseLeave:Connect(function()
+                        TweenObject(rf,{BackgroundColor3=even and Theme.TabBg or Theme.ItemBg},0.1)
+                    end)
+
+                    local xOff = 0
+                    for ci=1,ncols do
+                        local cw = ws[ci]
+                        local cellVal = tostring(row[ci] or "")
+                        Create("TextLabel",{
+                            Text=cellVal,
+                            Font=Font, TextSize=11,
+                            TextColor3=Theme.TextSecondary,
+                            TextXAlignment=Enum.TextXAlignment.Left,
+                            TextTruncate=Enum.TextTruncate.AtEnd,
+                            Size=UDim2.new(0,cw-8,1,0),
+                            Position=UDim2.new(0,xOff+4,0,0),
+                            BackgroundTransparency=1,
+                            ZIndex=ZIndex.CONTENT+1, Parent=rf,
+                        })
+                        -- Column divider (except last)
+                        if ci < ncols then
+                            Create("Frame",{
+                                Size=UDim2.new(0,1,0,rowH-8),
+                                Position=UDim2.new(0,xOff+cw-1,0,4),
+                                BackgroundColor3=Theme.Border,
+                                BorderSizePixel=0, Parent=rf,
+                            })
+                        end
+                        xOff = xOff + cw
+                    end
+                end
+
+                -- Also update header sort indicators
+                for ci, lbl in ipairs(headerCells) do
+                    if sortCol == ci then
+                        lbl.Text = cols[ci]..(sortAsc and " ↑" or " ↓")
+                        lbl.TextColor3 = Theme.Accent
+                    else
+                        lbl.Text = cols[ci]
+                        lbl.TextColor3 = Theme.TextSecondary
+                    end
+                end
+            end
+
+            -- ── build header cells ─────────────────────────────────────
+            -- We defer actual width calc until after frame exists;
+            -- use equal UDim2 fractions for header (always correct)
+            local fracW = 1/ncols
+            for ci=1,ncols do
+                local hBtn = Create("TextButton",{
+                    Text=cols[ci],
+                    Font=FontBold, TextSize=11,
+                    TextColor3=Theme.TextSecondary,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Size=UDim2.new(fracW, ci==ncols and 0 or -1, 1, 0),
+                    Position=UDim2.new(fracW*(ci-1),4,0,0),
+                    BackgroundTransparency=1,
+                    ZIndex=ZIndex.CONTENT+1, Parent=headerFrame,
+                })
+                headerCells[ci] = hBtn
+                -- Column divider
+                if ci < ncols then
+                    Create("Frame",{
+                        Size=UDim2.new(0,1,0,16),
+                        Position=UDim2.new(fracW*ci,-1,0.5,-8),
+                        BackgroundColor3=Theme.Border,
+                        BorderSizePixel=0, Parent=headerFrame,
+                    })
+                end
+                local col_ci = ci  -- capture
+                hBtn.MouseButton1Click:Connect(function()
+                    if sortCol == col_ci then
+                        sortAsc = not sortAsc
+                    else
+                        sortCol = col_ci; sortAsc = true
+                    end
+                    rebuild()
+                end)
+                hBtn.MouseEnter:Connect(function()
+                    TweenObject(hBtn,{TextColor3=Theme.AccentHover},0.1)
+                end)
+                hBtn.MouseLeave:Connect(function()
+                    local c = sortCol==col_ci and Theme.Accent or Theme.TextSecondary
+                    TweenObject(hBtn,{TextColor3=c},0.1)
+                end)
+            end
+
+            -- Insert initial rows
+            for _, row in ipairs(initRows) do
+                allRows[#allRows+1] = row
+            end
+
+            -- First render (deferred so AbsoluteSize is valid)
+            task.defer(rebuild)
+
+            -- Rebuild on resize
+            RegConn(bodyScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+                task.defer(rebuild)
+            end))
+
+            -- ── public API ─────────────────────────────────────────────
+            local tdata = {}
+
+            function tdata:SetRows(rows)
+                allRows = {}
+                for _, r in ipairs(rows) do allRows[#allRows+1] = r end
+                rebuild()
+            end
+
+            function tdata:AddRow(row)
+                allRows[#allRows+1] = row
+                rebuild()
+            end
+
+            function tdata:RemoveRow(index)
+                table.remove(allRows, index)
+                rebuild()
+            end
+
+            function tdata:GetRows()
+                local copy = {}
+                for i,r in ipairs(allRows) do copy[i]=r end
+                return copy
+            end
+
+            function tdata:Clear()
+                allRows = {}; rebuild()
+            end
+
+            function tdata:SetColumnWidth(col, px)
+                colWidths[col] = px
+                task.defer(rebuild)
+            end
+
+            -- Config system integration
+            if flag then
+                MIDNIGHT:_RegCfgWidget(flag,
+                    function() return tdata:GetRows() end,
+                    function(v)
+                        if type(v) == "table" then tdata:SetRows(v) end
+                    end,
+                    "table"
+                )
+            end
+
+            return tdata
+        end -- AddTable
 
         return td
     end -- end MakeTab
@@ -5205,6 +5672,170 @@ function MIDNIGHT:Destroy()
         if type(k)=="string" and k:sub(1,1)=="_" then toNil[#toNil+1]=k end
     end
     for _,k in ipairs(toNil) do self[k]=nil end
+end
+
+--// ═══════════════════════════════════════════════════════════
+--// CONFIG SYSTEM  (v7.1)
+--// ═══════════════════════════════════════════════════════════
+--[[
+    API:
+      MIDNIGHT:SetupConfig(key)           -- set save-file key (call once, before MakeWindow)
+      MIDNIGHT:SaveConfig()               -- write current widget values to file
+      MIDNIGHT:LoadConfig()               -- read file and push values back to widgets
+      MIDNIGHT:ResetConfig()              -- delete saved file
+
+    Each widget that participates in config must pass a Flag = "unique_string" in its
+    config table. Supported widget types: Toggle, Slider, Dropdown, InlineDropdown,
+    TextBox, ColorPicker, InlineColorPicker, Keybind.
+
+    Internal registration:
+      MIDNIGHT:_RegCfgWidget(flag, getter, setter, wtype)
+]]
+
+function MIDNIGHT:SetupConfig(key)
+    assert(type(key) == "string" and #key > 0, "SetupConfig: key must be a non-empty string")
+    self._ConfigKey = key
+    self._ConfigWidgets = self._ConfigWidgets or {}
+end
+
+-- Internal: called by each widget that has a Flag
+function MIDNIGHT:_RegCfgWidget(flag, getter, setter, wtype)
+    if not flag or flag == "" then return end
+    self._ConfigWidgets = self._ConfigWidgets or {}
+    self._ConfigWidgets[flag] = { get = getter, set = setter, wtype = wtype }
+end
+
+local function _cfgSerialize(val, wtype)
+    if wtype == "toggle" then
+        return val and "true" or "false"
+    elseif wtype == "slider" then
+        return tostring(val)
+    elseif wtype == "dropdown" then
+        if type(val) == "table" then
+            -- multiselect: join with \n
+            local parts = {}
+            for _, v in ipairs(val) do parts[#parts+1] = tostring(v) end
+            return "multi:"..table.concat(parts, "\n")
+        end
+        return tostring(val)
+    elseif wtype == "textbox" then
+        -- escape newlines so one entry = one line
+        return (tostring(val):gsub("\n", "\\n"))
+    elseif wtype == "color" then
+        if typeof(val) == "Color3" then
+            return string.format("%d,%d,%d",
+                math.round(val.R*255),
+                math.round(val.G*255),
+                math.round(val.B*255))
+        end
+        return "139,92,246"
+    elseif wtype == "keybind" then
+        return tostring(val and val.Name or "Unknown")
+    end
+    return tostring(val)
+end
+
+local function _cfgDeserialize(raw, wtype)
+    if wtype == "toggle" then
+        return raw == "true"
+    elseif wtype == "slider" then
+        return tonumber(raw)
+    elseif wtype == "dropdown" then
+        if raw:sub(1,6) == "multi:" then
+            local list = {}
+            for item in (raw:sub(7).."\n"):gmatch("([^\n]*)\n") do
+                if item ~= "" then list[#list+1] = item end
+            end
+            return list
+        end
+        return raw
+    elseif wtype == "textbox" then
+        return raw:gsub("\\n", "\n")
+    elseif wtype == "color" then
+        local r,g,b = raw:match("(%d+),(%d+),(%d+)")
+        if r then return Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b)) end
+        return nil
+    elseif wtype == "keybind" then
+        return raw  -- pass the key name string; widget's Set() accepts it
+    end
+    return raw
+end
+
+function MIDNIGHT:SaveConfig()
+    if not self._ConfigKey then
+        warn("MIDNIGHT:SaveConfig() called without SetupConfig(key)")
+        return false
+    end
+    local lines = {}
+    for flag, w in pairs(self._ConfigWidgets) do
+        local ok, val = pcall(w.get)
+        if ok and val ~= nil then
+            local raw = _cfgSerialize(val, w.wtype)
+            -- store as "flag=value" (flag may not contain '=')
+            lines[#lines+1] = flag.."="..raw
+        end
+    end
+    local content = table.concat(lines, "\n")
+    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
+    local ok, err = pcall(function()
+        if writefile then
+            writefile(fname, content)
+        else
+            -- Fallback: store in hidden attribute on ScreenGui (session-only)
+            if self._ScreenGui then
+                self._ScreenGui:SetAttribute("_cfg_"..self._ConfigKey, content)
+            end
+        end
+    end)
+    if not ok then
+        warn("MIDNIGHT:SaveConfig() write error: "..tostring(err))
+        return false
+    end
+    return true
+end
+
+function MIDNIGHT:LoadConfig()
+    if not self._ConfigKey then
+        warn("MIDNIGHT:LoadConfig() called without SetupConfig(key)")
+        return false
+    end
+    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
+    local content = nil
+    pcall(function()
+        if readfile then
+            content = readfile(fname)
+        elseif self._ScreenGui then
+            content = self._ScreenGui:GetAttribute("_cfg_"..self._ConfigKey)
+        end
+    end)
+    if not content or content == "" then return false end
+
+    -- Parse key=value lines (value may contain '=')
+    for line in (content.."\n"):gmatch("([^\n]*)\n") do
+        if line ~= "" then
+            local flag, raw = line:match("^([^=]+)=(.*)")
+            if flag and raw and self._ConfigWidgets[flag] then
+                local w = self._ConfigWidgets[flag]
+                local val = _cfgDeserialize(raw, w.wtype)
+                if val ~= nil then
+                    pcall(w.set, val)
+                end
+            end
+        end
+    end
+    return true
+end
+
+function MIDNIGHT:ResetConfig()
+    if not self._ConfigKey then return false end
+    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
+    pcall(function()
+        if delfile then delfile(fname)
+        elseif self._ScreenGui then
+            self._ScreenGui:SetAttribute("_cfg_"..self._ConfigKey, nil)
+        end
+    end)
+    return true
 end
 
 --// ═══════════════════════════════════════════════════════════
