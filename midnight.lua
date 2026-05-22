@@ -4032,7 +4032,7 @@ function MIDNIGHT:MakeWindow(config)
         _Frame=wf, _TitleBar=tb, _Body=body, _Sidebar=sidebar,
         _TabList=tabList, _ContentFrame=contentFrame,
         _Tabs={}, _ActiveTab=nil, _FloatingWindows={},
-        _AdminLogsWindow=nil, _ChatLoggerWindow=nil,
+        _AdminLogsWindow=nil, _AdminPresenceWidget=nil, _ChatLoggerWindow=nil,
         _TabCount=0,
         _IsMinimized=false,  -- BUG-E FIX: track minimized state in wd so MenuKey open restores correctly
     }
@@ -5855,6 +5855,987 @@ function MIDNIGHT:MakeWindow(config)
         return fData
     end
 
+    function wd:CreateAdminPresenceWidget(config)
+        if self._AdminPresenceWidget and self._AdminPresenceWidget.IsAlive and self._AdminPresenceWidget:IsAlive() then
+            if config and config.LogsWindow then
+                self._AdminPresenceWidget:SetLogsWindow(config.LogsWindow)
+            end
+            return self._AdminPresenceWidget
+        end
+
+        config = config or {}
+        MIDNIGHT:_InitScreenGui()
+
+        local widgetW = math.max(292, math.floor(tonumber(config.Width) or 304))
+        local widgetH = math.max(244, math.floor(tonumber(config.Height) or 254))
+        local marginX = math.floor(tonumber(config.MarginX) or 18)
+        local marginY = math.floor(tonumber(config.MarginY) or 76)
+        local shownPos = UDim2.new(1, -marginX, 0, marginY)
+        local hiddenPos = UDim2.new(1, widgetW + 28, 0, marginY)
+
+        local wf = Create("Frame",{
+            Name = "AdminPresenceWidget",
+            Size = UDim2.new(0, widgetW, 0, widgetH),
+            Position = hiddenPos,
+            AnchorPoint = Vector2.new(1, 0),
+            BackgroundColor3 = Theme.WindowBg,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Visible = false,
+            Active = true,
+            ZIndex = ZIndex.OVERLAY + 20,
+            Parent = MIDNIGHT._ScreenGui,
+        })
+        ApplyCorner(wf, 8)
+        local wfStroke = ApplyStroke(wf, Theme.Border, 1, 1)
+        local wfScale = Create("UIScale",{Scale=0.97,Parent=wf})
+
+        local shadow = Create("ImageLabel",{
+            Size=UDim2.new(1,26,1,26),
+            Position=UDim2.new(0,-13,0,-11),
+            BackgroundTransparency=1,
+            Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Shadow,
+            ImageTransparency=1,
+            ScaleType=Enum.ScaleType.Slice,
+            SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=wf.ZIndex-1,
+            Parent=wf,
+        })
+
+        local tint = Create("Frame",{
+            Size=UDim2.new(1,0,1,0),
+            BackgroundColor3=AccentTint(Theme.Accent,0.05),
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex,
+            Parent=wf,
+        })
+        ApplyCorner(tint, 8)
+
+        local header = Create("Frame",{
+            Size=UDim2.new(1,0,0,26),
+            BackgroundColor3=Theme.TitleBarBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+1,
+            Parent=wf,
+        })
+        ApplyCorner(header, 8)
+        Create("Frame",{
+            Size=UDim2.new(1,0,0,8),
+            Position=UDim2.new(0,0,1,-8),
+            BackgroundColor3=Theme.TitleBarBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            Parent=header,
+        })
+        local headerDivider = Create("Frame",{
+            Size=UDim2.new(1,0,0,1),
+            Position=UDim2.new(0,0,1,-1),
+            BackgroundColor3=Theme.Border,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+2,
+            Parent=header,
+        })
+        local headerTitle = Create("TextLabel",{
+            Text="Admin Presence",
+            Font=FontBold,
+            TextSize=10,
+            TextColor3=Theme.TextPrimary,
+            TextTransparency=1,
+            Size=UDim2.new(1,-44,1,0),
+            Position=UDim2.new(0,10,0,0),
+            TextXAlignment=Enum.TextXAlignment.Left,
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=header,
+        })
+
+        local closeBtn = Create("TextButton",{
+            Text="",
+            Size=UDim2.new(0,18,0,14),
+            Position=UDim2.new(1,-22,0,6),
+            BackgroundColor3=Theme.InputBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            AutoButtonColor=false,
+            ZIndex=wf.ZIndex+3,
+            Parent=header,
+        })
+        ApplyCorner(closeBtn,4)
+        local closeStroke = ApplyStroke(closeBtn, Theme.Border, 1, 1)
+        local closeIcon = CreateIconOrText(closeBtn,"x",nil,UDim2.new(0,8,0,8),UDim2.new(0.5,-4,0.5,-4),Theme.TextMuted,FontBold,8)
+        if closeIcon and closeIcon:IsA("TextLabel") then
+            closeIcon.TextXAlignment = Enum.TextXAlignment.Center
+            closeIcon.TextYAlignment = Enum.TextYAlignment.Center
+            closeIcon.TextTransparency = 1
+        elseif closeIcon and closeIcon:IsA("ImageLabel") then
+            closeIcon.ImageTransparency = 1
+        end
+
+        local body = Create("Frame",{
+            Size=UDim2.new(1,-16,1,-38),
+            Position=UDim2.new(0,8,0,30),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+1,
+            Parent=wf,
+        })
+
+        local avatarWrap = Create("Frame",{
+            Size=UDim2.new(0,48,0,48),
+            Position=UDim2.new(0,0,0,0),
+            BackgroundColor3=Theme.InputBg,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        ApplyCorner(avatarWrap,6)
+        local avatarStroke = ApplyStroke(avatarWrap, Theme.BorderLight, 1, 1)
+        local avatarImg = Create("ImageLabel",{
+            Size=UDim2.new(1,0,1,0),
+            BackgroundTransparency=1,
+            Image="",
+            ImageTransparency=0,
+            ZIndex=wf.ZIndex+3,
+            Parent=avatarWrap,
+        })
+        ApplyCorner(avatarImg,5)
+        local avatarFallback = CreateIconOrText(avatarWrap,"shield",nil,UDim2.new(0,18,0,18),UDim2.new(0.5,-9,0.5,-9),Theme.TextMuted,FontBold,14)
+
+        local countBadge = Create("Frame",{
+            Size=UDim2.new(0,34,0,16),
+            Position=UDim2.new(1,-34,0,0),
+            BackgroundColor3=Theme.InputBg,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        ApplyCorner(countBadge,8)
+        local countStroke = ApplyStroke(countBadge, Theme.Border, 1, 1)
+        local countLabel = Create("TextLabel",{
+            Text="1 / 1",
+            Font=FontBold,
+            TextSize=8,
+            TextColor3=Theme.TextMuted,
+            Size=UDim2.new(1,0,1,0),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+3,
+            Parent=countBadge,
+        })
+
+        local nameLabel = Create("TextLabel",{
+            Text="No admins detected",
+            Font=FontBold,
+            TextSize=12,
+            TextColor3=Theme.TextPrimary,
+            TextWrapped=true,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            TextYAlignment=Enum.TextYAlignment.Top,
+            Size=UDim2.new(1,-94,0,16),
+            Position=UDim2.new(0,58,0,0),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        local handleLabel = Create("TextLabel",{
+            Text="@waiting",
+            Font=FontRegular,
+            TextSize=9,
+            TextColor3=Theme.TextMuted,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(1,-94,0,12),
+            Position=UDim2.new(0,58,0,17),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        local metaLabel = Create("TextLabel",{
+            Text="Waiting for the first admin event",
+            Font=FontRegular,
+            TextSize=8,
+            TextColor3=Theme.TextMuted,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(1,-94,0,11),
+            Position=UDim2.new(0,58,0,30),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+
+        local roleBadge = Create("Frame",{
+            Size=UDim2.new(0,0,0,16),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Position=UDim2.new(0,58,0,42),
+            BackgroundColor3=AccentTint(Theme.Accent,0.14),
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        ApplyCorner(roleBadge,8)
+        ApplyPadding(roleBadge,0,0,7,7)
+        local roleStroke = ApplyStroke(roleBadge, Theme.Accent, 1, 1)
+        local roleLabel = Create("TextLabel",{
+            Text="Observer",
+            Font=FontBold,
+            TextSize=8,
+            TextColor3=Theme.TextAccent,
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+3,
+            Parent=roleBadge,
+        })
+
+        local stateBadge = Create("Frame",{
+            Size=UDim2.new(0,0,0,16),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Position=UDim2.new(1,-74,0,42),
+            BackgroundColor3=AccentTint(Theme.Success,0.12),
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+2,
+            Parent=body,
+        })
+        ApplyCorner(stateBadge,8)
+        ApplyPadding(stateBadge,0,0,7,7)
+        local stateStroke = ApplyStroke(stateBadge, Theme.Success, 1, 1)
+        local stateLabel = Create("TextLabel",{
+            Text="ONLINE",
+            Font=FontBold,
+            TextSize=8,
+            TextColor3=Theme.Success,
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+3,
+            Parent=stateBadge,
+        })
+
+        local statusCard = Create("Frame",{
+            Size=UDim2.new(1,0,0,50),
+            Position=UDim2.new(0,0,0,64),
+            BackgroundColor3=Theme.ItemBg,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+1,
+            Parent=body,
+        })
+        ApplyCorner(statusCard,6)
+        local statusStroke = ApplyStroke(statusCard, Theme.Border, 1, 1)
+        local statusHead = Create("TextLabel",{
+            Text="LAST ACTION",
+            Font=FontBold,
+            TextSize=8,
+            TextColor3=Theme.TextMuted,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(1,-12,0,10),
+            Position=UDim2.new(0,6,0,6),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=statusCard,
+        })
+        local statusText = Create("TextLabel",{
+            Text="Waiting for activity",
+            Font=FontRegular,
+            TextSize=9,
+            TextColor3=Theme.TextSecondary,
+            TextWrapped=true,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            TextYAlignment=Enum.TextYAlignment.Top,
+            Size=UDim2.new(1,-12,0,28),
+            Position=UDim2.new(0,6,0,18),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=statusCard,
+        })
+
+        local commandCard = Create("Frame",{
+            Size=UDim2.new(1,0,0,46),
+            Position=UDim2.new(0,0,0,120),
+            BackgroundColor3=Theme.ItemBg,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+1,
+            Parent=body,
+        })
+        ApplyCorner(commandCard,6)
+        local commandStroke = ApplyStroke(commandCard, Theme.Border, 1, 1)
+        local commandHead = Create("TextLabel",{
+            Text="LAST COMMAND",
+            Font=FontBold,
+            TextSize=8,
+            TextColor3=Theme.TextMuted,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(1,-12,0,10),
+            Position=UDim2.new(0,6,0,6),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=commandCard,
+        })
+        local commandText = Create("TextLabel",{
+            Text="No commands captured yet",
+            Font=FontRegular,
+            TextSize=9,
+            TextColor3=Theme.TextSecondary,
+            TextWrapped=true,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            TextYAlignment=Enum.TextYAlignment.Top,
+            Size=UDim2.new(1,-12,0,24),
+            Position=UDim2.new(0,6,0,18),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=commandCard,
+        })
+
+        local confirmBar = Create("Frame",{
+            Size=UDim2.new(1,0,0,24),
+            Position=UDim2.new(0,0,0,172),
+            BackgroundColor3=Theme.InputBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            Visible=false,
+            ZIndex=wf.ZIndex+1,
+            Parent=body,
+        })
+        ApplyCorner(confirmBar,6)
+        local confirmStroke = ApplyStroke(confirmBar, Theme.Warning, 1, 1)
+        local confirmLabel = Create("TextLabel",{
+            Text="Teleport to admin?",
+            Font=FontRegular,
+            TextSize=9,
+            TextColor3=Theme.TextSecondary,
+            TextTransparency=1,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(1,-90,1,0),
+            Position=UDim2.new(0,8,0,0),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+2,
+            Parent=confirmBar,
+        })
+        local confirmYes = Create("TextButton",{
+            Text="Yes",
+            Font=FontBold,
+            TextSize=9,
+            TextColor3=Theme.TextPrimary,
+            TextTransparency=1,
+            Size=UDim2.new(0,34,0,16),
+            Position=UDim2.new(1,-74,0.5,-8),
+            BackgroundColor3=Theme.Accent,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            AutoButtonColor=false,
+            ZIndex=wf.ZIndex+2,
+            Parent=confirmBar,
+        })
+        ApplyCorner(confirmYes,4)
+        local confirmNo = Create("TextButton",{
+            Text="No",
+            Font=FontBold,
+            TextSize=9,
+            TextColor3=Theme.TextSecondary,
+            TextTransparency=1,
+            Size=UDim2.new(0,30,0,16),
+            Position=UDim2.new(1,-36,0.5,-8),
+            BackgroundColor3=Theme.WindowBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            AutoButtonColor=false,
+            ZIndex=wf.ZIndex+2,
+            Parent=confirmBar,
+        })
+        ApplyCorner(confirmNo,4)
+        local confirmNoStroke = ApplyStroke(confirmNo, Theme.Border, 1, 1)
+
+        local buttonGrid = Create("Frame",{
+            Size=UDim2.new(1,0,0,50),
+            Position=UDim2.new(0,0,0,202),
+            BackgroundTransparency=1,
+            ZIndex=wf.ZIndex+1,
+            Parent=body,
+        })
+        Create("UIGridLayout",{
+            CellSize=UDim2.new(0,(widgetW-16-8)/3,0,24),
+            CellPadding=UDim2.new(0,4,0,4),
+            FillDirectionMaxCells=3,
+            SortOrder=Enum.SortOrder.LayoutOrder,
+            Parent=buttonGrid,
+        })
+
+        local function makeActionButton(text, order)
+            local btn = Create("TextButton",{
+                Text="",
+                Size=UDim2.new(0,0,0,24),
+                BackgroundColor3=Theme.ItemBg,
+                BorderSizePixel=0,
+                LayoutOrder=order,
+                AutoButtonColor=false,
+                ZIndex=wf.ZIndex+2,
+                Parent=buttonGrid,
+            })
+            ApplyCorner(btn,4)
+            local stroke = ApplyStroke(btn, Theme.Border, 1, 1)
+            local lbl = Create("TextLabel",{
+                Text=text,
+                Font=FontBold,
+                TextSize=9,
+                TextColor3=Theme.TextPrimary,
+                Size=UDim2.new(1,-8,1,0),
+                Position=UDim2.new(0,4,0,0),
+                TextXAlignment=Enum.TextXAlignment.Center,
+                BackgroundTransparency=1,
+                ZIndex=wf.ZIndex+3,
+                Parent=btn,
+            })
+            local data = {Button=btn, Label=lbl, Stroke=stroke, Enabled=true, Accent=false}
+            btn.MouseEnter:Connect(function()
+                if not data.Enabled then return end
+                TweenObject(btn,{BackgroundColor3=data.Accent and AccentTint(Theme.Accent,0.18) or Theme.ItemHoverBg},0.12)
+                if stroke then TweenObject(stroke,{Color=data.Accent and Theme.Accent or Theme.BorderLight,Transparency=0.18},0.12) end
+            end)
+            btn.MouseLeave:Connect(function()
+                local bg = data.Accent and AccentTint(Theme.Accent,0.1) or Theme.ItemBg
+                local color = data.Accent and Theme.Accent or Theme.Border
+                TweenObject(btn,{BackgroundColor3=bg},0.14)
+                if stroke then TweenObject(stroke,{Color=color,Transparency=data.Enabled and 0.3 or 0.55},0.14) end
+            end)
+            return data
+        end
+
+        local spectateBtn = makeActionButton("Spectate", 1)
+        local teleportBtn = makeActionButton("Teleport", 2)
+        local logsBtn = makeActionButton("Chat Logs", 3)
+        local prevBtn = makeActionButton("Prev", 4)
+        local nextBtn = makeActionButton("Next", 5)
+        local dismissBtn = makeActionButton("Dismiss", 6)
+
+        local data = {
+            _Frame = wf,
+            _LogsWindow = config.LogsWindow,
+            _Admins = {},
+            _AdminMap = {},
+            _Index = 0,
+            _Visible = false,
+            _Destroyed = false,
+            _CurrentAvatarUserId = nil,
+            _AvatarToken = 0,
+            _PendingConfirm = nil,
+            _PendingHideThread = nil,
+            _SpectateUserId = nil,
+            _PreviousCameraSubject = nil,
+            _PreviousCameraType = nil,
+        }
+
+        self._AdminPresenceWidget = data
+
+        local function setButtonState(btnData, enabled, accent)
+            btnData.Enabled = enabled ~= false
+            btnData.Accent = accent == true
+            local bg = accent and AccentTint(Theme.Accent,0.1) or Theme.ItemBg
+            local borderColor = accent and Theme.Accent or Theme.Border
+            local textColor = btnData.Enabled and (accent and Theme.TextAccent or Theme.TextPrimary) or Theme.TextMuted
+            TweenObject(btnData.Button,{BackgroundColor3=bg},0.1)
+            if btnData.Stroke then
+                TweenObject(btnData.Stroke,{
+                    Color=borderColor,
+                    Transparency=btnData.Enabled and 0.3 or 0.55
+                },0.1)
+            end
+            TweenObject(btnData.Label,{TextColor3=textColor},0.1)
+        end
+
+        local function setConfirmVisible(visible, labelText, action)
+            data._PendingConfirm = visible and action or nil
+            if visible then
+                confirmLabel.Text = labelText or "Confirm action?"
+                confirmBar.Visible = true
+                TweenObject(confirmBar,{BackgroundTransparency=0.08},0.14)
+                if confirmStroke then TweenObject(confirmStroke,{Transparency=0.28},0.14) end
+                TweenObject(confirmLabel,{TextTransparency=0},0.14)
+                TweenObject(confirmYes,{BackgroundTransparency=0,TextTransparency=0},0.14)
+                TweenObject(confirmNo,{BackgroundTransparency=0,TextTransparency=0},0.14)
+                if confirmNoStroke then TweenObject(confirmNoStroke,{Transparency=0.32},0.14) end
+            else
+                TweenObject(confirmBar,{BackgroundTransparency=1},0.12)
+                if confirmStroke then TweenObject(confirmStroke,{Transparency=1},0.12) end
+                TweenObject(confirmLabel,{TextTransparency=1},0.12)
+                TweenObject(confirmYes,{BackgroundTransparency=1,TextTransparency=1},0.12)
+                TweenObject(confirmNo,{BackgroundTransparency=1,TextTransparency=1},0.12)
+                if confirmNoStroke then TweenObject(confirmNoStroke,{Transparency=1},0.12) end
+                local token = os.clock()
+                data._ConfirmHideToken = token
+                task.delay(0.14,function()
+                    if data._Destroyed then return end
+                    if data._ConfirmHideToken ~= token then return end
+                    confirmBar.Visible = false
+                end)
+            end
+        end
+
+        local function getCurrentEntry()
+            return data._Admins[data._Index]
+        end
+
+        local function getLocalFocusParts()
+            local char = LocalPlayer and LocalPlayer.Character
+            if not char then return nil, nil end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+            return hum, root
+        end
+
+        local function resolveTargetParts(player)
+            if not player or not player.Character then return nil, nil, nil end
+            local char = player.Character
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+            return hum, root, char
+        end
+
+        local function moveEntryToFront(entry)
+            for i, existing in ipairs(data._Admins) do
+                if existing == entry then
+                    table.remove(data._Admins, i)
+                    break
+                end
+            end
+            table.insert(data._Admins, 1, entry)
+        end
+
+        local function updateCount()
+            local total = #data._Admins
+            countBadge.Visible = total > 1
+            if total > 1 then
+                countLabel.Text = tostring(math.max(1, data._Index)) .. " / " .. tostring(total)
+            else
+                countLabel.Text = "1 / 1"
+            end
+        end
+
+        local function setVisible(visible)
+            SafeCancelThread(data._PendingHideThread)
+            data._PendingHideThread = nil
+            data._Visible = visible == true
+            if visible then
+                wf.Visible = true
+                wf.Position = hiddenPos
+                wfScale.Scale = 0.97
+                TweenObject(wf,{Position=shownPos,BackgroundTransparency=0},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                TweenObject(wfScale,{Scale=1},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                if wfStroke then TweenObject(wfStroke,{Transparency=0.16},0.18) end
+                TweenObject(header,{BackgroundTransparency=0},0.18)
+                TweenObject(headerDivider,{BackgroundTransparency=0},0.18)
+                TweenObject(headerTitle,{TextTransparency=0},0.16)
+                if shadow then TweenObject(shadow,{ImageTransparency=0.8},0.22) end
+                if tint then TweenObject(tint,{BackgroundTransparency=0.52},0.2) end
+                if closeStroke then TweenObject(closeStroke,{Transparency=0.4},0.16) end
+                if closeIcon then
+                    if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextTransparency=0},0.16)
+                    elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageTransparency=0},0.16) end
+                end
+            else
+                TweenObject(wf,{Position=hiddenPos,BackgroundTransparency=1},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+                TweenObject(wfScale,{Scale=0.97},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+                if wfStroke then TweenObject(wfStroke,{Transparency=1},0.16) end
+                TweenObject(header,{BackgroundTransparency=1},0.16)
+                TweenObject(headerDivider,{BackgroundTransparency=1},0.16)
+                TweenObject(headerTitle,{TextTransparency=1},0.14)
+                if shadow then TweenObject(shadow,{ImageTransparency=1},0.16) end
+                if tint then TweenObject(tint,{BackgroundTransparency=1},0.16) end
+                if closeStroke then TweenObject(closeStroke,{Transparency=1},0.14) end
+                if closeIcon then
+                    if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextTransparency=1},0.14)
+                    elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageTransparency=1},0.14) end
+                end
+                data._PendingHideThread = task.delay(0.22,function()
+                    if not data._Visible and wf.Parent then
+                        wf.Visible = false
+                    end
+                end)
+            end
+        end
+
+        local function updateButtons()
+            local current = getCurrentEntry()
+            local hasAdmin = current ~= nil
+            local logsAlive = data._LogsWindow and data._LogsWindow.IsAlive and data._LogsWindow:IsAlive()
+            local isSpectatingCurrent = hasAdmin and data._SpectateUserId == current.UserId
+
+            spectateBtn.Label.Text = isSpectatingCurrent and "Unspectate" or "Spectate"
+            setButtonState(spectateBtn, hasAdmin, isSpectatingCurrent)
+            setButtonState(teleportBtn, hasAdmin, false)
+            setButtonState(logsBtn, logsAlive, false)
+            setButtonState(prevBtn, #data._Admins > 1, false)
+            setButtonState(nextBtn, #data._Admins > 1, false)
+            setButtonState(dismissBtn, true, false)
+        end
+
+        local function loadAvatar(entry)
+            data._AvatarToken = data._AvatarToken + 1
+            local token = data._AvatarToken
+            data._CurrentAvatarUserId = entry and entry.UserId or nil
+            avatarImg.Image = ""
+            if avatarFallback then avatarFallback.Visible = true end
+            if not entry then return end
+            task.spawn(function()
+                local ok, image = pcall(function()
+                    return Players:GetUserThumbnailAsync(
+                        entry.UserId,
+                        Enum.ThumbnailType.HeadShot,
+                        Enum.ThumbnailSize.Size60x60
+                    )
+                end)
+                if not ok or not image or data._Destroyed then return end
+                if token ~= data._AvatarToken then return end
+                local current = getCurrentEntry()
+                if not current or current.UserId ~= entry.UserId then return end
+                avatarImg.Image = image
+                if avatarFallback then avatarFallback.Visible = false end
+            end)
+        end
+
+        local function render(entry)
+            if not entry then
+                nameLabel.Text = "No admins detected"
+                handleLabel.Text = "@waiting"
+                metaLabel.Text = "Waiting for the first admin event"
+                roleLabel.Text = "Observer"
+                roleBadge.BackgroundColor3 = AccentTint(Theme.Accent,0.14)
+                if roleStroke then roleStroke.Color = Theme.Accent end
+                stateLabel.Text = "IDLE"
+                stateLabel.TextColor3 = Theme.TextMuted
+                stateBadge.BackgroundColor3 = Theme.InputBg
+                if stateStroke then stateStroke.Color = Theme.Border end
+                statusText.Text = "No admin activity detected yet."
+                commandText.Text = "No commands captured yet."
+                commandText.TextColor3 = Theme.TextMuted
+                updateCount()
+                updateButtons()
+                loadAvatar(nil)
+                return
+            end
+
+            local displayName = entry.DisplayName or entry.Name or "Unknown"
+            local roleColor = entry.RankColor or Theme.TextAccent
+            nameLabel.Text = displayName
+            handleLabel.Text = "@" .. tostring(entry.Name or "unknown")
+            metaLabel.Text = "Last update " .. tostring(entry.LastSeen or os.date("%H:%M:%S"))
+            roleLabel.Text = tostring(entry.RankName or "Admin")
+            roleLabel.TextColor3 = roleColor
+            roleBadge.BackgroundColor3 = AccentTint(roleColor,0.14)
+            if roleStroke then roleStroke.Color = roleColor end
+            stateLabel.Text = "ONLINE"
+            stateLabel.TextColor3 = Theme.Success
+            stateBadge.BackgroundColor3 = AccentTint(Theme.Success,0.12)
+            if stateStroke then stateStroke.Color = Theme.Success end
+            statusText.Text = tostring(entry.LatestAction or "Watching the server")
+            commandText.Text = tostring(entry.LastCommand or "No commands captured yet")
+            commandText.TextColor3 = (entry.LastCommand and entry.LastCommand ~= "" and entry.LastCommand ~= "No commands captured yet") and Theme.TextPrimary or Theme.TextMuted
+            if data._CurrentAvatarUserId ~= entry.UserId then
+                loadAvatar(entry)
+            end
+            updateCount()
+            updateButtons()
+        end
+
+        function data:IsAlive()
+            return not self._Destroyed and self._Frame and self._Frame.Parent ~= nil
+        end
+
+        function data:SetLogsWindow(window)
+            self._LogsWindow = window
+            updateButtons()
+            return self
+        end
+
+        function data:Show()
+            if self._Destroyed then return end
+            setVisible(true)
+        end
+
+        function data:Hide()
+            if self._Destroyed then return end
+            setConfirmVisible(false)
+            setVisible(false)
+        end
+
+        function data:FocusAdmin(playerOrUserId)
+            local userId = typeof(playerOrUserId) == "Instance" and playerOrUserId.UserId or tonumber(playerOrUserId)
+            if not userId then return end
+            for i, entry in ipairs(self._Admins) do
+                if entry.UserId == userId then
+                    self._Index = i
+                    render(entry)
+                    return entry
+                end
+            end
+        end
+
+        function data:Cycle(direction)
+            if #self._Admins == 0 then return end
+            local step = direction == "prev" and -1 or 1
+            local nextIndex = self._Index + step
+            if nextIndex < 1 then nextIndex = #self._Admins end
+            if nextIndex > #self._Admins then nextIndex = 1 end
+            self._Index = nextIndex
+            render(getCurrentEntry())
+        end
+
+        function data:StopSpectate(skipNotify)
+            local camera = workspace.CurrentCamera
+            if camera then
+                camera.CameraType = self._PreviousCameraType or Enum.CameraType.Custom
+                if self._PreviousCameraSubject and self._PreviousCameraSubject.Parent then
+                    camera.CameraSubject = self._PreviousCameraSubject
+                else
+                    local hum, root = getLocalFocusParts()
+                    if hum then
+                        camera.CameraSubject = hum
+                    elseif root then
+                        camera.CameraSubject = root
+                    end
+                    camera.CameraType = Enum.CameraType.Custom
+                end
+            end
+            self._SpectateUserId = nil
+            self._PreviousCameraSubject = nil
+            self._PreviousCameraType = nil
+            render(getCurrentEntry())
+            if not skipNotify then
+                MIDNIGHT:Notify({Title="Admin Widget",Content="Spectate disabled",Type="info",Duration=3})
+            end
+        end
+
+        function data:StartSpectate(entry)
+            if not entry or not entry.Player then return end
+            local hum, root = resolveTargetParts(entry.Player)
+            local target = hum or root
+            if not target then
+                MIDNIGHT:Notify({Title="Admin Widget",Content="Admin character is not available",Type="warning",Duration=4})
+                return
+            end
+            local camera = workspace.CurrentCamera
+            if not camera then return end
+            if self._SpectateUserId == entry.UserId then
+                self:StopSpectate()
+                return
+            end
+            self._PreviousCameraSubject = camera.CameraSubject
+            self._PreviousCameraType = camera.CameraType
+            camera.CameraType = Enum.CameraType.Custom
+            camera.CameraSubject = target
+            self._SpectateUserId = entry.UserId
+            render(entry)
+            MIDNIGHT:Notify({Title="Admin Widget",Content="Spectating "..tostring(entry.DisplayName or entry.Name),Type="info",Duration=3})
+        end
+
+        function data:TeleportTo(entry)
+            if not entry or not entry.Player then return end
+            local _, localRoot = getLocalFocusParts()
+            local _, targetRoot = resolveTargetParts(entry.Player)
+            if not localRoot or not targetRoot then
+                MIDNIGHT:Notify({Title="Admin Widget",Content="Teleport target is not available",Type="warning",Duration=4})
+                return
+            end
+            local offset = targetRoot.CFrame.LookVector * -3
+            local teleportPos = targetRoot.Position + offset + Vector3.new(0,1,0)
+            localRoot.CFrame = CFrame.new(teleportPos, targetRoot.Position)
+            MIDNIGHT:Notify({Title="Admin Widget",Content="Teleported near "..tostring(entry.DisplayName or entry.Name),Type="success",Duration=3})
+        end
+
+        function data:OpenLogs()
+            local logsWindow = self._LogsWindow
+            if not (logsWindow and logsWindow.IsAlive and logsWindow:IsAlive()) then
+                MIDNIGHT:Notify({Title="Admin Widget",Content="Admin logs window is not available",Type="warning",Duration=4})
+                return
+            end
+            if not logsWindow._Visible then
+                logsWindow:Toggle()
+            end
+            task.defer(function()
+                if logsWindow._Scroll and logsWindow._Scroll.Parent then
+                    logsWindow._Scroll.CanvasPosition = Vector2.new(0, logsWindow._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
+        end
+
+        function data:TrackAdmin(player, rankName, rankColor, actionText, commandTextValue, options)
+            if self._Destroyed or not player then return end
+            options = type(options) == "table" and options or {}
+            local entry = self._AdminMap[player.UserId]
+            if not entry then
+                entry = {
+                    UserId = player.UserId,
+                    Player = player,
+                    DisplayName = player.DisplayName,
+                    Name = player.Name,
+                    RankName = rankName or "Admin",
+                    RankColor = rankColor or Theme.TextAccent,
+                    LatestAction = actionText or "Joined the server",
+                    LastCommand = commandTextValue or "No commands captured yet",
+                    LastSeen = os.date("%H:%M:%S"),
+                }
+                self._AdminMap[player.UserId] = entry
+                table.insert(self._Admins, 1, entry)
+                self._Index = 1
+            else
+                entry.Player = player
+                entry.DisplayName = player.DisplayName
+                entry.Name = player.Name
+                entry.RankName = rankName or entry.RankName
+                entry.RankColor = rankColor or entry.RankColor
+                if actionText and actionText ~= "" then
+                    entry.LatestAction = actionText
+                end
+                if commandTextValue and commandTextValue ~= "" then
+                    entry.LastCommand = commandTextValue
+                end
+                entry.LastSeen = os.date("%H:%M:%S")
+            end
+
+            if options.Focus then
+                moveEntryToFront(entry)
+                self._Index = 1
+            elseif self._Index == 0 then
+                self._Index = 1
+            end
+
+            if getCurrentEntry() == entry or options.Focus or #self._Admins == 1 then
+                render(entry)
+            else
+                updateCount()
+                updateButtons()
+            end
+
+            if options.Reveal then
+                self:Show()
+            end
+            return entry
+        end
+
+        function data:RemoveAdmin(player)
+            if self._Destroyed or not player then return end
+            local entry = self._AdminMap[player.UserId]
+            if not entry then return end
+            if self._SpectateUserId == player.UserId then
+                self:StopSpectate(true)
+            end
+            self._AdminMap[player.UserId] = nil
+            for i, existing in ipairs(self._Admins) do
+                if existing == entry then
+                    table.remove(self._Admins, i)
+                    if self._Index > i then
+                        self._Index = self._Index - 1
+                    end
+                    break
+                end
+            end
+            if #self._Admins == 0 then
+                self._Index = 0
+                render(nil)
+                self:Hide()
+            else
+                if self._Index < 1 then self._Index = 1 end
+                if self._Index > #self._Admins then self._Index = #self._Admins end
+                render(getCurrentEntry())
+            end
+        end
+
+        function data:Destroy()
+            if self._Destroyed then return end
+            self._Destroyed = true
+            SafeCancelThread(self._PendingHideThread)
+            self._PendingHideThread = nil
+            pcall(function() self:StopSpectate(true) end)
+            if self._Frame then
+                pcall(function() self._Frame:Destroy() end)
+            end
+            self._Frame = nil
+            if self._OwnerWindow and self._OwnerWindow._AdminPresenceWidget == self then
+                self._OwnerWindow._AdminPresenceWidget = nil
+            end
+        end
+
+        data._OwnerWindow = self
+
+        confirmYes.MouseButton1Click:Connect(function()
+            local action = data._PendingConfirm
+            setConfirmVisible(false)
+            if action then
+                pcall(action)
+            end
+        end)
+        confirmNo.MouseButton1Click:Connect(function()
+            setConfirmVisible(false)
+        end)
+
+        spectateBtn.Button.MouseButton1Click:Connect(function()
+            if not spectateBtn.Enabled then return end
+            local current = getCurrentEntry()
+            if not current then return end
+            data:StartSpectate(current)
+        end)
+        teleportBtn.Button.MouseButton1Click:Connect(function()
+            if not teleportBtn.Enabled then return end
+            local current = getCurrentEntry()
+            if not current then return end
+            setConfirmVisible(true, "Teleport to "..tostring(current.DisplayName or current.Name).."?", function()
+                data:TeleportTo(current)
+            end)
+        end)
+        logsBtn.Button.MouseButton1Click:Connect(function()
+            if logsBtn.Enabled then
+                data:OpenLogs()
+            end
+        end)
+        prevBtn.Button.MouseButton1Click:Connect(function()
+            if prevBtn.Enabled then
+                data:Cycle("prev")
+            end
+        end)
+        nextBtn.Button.MouseButton1Click:Connect(function()
+            if nextBtn.Enabled then
+                data:Cycle("next")
+            end
+        end)
+        dismissBtn.Button.MouseButton1Click:Connect(function()
+            data:Hide()
+        end)
+
+        closeBtn.MouseButton1Click:Connect(function()
+            data:Hide()
+        end)
+        closeBtn.MouseEnter:Connect(function()
+            TweenObject(closeBtn,{BackgroundTransparency=0.06,BackgroundColor3=Theme.CloseHover},0.12)
+            if closeStroke then TweenObject(closeStroke,{Transparency=0.2,Color=Theme.CloseHover},0.12) end
+            if closeIcon then
+                if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=Color3.fromRGB(255,255,255),TextTransparency=0},0.12)
+                elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageColor3=Color3.fromRGB(255,255,255),ImageTransparency=0},0.12) end
+            end
+        end)
+        closeBtn.MouseLeave:Connect(function()
+            TweenObject(closeBtn,{BackgroundTransparency=1,BackgroundColor3=Theme.InputBg},0.12)
+            if closeStroke then TweenObject(closeStroke,{Transparency=0.4,Color=Theme.Border},0.12) end
+            if closeIcon then
+                if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=Theme.TextMuted,TextTransparency=0},0.12)
+                elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageColor3=Theme.TextMuted,ImageTransparency=0},0.12) end
+            end
+        end)
+
+        if avatarStroke then avatarStroke.Transparency = 0.28 end
+        if countStroke then countStroke.Transparency = 0.38 end
+        if roleStroke then roleStroke.Transparency = 0.48 end
+        if stateStroke then stateStroke.Transparency = 0.48 end
+        if statusStroke then statusStroke.Transparency = 0.38 end
+        if commandStroke then commandStroke.Transparency = 0.38 end
+        if confirmStroke then confirmStroke.Transparency = 1 end
+        if confirmNoStroke then confirmNoStroke.Transparency = 1 end
+        if closeStroke then closeStroke.Transparency = 1 end
+
+        MakeDraggable(wf, header, function() MIDNIGHT:_CloseAllPopups() end)
+        render(nil)
+        return data
+    end
+    function wd:CreateAdminWidget(config) return self:CreateAdminPresenceWidget(config) end
+
     function wd:CreateAdminLogs(config)
         if self._AdminLogsWindow and self._AdminLogsWindow.IsAlive and self._AdminLogsWindow:IsAlive() then
             return self._AdminLogsWindow
@@ -5868,6 +6849,16 @@ function MIDNIGHT:MakeWindow(config)
         local aw = self:MakeFloatingWindow({Name="Admin Logs", Size={300,380}, Resizable=true})
         if not aw then return nil end
         self._AdminLogsWindow = aw
+
+        local adminWidget = nil
+        if config.WidgetEnabled ~= false then
+            local widgetConfig = type(config.Widget) == "table" and config.Widget or {}
+            widgetConfig.LogsWindow = aw
+            adminWidget = self:CreateAdminPresenceWidget(widgetConfig)
+            if adminWidget and adminWidget.SetLogsWindow then
+                adminWidget:SetLogsWindow(aw)
+            end
+        end
 
         local ownedConns = {}
         local ownedThreads = {}
@@ -5887,10 +6878,16 @@ function MIDNIGHT:MakeWindow(config)
         local function canUseWindow()
             return aw and aw.IsAlive and aw:IsAlive()
         end
+        local function canUseWidget()
+            return adminWidget and adminWidget.IsAlive and adminWidget:IsAlive()
+        end
 
         aw:OnDestroy(function()
             if self._AdminLogsWindow == aw then
                 self._AdminLogsWindow = nil
+            end
+            if adminWidget and adminWidget.SetLogsWindow then
+                adminWidget:SetLogsWindow(nil)
             end
             for _, conn in ipairs(ownedConns) do
                 SafeDisconnect(conn)
@@ -5907,10 +6904,11 @@ function MIDNIGHT:MakeWindow(config)
         aw._Frame.Visible = false
 
         local logOrder = 0
+        local autoOpenLogs = config.AutoOpenLogs == true
         local function addLog(tag, text, tagColor, textColor, skipAutoOpen)
             if not canUseWindow() then return end
             -- Авто-открытие при первом логе
-            if not skipAutoOpen and not aw._Visible then
+            if autoOpenLogs and not skipAutoOpen and not aw._Visible then
                 aw:Toggle()
             end
             logOrder = logOrder + 1
@@ -5925,6 +6923,23 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         -- Проверка является ли игрок админом
+        local rankColor
+        local function trackWidget(player, rankName, actionText, commandTextValue, options)
+            if not canUseWidget() or not player then return end
+            local okColor, colorValue = pcall(rankColor, player)
+            local badgeColor = okColor and colorValue or Theme.TextAccent
+            pcall(function()
+                adminWidget:TrackAdmin(player, tostring(rankName or "Admin"), badgeColor, actionText, commandTextValue, options)
+            end)
+        end
+
+        local function removeFromWidget(player)
+            if not canUseWidget() or not player then return end
+            pcall(function()
+                adminWidget:RemoveAdmin(player)
+            end)
+        end
+
         local adminCache = {}
         local function isAdmin(player)
             if adminCache[player.UserId] ~= nil then return adminCache[player.UserId], adminCache[player.UserId .. "_rank"] end
@@ -5939,7 +6954,7 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         -- Цвет по рангу
-        local function rankColor(player)
+        rankColor = function(player)
             local ok, rank = pcall(function() return player:GetRankInGroup(groupId) end)
             if not ok then return Theme.TextAccent end
             return rank>=200 and Theme.Error or rank>=100 and Theme.Warning or rank>=50 and Theme.Success or Theme.TextAccent
@@ -5947,6 +6962,8 @@ function MIDNIGHT:MakeWindow(config)
 
         -- Подписка на чат игрока
         local chatConns = {}
+        local teamConns = {}
+        local spawnConns = {}
         local function watchChat(player)
             if chatConns[player.UserId] then return end
             local ok2, admin, rankName = pcall(isAdmin, player)
@@ -5955,25 +6972,52 @@ function MIDNIGHT:MakeWindow(config)
                 if not canUseWindow() then return end
                 local nc = rankColor(player)
                 addLog(player.DisplayName, msg, nc, Theme.TextSecondary)
+                local isCommand = type(msg) == "string" and (msg:sub(1,1) == "!" or msg:sub(1,1) == "/")
+                if isCommand then
+                    trackWidget(player, rankName, "Issued a command in chat", msg, {Focus=false, Reveal=false})
+                else
+                    trackWidget(player, rankName, "Spoke in chat", nil, {Focus=false, Reveal=false})
+                end
             end)
             chatConns[player.UserId] = conn
             bindConn(conn)
         end
 
         -- Подписка на спавн/деспавн
+        local function watchTeam(player)
+            if teamConns[player.UserId] then return end
+            local ok2, admin, rankName = pcall(isAdmin, player)
+            if not (ok2 and admin) then return end
+            local conn = player:GetPropertyChangedSignal("Team"):Connect(function()
+                if not canUseWindow() then return end
+                local teamName = player.Team and player.Team.Name or "No Team"
+                local nc = rankColor(player)
+                addLog(player.DisplayName, "switched team -> "..teamName, nc, Theme.Warning)
+                trackWidget(player, rankName, "Switched team to "..teamName, nil, {Focus=false, Reveal=false})
+            end)
+            teamConns[player.UserId] = conn
+            bindConn(conn)
+        end
+
         local function watchSpawn(player)
+            if spawnConns[player.UserId] then return end
             local ok2, admin, rankName = pcall(isAdmin, player)
             if not (ok2 and admin) then return end
             local nc = rankColor(player)
-            bindConn(player.CharacterAdded:Connect(function()
+            local addedConn = player.CharacterAdded:Connect(function()
                 if not canUseWindow() then return end
                 addLog(player.DisplayName, "spawned ["..tostring(rankName).."]", nc, Theme.Success)
+                trackWidget(player, rankName, "Spawned in the server", nil, {Focus=false, Reveal=false})
                 midnight:Notify({Title="Admin Spawned", Content=player.DisplayName.." ("..tostring(rankName)..")", Type="warning", Duration=6})
-            end))
-            bindConn(player.CharacterRemoving:Connect(function()
+            end)
+            local removingConn = player.CharacterRemoving:Connect(function()
                 if not canUseWindow() then return end
                 addLog(player.DisplayName, "despawned", nc, Theme.TextMuted)
-            end))
+                trackWidget(player, rankName, "Character despawned", nil, {Focus=false, Reveal=false})
+            end)
+            spawnConns[player.UserId] = {addedConn, removingConn}
+            bindConn(addedConn)
+            bindConn(removingConn)
         end
 
         -- Обработка входа игрока
@@ -5992,39 +7036,61 @@ function MIDNIGHT:MakeWindow(config)
                     Duration = 8,
                 })
                 -- Открыть окно автоматически
-                if not aw._Visible then aw:Toggle() end
+                trackWidget(player, rankName, "Joined the server", nil, {Focus=true, Reveal=true})
+                if autoOpenLogs and not aw._Visible then aw:Toggle() end
                 watchChat(player)
+                watchTeam(player)
                 watchSpawn(player)
             end))
         end
 
         -- Обработка выхода
         local function onPlayerRemoving(player)
-            if not canUseWindow() then return end
             local ok2, admin, rankName = pcall(isAdmin, player)
-            if not (ok2 and admin) then return end
-            local nc = rankColor(player)
-            addLog(player.DisplayName, "left ["..tostring(rankName).."]", nc, Theme.Error)
-            midnight:Notify({
-                Title = "Admin Left",
-                Content = player.DisplayName .. " disconnected",
-                Type = "info",
-                Duration = 5,
-            })
+            if ok2 and admin then
+                local nc = rankColor(player)
+                if canUseWindow() then
+                    addLog(player.DisplayName, "left ["..tostring(rankName).."]", nc, Theme.Error)
+                    midnight:Notify({
+                        Title = "Admin Left",
+                        Content = player.DisplayName .. " disconnected",
+                        Type = "info",
+                        Duration = 5,
+                    })
+                end
+                removeFromWidget(player)
+            end
+            SafeDisconnect(chatConns[player.UserId])
             chatConns[player.UserId] = nil
+            SafeDisconnect(teamConns[player.UserId])
+            teamConns[player.UserId] = nil
+            local playerSpawnConns = spawnConns[player.UserId]
+            if playerSpawnConns then
+                for _, conn in ipairs(playerSpawnConns) do
+                    SafeDisconnect(conn)
+                end
+            end
+            spawnConns[player.UserId] = nil
             adminCache[player.UserId] = nil
             adminCache[player.UserId .. "_rank"] = nil
         end
 
         -- Инициализация текущих игроков
         addLog("SYSTEM", "Admin monitor started", Theme.Accent, Theme.TextSecondary, true)
+        local revealedExistingAdmin = false
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
                 local ok2, admin, rankName = pcall(isAdmin, p)
                 if ok2 and admin then
                     local nc = rankColor(p)
                     addLog(p.DisplayName, "online ["..tostring(rankName).."]", nc, Theme.TextAccent, true)
+                    trackWidget(p, rankName, "Already online in the server", nil, {
+                        Focus = not revealedExistingAdmin,
+                        Reveal = not revealedExistingAdmin,
+                    })
+                    revealedExistingAdmin = true
                     watchChat(p)
+                    watchTeam(p)
                     watchSpawn(p)
                 end
             end
@@ -6035,6 +7101,234 @@ function MIDNIGHT:MakeWindow(config)
         return aw
     end
     function wd:CreateAdminChecker(c) return self:CreateAdminLogs(c) end
+
+    function wd:TestAdmin(config)
+        config = config or {}
+        local midnight = MIDNIGHT
+
+        local previous = self._TestAdminState
+        if previous then
+            previous.Token = nil
+            for _, th in ipairs(previous.Threads or {}) do
+                SafeCancelThread(th)
+            end
+            if previous.Widget and previous.Widget.IsAlive and previous.Widget:IsAlive() and previous.Player then
+                pcall(function()
+                    previous.Widget:RemoveAdmin(previous.Player)
+                end)
+            end
+            if previous.OwnedLogs and previous.LogsWindow and previous.LogsWindow.IsAlive and previous.LogsWindow:IsAlive() then
+                pcall(function()
+                    previous.LogsWindow:Destroy()
+                end)
+            end
+            self._TestAdminState = nil
+        end
+
+        local rolePool = config.Roles or {
+            {Name = "Contributor", Color = Theme.TextAccent},
+            {Name = "Moderator", Color = Theme.Success},
+            {Name = "Head Admin", Color = Theme.Warning},
+            {Name = "Lead Developer", Color = Color3.fromRGB(255, 140, 0)},
+            {Name = "Owner", Color = Theme.Error},
+        }
+        local chatPool = config.ChatMessages or {
+            "checking the server",
+            "all good here",
+            "anyone calling staff?",
+            "watching reports",
+            "keep it clean",
+        }
+        local commandPool = config.Commands or {
+            "!spectate "..string.lower(LocalPlayer and LocalPlayer.Name or "player"),
+            "!bring "..string.lower(LocalPlayer and LocalPlayer.Name or "player"),
+            "!logs recent",
+            "/check suspicious_player",
+            "/warn random_player",
+        }
+        local teamPool = config.Teams or {
+            "Spectators",
+            "Rapid Response Team",
+            "Site Staff",
+            "Control Room",
+        }
+
+        local function normalizeRole(roleData)
+            if type(roleData) == "string" then
+                return {Name = roleData, Color = Theme.TextAccent}
+            end
+            roleData = type(roleData) == "table" and roleData or {}
+            return {
+                Name = tostring(roleData.Name or roleData.Role or roleData.rank or "Admin"),
+                Color = roleData.Color or roleData.rankColor or Theme.TextAccent,
+            }
+        end
+
+        local function collectCandidates(skipTracked)
+            local tracked = self._AdminPresenceWidget and self._AdminPresenceWidget._AdminMap or nil
+            local pool = {}
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if (config.IncludeLocalPlayer or plr ~= LocalPlayer)
+                and (not skipTracked or not (tracked and tracked[plr.UserId])) then
+                    pool[#pool + 1] = plr
+                end
+            end
+            return pool
+        end
+
+        local target = config.Player
+        if not target then
+            local candidates = collectCandidates(true)
+            if #candidates == 0 then
+                candidates = collectCandidates(false)
+            end
+            if #candidates == 0 and LocalPlayer then
+                candidates = {LocalPlayer}
+            end
+            if #candidates > 0 then
+                target = candidates[math.random(1, #candidates)]
+            end
+        end
+
+        if not target then
+            midnight:Notify({
+                Title = "Admin Test",
+                Content = "No players available for the preview",
+                Type = "warning",
+                Duration = 4,
+            })
+            return nil
+        end
+
+        local role = normalizeRole(rolePool[math.random(1, #rolePool)])
+        local displayName = tostring(target.DisplayName or target.Name or "Unknown")
+
+        local logsWindow = config.LogsWindow
+        local ownedLogs = false
+        if config.WithLogs ~= false then
+            local alive = logsWindow and logsWindow.IsAlive and logsWindow:IsAlive()
+            if not alive then
+                logsWindow = self:MakeFloatingWindow({
+                    Name = "Admin Logs [TEST]",
+                    Size = {320, 360},
+                    Resizable = true,
+                })
+                ownedLogs = logsWindow ~= nil
+            end
+        end
+
+        local widgetConfig = type(config.Widget) == "table" and config.Widget or {}
+        widgetConfig.LogsWindow = logsWindow
+        local widget = self:CreateAdminPresenceWidget(widgetConfig)
+        if not widget then return nil end
+        if logsWindow and widget.SetLogsWindow then
+            widget:SetLogsWindow(logsWindow)
+        end
+
+        local state = {
+            Token = os.clock(),
+            Player = target,
+            Widget = widget,
+            LogsWindow = logsWindow,
+            OwnedLogs = ownedLogs,
+            Threads = {},
+        }
+        self._TestAdminState = state
+
+        local function addLog(tag, text, tagColor, textColor)
+            if not (logsWindow and logsWindow.IsAlive and logsWindow:IsAlive()) then return end
+            local time = os.date("%H:%M:%S")
+            logsWindow:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
+            task.defer(function()
+                if logsWindow._Scroll and logsWindow._Scroll.Parent then
+                    logsWindow._Scroll.CanvasPosition = Vector2.new(0, logsWindow._Scroll.AbsoluteCanvasSize.Y)
+                end
+            end)
+        end
+
+        local function queue(delaySec, fn)
+            local token = state.Token
+            local th = task.delay(delaySec, function()
+                local current = self._TestAdminState
+                if not current or current.Token ~= token then return end
+                if not (widget and widget.IsAlive and widget:IsAlive()) then return end
+                fn()
+            end)
+            state.Threads[#state.Threads + 1] = th
+            return th
+        end
+
+        local function updateAdmin(actionText, commandText, opts)
+            widget:TrackAdmin(target, role.Name, role.Color, actionText, commandText, opts or {
+                Focus = true,
+                Reveal = false,
+            })
+        end
+
+        updateAdmin("Joined the server", nil, {Focus = true, Reveal = true})
+        addLog(displayName, "joined ["..role.Name.."]", role.Color, Theme.Warning)
+        midnight:Notify({
+            Title = "Admin Joined [TEST]",
+            Content = displayName .. " - " .. role.Name,
+            Type = "warning",
+            Duration = 6,
+        })
+
+        if config.AutoOpenLogs == true and logsWindow and not logsWindow._Visible then
+            logsWindow:Toggle()
+        end
+
+        queue(1.5, function()
+            local teamName = teamPool[math.random(1, #teamPool)] or "Spectators"
+            updateAdmin("Switched team to "..teamName, nil, {Focus = true, Reveal = false})
+            addLog(displayName, "switched team -> "..teamName, role.Color, Theme.Warning)
+            midnight:Notify({
+                Title = "Team Switch [TEST]",
+                Content = displayName .. " -> " .. teamName,
+                Type = "warning",
+                Duration = 4,
+            })
+        end)
+
+        queue(3.2, function()
+            local msg = chatPool[math.random(1, #chatPool)] or "checking the server"
+            updateAdmin("Spoke in chat", nil, {Focus = true, Reveal = false})
+            addLog(displayName, msg, role.Color, Theme.TextSecondary)
+            midnight:Notify({
+                Title = "Admin Chat [TEST]",
+                Content = displayName .. ": " .. msg,
+                Type = "info",
+                Duration = 4,
+            })
+        end)
+
+        queue(5.0, function()
+            local cmd = commandPool[math.random(1, #commandPool)] or "!spectate player"
+            updateAdmin("Issued a command in chat", cmd, {Focus = true, Reveal = false})
+            addLog(displayName, cmd, role.Color, Theme.Warning)
+            midnight:Notify({
+                Title = "Admin Command [TEST]",
+                Content = displayName .. " used " .. cmd,
+                Type = "warning",
+                Duration = 5,
+            })
+        end)
+
+        if config.AutoRemove == true then
+            queue(8.0, function()
+                addLog(displayName, "left ["..role.Name.."]", role.Color, Theme.Error)
+                midnight:Notify({
+                    Title = "Admin Left [TEST]",
+                    Content = displayName .. " disconnected",
+                    Type = "info",
+                    Duration = 4,
+                })
+                widget:RemoveAdmin(target)
+            end)
+        end
+
+        return widget
+    end
 
     function wd:TestAdminLogs()
         local midnight = MIDNIGHT
