@@ -5866,8 +5866,8 @@ function MIDNIGHT:MakeWindow(config)
         config = config or {}
         MIDNIGHT:_InitScreenGui()
 
-        local widgetW = math.max(292, math.floor(tonumber(config.Width) or 304))
-        local widgetH = math.max(244, math.floor(tonumber(config.Height) or 254))
+        local widgetW = math.max(340, math.floor(tonumber(config.Width) or 360))
+        local widgetH = math.max(320, math.floor(tonumber(config.Height) or 336))
         local marginX = math.floor(tonumber(config.MarginX) or 18)
         local marginY = math.floor(tonumber(config.MarginY) or 76)
         local shownPos = UDim2.new(1, -marginX, 0, marginY)
@@ -5914,7 +5914,7 @@ function MIDNIGHT:MakeWindow(config)
         ApplyCorner(tint, 8)
 
         local header = Create("Frame",{
-            Size=UDim2.new(1,0,0,26),
+            Size=UDim2.new(1,0,0,32),
             BackgroundColor3=Theme.TitleBarBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -5942,11 +5942,11 @@ function MIDNIGHT:MakeWindow(config)
         local headerTitle = Create("TextLabel",{
             Text="Admin Presence",
             Font=FontBold,
-            TextSize=10,
+            TextSize=12,
             TextColor3=Theme.TextPrimary,
             TextTransparency=1,
             Size=UDim2.new(1,-44,1,0),
-            Position=UDim2.new(0,10,0,0),
+            Position=UDim2.new(0,12,0,0),
             TextXAlignment=Enum.TextXAlignment.Left,
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
@@ -5955,8 +5955,8 @@ function MIDNIGHT:MakeWindow(config)
 
         local closeBtn = Create("TextButton",{
             Text="",
-            Size=UDim2.new(0,18,0,14),
-            Position=UDim2.new(1,-22,0,6),
+            Size=UDim2.new(0,20,0,16),
+            Position=UDim2.new(1,-24,0,8),
             BackgroundColor3=Theme.InputBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -5966,7 +5966,7 @@ function MIDNIGHT:MakeWindow(config)
         })
         ApplyCorner(closeBtn,4)
         local closeStroke = ApplyStroke(closeBtn, Theme.Border, 1, 1)
-        local closeIcon = CreateIconOrText(closeBtn,"x",nil,UDim2.new(0,8,0,8),UDim2.new(0.5,-4,0.5,-4),Theme.TextMuted,FontBold,8)
+        local closeIcon = CreateIconOrText(closeBtn,"x",nil,UDim2.new(0,10,0,10),UDim2.new(0.5,-5,0.5,-5),Theme.TextMuted,FontBold,9)
         if closeIcon and closeIcon:IsA("TextLabel") then
             closeIcon.TextXAlignment = Enum.TextXAlignment.Center
             closeIcon.TextYAlignment = Enum.TextYAlignment.Center
@@ -5976,22 +5976,22 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local body = Create("Frame",{
-            Size=UDim2.new(1,-16,1,-38),
-            Position=UDim2.new(0,8,0,30),
+            Size=UDim2.new(1,-16,1,-48),
+            Position=UDim2.new(0,8,0,36),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+1,
             Parent=wf,
         })
 
         local avatarWrap = Create("Frame",{
-            Size=UDim2.new(0,48,0,48),
+            Size=UDim2.new(0,56,0,56),
             Position=UDim2.new(0,0,0,0),
             BackgroundColor3=Theme.InputBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
             Parent=body,
         })
-        ApplyCorner(avatarWrap,6)
+        ApplyCorner(avatarWrap,8)
         local avatarStroke = ApplyStroke(avatarWrap, Theme.BorderLight, 1, 1)
         local avatarImg = Create("ImageLabel",{
             Size=UDim2.new(1,0,1,0),
@@ -6001,12 +6001,12 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=wf.ZIndex+3,
             Parent=avatarWrap,
         })
-        ApplyCorner(avatarImg,5)
-        local avatarFallback = CreateIconOrText(avatarWrap,"shield",nil,UDim2.new(0,18,0,18),UDim2.new(0.5,-9,0.5,-9),Theme.TextMuted,FontBold,14)
+        ApplyCorner(avatarImg,7)
+        local avatarFallback = CreateIconOrText(avatarWrap,"shield",nil,UDim2.new(0,22,0,22),UDim2.new(0.5,-11,0.5,-11),Theme.TextMuted,FontBold,16)
 
         local countBadge = Create("Frame",{
-            Size=UDim2.new(0,34,0,16),
-            Position=UDim2.new(1,-34,0,0),
+            Size=UDim2.new(0,40,0,18),
+            Position=UDim2.new(1,-40,0,0),
             BackgroundColor3=Theme.InputBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
@@ -6017,7 +6017,7 @@ function MIDNIGHT:MakeWindow(config)
         local countLabel = Create("TextLabel",{
             Text="1 / 1",
             Font=FontBold,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.TextMuted,
             Size=UDim2.new(1,0,1,0),
             BackgroundTransparency=1,
@@ -6028,13 +6028,13 @@ function MIDNIGHT:MakeWindow(config)
         local nameLabel = Create("TextLabel",{
             Text="No admins detected",
             Font=FontBold,
-            TextSize=12,
+            TextSize=14,
             TextColor3=Theme.TextPrimary,
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-94,0,16),
-            Position=UDim2.new(0,58,0,0),
+            Size=UDim2.new(1,-108,0,18),
+            Position=UDim2.new(0,66,0,0),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
@@ -6042,11 +6042,11 @@ function MIDNIGHT:MakeWindow(config)
         local handleLabel = Create("TextLabel",{
             Text="@waiting",
             Font=FontRegular,
-            TextSize=9,
+            TextSize=11,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-94,0,12),
-            Position=UDim2.new(0,58,0,17),
+            Size=UDim2.new(1,-108,0,13),
+            Position=UDim2.new(0,66,0,20),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
@@ -6054,32 +6054,32 @@ function MIDNIGHT:MakeWindow(config)
         local metaLabel = Create("TextLabel",{
             Text="Waiting for the first admin event",
             Font=FontRegular,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-94,0,11),
-            Position=UDim2.new(0,58,0,30),
+            Size=UDim2.new(1,-108,0,12),
+            Position=UDim2.new(0,66,0,35),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
         })
 
         local roleBadge = Create("Frame",{
-            Size=UDim2.new(0,0,0,16),
+            Size=UDim2.new(0,0,0,18),
             AutomaticSize=Enum.AutomaticSize.X,
-            Position=UDim2.new(0,58,0,42),
+            Position=UDim2.new(0,66,0,50),
             BackgroundColor3=AccentTint(Theme.Accent,0.14),
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
             Parent=body,
         })
         ApplyCorner(roleBadge,8)
-        ApplyPadding(roleBadge,0,0,7,7)
+        ApplyPadding(roleBadge,0,0,8,8)
         local roleStroke = ApplyStroke(roleBadge, Theme.Accent, 1, 1)
         local roleLabel = Create("TextLabel",{
             Text="Observer",
             Font=FontBold,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.TextAccent,
             Size=UDim2.new(0,0,1,0),
             AutomaticSize=Enum.AutomaticSize.X,
@@ -6089,21 +6089,21 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         local stateBadge = Create("Frame",{
-            Size=UDim2.new(0,0,0,16),
+            Size=UDim2.new(0,0,0,18),
             AutomaticSize=Enum.AutomaticSize.X,
-            Position=UDim2.new(1,-74,0,42),
+            Position=UDim2.new(1,-82,0,50),
             BackgroundColor3=AccentTint(Theme.Success,0.12),
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
             Parent=body,
         })
         ApplyCorner(stateBadge,8)
-        ApplyPadding(stateBadge,0,0,7,7)
+        ApplyPadding(stateBadge,0,0,8,8)
         local stateStroke = ApplyStroke(stateBadge, Theme.Success, 1, 1)
         local stateLabel = Create("TextLabel",{
             Text="ONLINE",
             Font=FontBold,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.Success,
             Size=UDim2.new(0,0,1,0),
             AutomaticSize=Enum.AutomaticSize.X,
@@ -6113,23 +6113,23 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         local statusCard = Create("Frame",{
-            Size=UDim2.new(1,0,0,50),
-            Position=UDim2.new(0,0,0,64),
+            Size=UDim2.new(1,0,0,58),
+            Position=UDim2.new(0,0,0,78),
             BackgroundColor3=Theme.ItemBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
-        ApplyCorner(statusCard,6)
+        ApplyCorner(statusCard,7)
         local statusStroke = ApplyStroke(statusCard, Theme.Border, 1, 1)
         local statusHead = Create("TextLabel",{
             Text="LAST ACTION",
             Font=FontBold,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-12,0,10),
-            Position=UDim2.new(0,6,0,6),
+            Size=UDim2.new(1,-14,0,12),
+            Position=UDim2.new(0,7,0,7),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=statusCard,
@@ -6137,36 +6137,36 @@ function MIDNIGHT:MakeWindow(config)
         local statusText = Create("TextLabel",{
             Text="Waiting for activity",
             Font=FontRegular,
-            TextSize=9,
+            TextSize=10,
             TextColor3=Theme.TextSecondary,
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-12,0,28),
-            Position=UDim2.new(0,6,0,18),
+            Size=UDim2.new(1,-14,0,34),
+            Position=UDim2.new(0,7,0,21),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=statusCard,
         })
 
         local commandCard = Create("Frame",{
-            Size=UDim2.new(1,0,0,46),
-            Position=UDim2.new(0,0,0,120),
+            Size=UDim2.new(1,0,0,54),
+            Position=UDim2.new(0,0,0,142),
             BackgroundColor3=Theme.ItemBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
-        ApplyCorner(commandCard,6)
+        ApplyCorner(commandCard,7)
         local commandStroke = ApplyStroke(commandCard, Theme.Border, 1, 1)
         local commandHead = Create("TextLabel",{
             Text="LAST COMMAND",
             Font=FontBold,
-            TextSize=8,
+            TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-12,0,10),
-            Position=UDim2.new(0,6,0,6),
+            Size=UDim2.new(1,-14,0,12),
+            Position=UDim2.new(0,7,0,7),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=commandCard,
@@ -6174,21 +6174,21 @@ function MIDNIGHT:MakeWindow(config)
         local commandText = Create("TextLabel",{
             Text="No commands captured yet",
             Font=FontRegular,
-            TextSize=9,
+            TextSize=10,
             TextColor3=Theme.TextSecondary,
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-12,0,24),
-            Position=UDim2.new(0,6,0,18),
+            Size=UDim2.new(1,-14,0,30),
+            Position=UDim2.new(0,7,0,21),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=commandCard,
         })
 
         local confirmBar = Create("Frame",{
-            Size=UDim2.new(1,0,0,24),
-            Position=UDim2.new(0,0,0,172),
+            Size=UDim2.new(1,0,0,28),
+            Position=UDim2.new(0,0,0,202),
             BackgroundColor3=Theme.InputBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -6201,11 +6201,11 @@ function MIDNIGHT:MakeWindow(config)
         local confirmLabel = Create("TextLabel",{
             Text="Teleport to admin?",
             Font=FontRegular,
-            TextSize=9,
+            TextSize=10,
             TextColor3=Theme.TextSecondary,
             TextTransparency=1,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-90,1,0),
+            Size=UDim2.new(1,-102,1,0),
             Position=UDim2.new(0,8,0,0),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
@@ -6214,11 +6214,11 @@ function MIDNIGHT:MakeWindow(config)
         local confirmYes = Create("TextButton",{
             Text="Yes",
             Font=FontBold,
-            TextSize=9,
+            TextSize=10,
             TextColor3=Theme.TextPrimary,
             TextTransparency=1,
-            Size=UDim2.new(0,34,0,16),
-            Position=UDim2.new(1,-74,0.5,-8),
+            Size=UDim2.new(0,40,0,18),
+            Position=UDim2.new(1,-82,0.5,-9),
             BackgroundColor3=Theme.Accent,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -6230,11 +6230,11 @@ function MIDNIGHT:MakeWindow(config)
         local confirmNo = Create("TextButton",{
             Text="No",
             Font=FontBold,
-            TextSize=9,
+            TextSize=10,
             TextColor3=Theme.TextSecondary,
             TextTransparency=1,
-            Size=UDim2.new(0,30,0,16),
-            Position=UDim2.new(1,-36,0.5,-8),
+            Size=UDim2.new(0,36,0,18),
+            Position=UDim2.new(1,-38,0.5,-9),
             BackgroundColor3=Theme.WindowBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -6246,14 +6246,14 @@ function MIDNIGHT:MakeWindow(config)
         local confirmNoStroke = ApplyStroke(confirmNo, Theme.Border, 1, 1)
 
         local buttonGrid = Create("Frame",{
-            Size=UDim2.new(1,0,0,50),
-            Position=UDim2.new(0,0,0,202),
+            Size=UDim2.new(1,0,0,52),
+            Position=UDim2.new(0,0,0,236),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
         Create("UIGridLayout",{
-            CellSize=UDim2.new(0,(widgetW-16-8)/3,0,24),
+            CellSize=UDim2.new(0,(widgetW-16-8)/3,0,26),
             CellPadding=UDim2.new(0,4,0,4),
             FillDirectionMaxCells=3,
             SortOrder=Enum.SortOrder.LayoutOrder,
@@ -6263,7 +6263,7 @@ function MIDNIGHT:MakeWindow(config)
         local function makeActionButton(text, order)
             local btn = Create("TextButton",{
                 Text="",
-                Size=UDim2.new(0,0,0,24),
+                Size=UDim2.new(0,0,0,26),
                 BackgroundColor3=Theme.ItemBg,
                 BorderSizePixel=0,
                 LayoutOrder=order,
@@ -6276,7 +6276,7 @@ function MIDNIGHT:MakeWindow(config)
             local lbl = Create("TextLabel",{
                 Text=text,
                 Font=FontBold,
-                TextSize=9,
+                TextSize=10,
                 TextColor3=Theme.TextPrimary,
                 Size=UDim2.new(1,-8,1,0),
                 Position=UDim2.new(0,4,0,0),
