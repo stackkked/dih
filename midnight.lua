@@ -330,8 +330,8 @@ local function ApplyPadding(parent, top, bottom, left, right)
     })
 end
 
--- #2 OPT: Cancel previous tween on same instance before playing new one
--- prevents competing tweens on hover in/out
+-- #2 OPT: cancel only overlapping property tweens on the same instance
+-- so background/text/scale can animate together without fighting each other
 local _ActiveTweens = setmetatable({}, {__mode="k"})  -- weak keys: dead instances are GC'd
 local _TweenInfoCache = {}
 local function GetTweenInfo(duration, style, dir)
@@ -349,37 +349,64 @@ local function GetTweenInfo(duration, style, dir)
     return ti
 end
 
+local function CleanupTweenEntry(inst, tweenEntry)
+    local instTweens = _ActiveTweens[inst]
+    if not instTweens or not tweenEntry then return end
+    for prop in pairs(tweenEntry._Props or {}) do
+        if instTweens[prop] == tweenEntry then
+            instTweens[prop] = nil
+        end
+    end
+    if next(instTweens) == nil then
+        _ActiveTweens[inst] = nil
+    end
+end
+
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
     if not props or next(props) == nil then return nil end
+    local tweenProps = {}
     local needsTween = false
     for prop, targetValue in pairs(props) do
         local ok, currentValue = pcall(function()
             return inst[prop]
         end)
         if ok and currentValue ~= targetValue then
+            tweenProps[prop] = targetValue
             needsTween = true
-            break
         end
     end
     if not needsTween then return nil end
-    local prev = _ActiveTweens[inst]
-    if prev then prev:Cancel() end
-    local t = TweenService:Create(inst, GetTweenInfo(duration, style, dir), props)
+    local instTweens = _ActiveTweens[inst]
+    if not instTweens then
+        instTweens = {}
+        _ActiveTweens[inst] = instTweens
+    end
+    local canceled = {}
+    for prop in pairs(tweenProps) do
+        local prev = instTweens[prop]
+        if prev and prev._Tween and not canceled[prev] then
+            canceled[prev] = true
+            prev._Tween:Cancel()
+            CleanupTweenEntry(inst, prev)
+        end
+    end
+    local t = TweenService:Create(inst, GetTweenInfo(duration, style, dir), tweenProps)
     if t then
-        _ActiveTweens[inst] = t
+        local tweenEntry = {_Tween = t, _Props = {}}
+        for prop in pairs(tweenProps) do
+            tweenEntry._Props[prop] = true
+            instTweens[prop] = tweenEntry
+        end
         t:Play()
-        -- FIX #1: disconnect the Completed connection immediately after firing
-        -- to prevent accumulation of dead connections on long-lived instances.
-        -- Use Once() if available (cleaner), otherwise manual disconnect.
         if t.Completed.Once then
             t.Completed:Once(function()
-                if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
+                CleanupTweenEntry(inst, tweenEntry)
             end)
         else
             local _c
             _c = t.Completed:Connect(function()
-                if _ActiveTweens[inst] == t then _ActiveTweens[inst] = nil end
+                CleanupTweenEntry(inst, tweenEntry)
                 _c:Disconnect()
             end)
         end
@@ -496,8 +523,18 @@ local function MakeDraggable(frame, handle, onDragStart)
 end
 
 -- Hover: subtle left border + bg change
-local function ApplyHoverEffect(frame, normalBg, hoverBg, withBorder)
+local function ResolveStateValue(value, frame)
+    if type(value) == "function" then
+        local ok, resolved = pcall(value, frame)
+        if ok then return resolved end
+        return nil
+    end
+    return value
+end
+
+local function ApplyHoverEffect(frame, normalBg, hoverBg, withBorder, opts)
     if not frame then return end
+    opts = type(opts) == "table" and opts or nil
     local borderLine
     if withBorder then
         borderLine = Create("Frame", {
@@ -511,14 +548,46 @@ local function ApplyHoverEffect(frame, normalBg, hoverBg, withBorder)
         })
         ApplyCorner(borderLine, 1)
     end
-    -- #3 OPT: register hover connections for proper Destroy() cleanup
+    local function getNormalBg()
+        return ResolveStateValue(opts and opts.GetNormalBg or normalBg, frame)
+    end
+    local function getHoverBg()
+        return ResolveStateValue(opts and opts.GetHoverBg or hoverBg, frame)
+    end
+    local function getBorderTransparency(isHover)
+        if opts and opts.GetBorderTransparency then
+            local value = opts.GetBorderTransparency(isHover, frame)
+            if type(value) == "number" then
+                return math.clamp(value, 0, 1)
+            end
+        end
+        return isHover and 0 or 1
+    end
+    local enterDur = opts and opts.EnterDuration or 0.18
+    local leaveDur = opts and opts.LeaveDuration or 0.18
     RegConn(frame.MouseEnter:Connect(function()
-        TweenObject(frame, {BackgroundColor3 = hoverBg}, 0.18)
-        if borderLine then TweenObject(borderLine, {BackgroundTransparency = 0}, 0.18) end
+        local bg = getHoverBg()
+        if bg then
+            TweenObject(frame, {BackgroundColor3 = bg}, enterDur)
+        end
+        if borderLine then
+            TweenObject(borderLine, {BackgroundTransparency = getBorderTransparency(true)}, enterDur)
+        end
+        if opts and opts.OnEnter then
+            opts.OnEnter(frame, borderLine)
+        end
     end))
     RegConn(frame.MouseLeave:Connect(function()
-        TweenObject(frame, {BackgroundColor3 = normalBg}, 0.18)
-        if borderLine then TweenObject(borderLine, {BackgroundTransparency = 1}, 0.18) end
+        local bg = getNormalBg()
+        if bg then
+            TweenObject(frame, {BackgroundColor3 = bg}, leaveDur)
+        end
+        if borderLine then
+            TweenObject(borderLine, {BackgroundTransparency = getBorderTransparency(false)}, leaveDur)
+        end
+        if opts and opts.OnLeave then
+            opts.OnLeave(frame, borderLine)
+        end
     end))
 end
 
@@ -950,6 +1019,7 @@ local MIDNIGHT = {
     _Connections = {},   -- ALL connections stored here for Destroy()
 
     _NotificationPosition = "TopRight",
+    _NotificationMaxStack = 5,
     _MenuKey    = Enum.KeyCode.RightShift,
     _MenuKeyStr = "RShift",
     _MenuOpen   = false,
@@ -2519,7 +2589,6 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     -- Hover: подсвечиваем dots при наведении на handle
     dragHandle.MouseEnter:Connect(function()
-        TweenObject(gripDots, {}, 0.12)
         for _, dot in ipairs(gripDots:GetChildren()) do
             if dot:IsA("Frame") then
                 TweenObject(dot, {BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0}, 0.12)
@@ -2849,6 +2918,54 @@ function MIDNIGHT:_RepositionNotifications()
     end
 end
 
+function MIDNIGHT:_RemoveNotificationEntry(target)
+    for i, n in ipairs(self._Notifications) do
+        if n == target then
+            table.remove(self._Notifications, i)
+            return true
+        end
+    end
+    return false
+end
+
+function MIDNIGHT:_FindDuplicateNotification(title, contentText, notifType)
+    for i = #self._Notifications, 1, -1 do
+        local n = self._Notifications[i]
+        if n
+        and not n._Dismissed
+        and n._Frame and n._Frame.Parent
+        and n._Title == title
+        and n._Content == contentText
+        and n._Type == notifType then
+            return n
+        end
+    end
+    return nil
+end
+
+function MIDNIGHT:_TrimNotifications(maxCount)
+    local limit = math.max(1, math.floor(tonumber(maxCount) or self._NotificationMaxStack or 5))
+    while true do
+        local liveCount = 0
+        local oldestLive = nil
+        for _, n in ipairs(self._Notifications) do
+            if n and not n._Dismissed and n._Frame and n._Frame.Parent then
+                liveCount = liveCount + 1
+                if not oldestLive then oldestLive = n end
+            end
+        end
+        if liveCount < limit or not oldestLive then
+            break
+        end
+        if oldestLive.Dismiss then
+            oldestLive:Dismiss(true)
+        else
+            pcall(function() oldestLive._Frame:Destroy() end)
+            self:_RemoveNotificationEntry(oldestLive)
+        end
+    end
+end
+
 function MIDNIGHT:_LegacyNotify(config)
     config = config or {}
     local title       = config.Title    or "MIDNIGHT"
@@ -2995,6 +3112,12 @@ function MIDNIGHT:Notify(config)
     local typeLabels = {success="SUCCESS",warning="WARNING",error="ERROR",info="INFO"}
     local typeColor  = typeColors[notifType] or Theme.Info
     local iconName   = notifType=="success" and "check" or notifType=="error" and "x" or notifType=="warning" and "alert-triangle" or "info"
+    local duplicate = self:_FindDuplicateNotification(title, contentText, notifType)
+    if duplicate and duplicate._RefreshDuplicate then
+        duplicate:_RefreshDuplicate()
+        return duplicate
+    end
+    self:_TrimNotifications(self._NotificationMaxStack)
 
     local iconSize  = 40
     local leftPad   = 14
@@ -3079,6 +3202,33 @@ function MIDNIGHT:Notify(config)
     elseif iconEl and iconEl:IsA("ImageLabel") then
         iconEl.ImageTransparency = 1
     end
+
+    local countBadge = Create("Frame",{
+        Size=UDim2.new(0,18,0,18),
+        Position=UDim2.new(1,4,0,-6),
+        AnchorPoint=Vector2.new(1,0),
+        BackgroundColor3=typeColor,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        Visible=false,
+        ZIndex=ZIndex.NOTIFY+4,
+        Parent=iconBg,
+    })
+    ApplyCorner(countBadge,9)
+    local countScale = Create("UIScale",{Scale=0.8,Parent=countBadge})
+    local countStroke = ApplyStroke(countBadge, Theme.WindowBg, 1, 1)
+    if countStroke then countStroke.Transparency = 1 end
+    local countLabel = Create("TextLabel",{
+        Text="2",
+        Font=FontBold,
+        TextSize=9,
+        TextColor3=Color3.fromRGB(255,255,255),
+        TextTransparency=1,
+        Size=UDim2.new(1,0,1,0),
+        BackgroundTransparency=1,
+        ZIndex=ZIndex.NOTIFY+5,
+        Parent=countBadge,
+    })
 
     local typeBadge = Create("Frame",{
         Size=UDim2.new(0,0,0,badgeH),
@@ -3183,8 +3333,20 @@ function MIDNIGHT:Notify(config)
         _ExpectedWidth=width,
         _ExpectedHeight=cardH,
         _Gap=10,
+        _Title=title,
+        _Content=contentText,
+        _Type=notifType,
+        _Count=1,
+        _Elapsed=0,
+        _Paused=false,
+        _Hovered=false,
+        _Dismissed=false,
     }
     table.insert(self._Notifications, nd)
+
+    local function getCountText(count)
+        return count > 99 and "99+" or tostring(count)
+    end
 
     local function tweenVisualTransparency(inst, value, dur)
         if not inst then return end
@@ -3196,10 +3358,138 @@ function MIDNIGHT:Notify(config)
     end
 
     local dismissed = false
-    local function dismiss()
+    local dismissThread = nil
+    local progressTween = nil
+    local dismiss
+
+    local function cancelDismissThread()
+        if dismissThread and typeof(dismissThread) == "thread" then
+            pcall(function() task.cancel(dismissThread) end)
+        end
+        dismissThread = nil
+    end
+
+    local function cancelProgressTween()
+        if progressTween then
+            progressTween:Cancel()
+            progressTween = nil
+        end
+    end
+
+    local function updateCountBadge(pulse)
+        if nd._Count <= 1 then return end
+        countLabel.Text = getCountText(nd._Count)
+        if not countBadge.Visible then
+            countBadge.Visible = true
+            countScale.Scale = 0.72
+            TweenObject(countBadge,{BackgroundTransparency=0.02},0.16)
+            if countStroke then TweenObject(countStroke,{Transparency=0.3},0.16) end
+            TweenObject(countScale,{Scale=1},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            TweenObject(countLabel,{TextTransparency=0},0.16)
+        elseif pulse then
+            countScale.Scale = 0.84
+            TweenObject(countScale,{Scale=1},0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            TweenObject(countBadge,{BackgroundColor3=LightenColor(typeColor,8)},0.08)
+            task.delay(0.09,function()
+                if not dismissed and countBadge.Parent then
+                    TweenObject(countBadge,{BackgroundColor3=typeColor},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                end
+            end)
+        end
+    end
+
+    local function applyNotifHoverState(isHover)
+        if nfStroke then
+            TweenObject(nfStroke,{
+                Color = isHover and LightenColor(typeColor,10) or Theme.Border,
+                Transparency = isHover and 0.04 or 0.12
+            }, isHover and 0.16 or 0.18)
+        end
+        TweenObject(tintOverlay,{BackgroundTransparency=isHover and 0.18 or 0.32},isHover and 0.16 or 0.18)
+        TweenObject(iconBg,{BackgroundTransparency=isHover and 0.02 or 0.08},isHover and 0.16 or 0.18)
+    end
+
+    local function startLifetime(remaining)
+        if dismissed then return end
+        cancelDismissThread()
+        cancelProgressTween()
+        remaining = math.max(0.05, remaining or (duration - nd._Elapsed))
+        nd._Paused = false
+        nd._StartTime = tick()
+        progressTween = TweenObject(pFill,{Size=UDim2.new(0,0,1,0)},remaining,Enum.EasingStyle.Linear)
+        dismissThread = task.delay(remaining, function()
+            dismiss(false)
+        end)
+    end
+
+    local function pauseLifetime()
+        if dismissed or nd._Paused then return end
+        if nd._StartTime then
+            nd._Elapsed = math.min(duration, nd._Elapsed + math.max(0, tick() - nd._StartTime))
+        end
+        nd._StartTime = nil
+        nd._Paused = true
+        cancelDismissThread()
+        cancelProgressTween()
+    end
+
+    local function resetLifetime()
+        nd._Elapsed = 0
+        nd._StartTime = nil
+        cancelDismissThread()
+        cancelProgressTween()
+        pFill.Size = UDim2.new(1,0,1,0)
+        pFill.BackgroundTransparency = 0
+        if nd._Hovered then
+            nd._Paused = true
+        else
+            startLifetime(duration)
+        end
+    end
+
+    local function pulseNotification()
+        if dismissed then return end
+        TweenObject(nfScale,{Scale=1.03},0.12,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+        task.delay(0.13,function()
+            if not dismissed and nfScale.Parent then
+                TweenObject(nfScale,{Scale=1},0.24,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            end
+        end)
+        if shadow then
+            TweenObject(shadow,{ImageTransparency=0.48},0.12)
+            task.delay(0.13,function()
+                if not dismissed and shadow.Parent then
+                    TweenObject(shadow,{ImageTransparency=0.56},0.22)
+                end
+            end)
+        end
+        applyNotifHoverState(true)
+        task.delay(0.15,function()
+            if not dismissed and nf.Parent then
+                applyNotifHoverState(nd._Hovered)
+            end
+        end)
+    end
+
+    local function finalizeDismiss()
+        cancelDismissThread()
+        cancelProgressTween()
+        nd._Dismissed = true
+        pcall(function() nf:Destroy() end)
+        self:_RemoveNotificationEntry(nd)
+        self:_RepositionNotifications()
+    end
+
+    dismiss = function(immediate)
         if dismissed then return end
         dismissed = true
-        if not nf or not nf.Parent then return end
+        nd._Dismissed = true
+        cancelDismissThread()
+        cancelProgressTween()
+        if immediate or not nf or not nf.Parent then
+            finalizeDismiss()
+            return
+        end
         local slideOut = self:_GetNotifSlideOffset(self._NotificationPosition)
         TweenObject(nf,{Position=nf.Position+slideOut, BackgroundTransparency=1},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
         TweenObject(nfScale,{Scale=0.92},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
@@ -3216,22 +3506,29 @@ function MIDNIGHT:Notify(config)
         if closeStroke then TweenObject(closeStroke,{Transparency=1},0.18) end
         TweenObject(pBg,{BackgroundTransparency=1},0.18)
         TweenObject(pFill,{BackgroundTransparency=1},0.18)
+        TweenObject(countBadge,{BackgroundTransparency=1},0.16)
+        if countStroke then TweenObject(countStroke,{Transparency=1},0.16) end
         tweenVisualTransparency(iconEl, 1, 0.16)
         tweenVisualTransparency(closeIcon, 1, 0.16)
         tweenVisualTransparency(typeLabel, 1, 0.16)
+        TweenObject(countLabel,{TextTransparency=1},0.16)
         TweenObject(titleLabel,{TextTransparency=1},0.16)
         TweenObject(contentLabel,{TextTransparency=1},0.16)
         task.delay(0.26,function()
-            pcall(function() nf:Destroy() end)
-            for i, n in ipairs(self._Notifications) do
-                if n==nd then table.remove(self._Notifications,i); break end
-            end
-            self:_RepositionNotifications()
+            finalizeDismiss()
         end)
     end
 
-    function nd:Dismiss()
-        dismiss()
+    function nd:Dismiss(immediate)
+        dismiss(immediate)
+    end
+
+    function nd:_RefreshDuplicate()
+        if dismissed then return end
+        self._Count = self._Count + 1
+        updateCountBadge(true)
+        pulseNotification()
+        resetLifetime()
     end
 
     closeNBtn.MouseButton1Click:Connect(dismiss)
@@ -3254,14 +3551,14 @@ function MIDNIGHT:Notify(config)
     end)
 
     nf.MouseEnter:Connect(function()
-        if nfStroke then TweenObject(nfStroke,{Color=LightenColor(typeColor,10),Transparency=0.04},0.16) end
-        TweenObject(tintOverlay,{BackgroundTransparency=0.18},0.16)
-        TweenObject(iconBg,{BackgroundTransparency=0.02},0.16)
+        nd._Hovered = true
+        pauseLifetime()
+        applyNotifHoverState(true)
     end)
     nf.MouseLeave:Connect(function()
-        if nfStroke then TweenObject(nfStroke,{Color=Theme.Border,Transparency=0.12},0.18) end
-        TweenObject(tintOverlay,{BackgroundTransparency=0.32},0.18)
-        TweenObject(iconBg,{BackgroundTransparency=0.08},0.18)
+        nd._Hovered = false
+        applyNotifHoverState(false)
+        startLifetime(math.max(0.05, duration - nd._Elapsed))
     end)
 
     local totalH = 0
@@ -3295,10 +3592,8 @@ function MIDNIGHT:Notify(config)
         tweenVisualTransparency(typeLabel, 0, 0.18)
         TweenObject(titleLabel,{TextTransparency=0},0.18)
         TweenObject(contentLabel,{TextTransparency=0},0.18)
+        resetLifetime()
     end)
-
-    TweenObject(pFill,{Size=UDim2.new(0,0,1,0)},duration,Enum.EasingStyle.Linear)
-    task.delay(duration, dismiss)
 
     return nd
 end
@@ -3909,7 +4204,14 @@ function MIDNIGHT:MakeWindow(config)
         td._Select = selectTab
 
         btn.MouseButton1Click:Connect(selectTab)
-        ApplyHoverEffect(btn, Theme.TabBg, Theme.TabHoverBg, false)
+        ApplyHoverEffect(btn, Theme.TabBg, Theme.TabHoverBg, false, {
+            GetNormalBg = function()
+                return self._ActiveTab == td and Theme.TabActiveBg or Theme.TabBg
+            end,
+            GetHoverBg = function()
+                return self._ActiveTab == td and Theme.TabActiveBg or Theme.TabHoverBg
+            end,
+        })
         if #self._Tabs == 1 then
             pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
             TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.18)
