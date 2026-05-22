@@ -210,6 +210,22 @@ local Theme = {
     ScrollBarBg    = Color3.fromRGB(26, 29, 34),
     Shadow         = Color3.fromRGB(0, 0, 0),
     SeparatorBg    = Color3.fromRGB(33, 37, 43),
+    InputHoverBg   = Color3.fromRGB(27, 31, 37),
+    OverlayBg      = Color3.fromRGB(14, 16, 20),
+    OverlayCard    = Color3.fromRGB(18, 21, 26),
+    OverlayStroke  = Color3.fromRGB(45, 54, 66),
+    BorderSoft     = Color3.fromRGB(29, 33, 39),
+    BorderStrong   = Color3.fromRGB(52, 59, 70),
+    AccentSoft     = Color3.fromRGB(118, 202, 255),
+    AccentMuted    = Color3.fromRGB(72, 130, 166),
+    AccentFaint    = Color3.fromRGB(34, 55, 68),
+    UtilityBg      = Color3.fromRGB(13, 15, 18),
+    UtilityHeader  = Color3.fromRGB(17, 19, 23),
+    UtilityAccent  = Color3.fromRGB(87, 179, 238),
+    Surface0       = Color3.fromRGB(13, 15, 18),
+    Surface1       = Color3.fromRGB(16, 18, 21),
+    Surface2       = Color3.fromRGB(20, 22, 26),
+    Surface3       = Color3.fromRGB(24, 27, 32),
 }
 
 local Font        = Enum.Font.GothamSemibold
@@ -229,7 +245,144 @@ local CompactStyle = {
     SidebarWidth = 122,
     SidebarFooterHeight = 24,
     TabHeight = 28,
+    SidebarPadding = 6,
+    TabIconSize = 14,
+    TabTextSize = 11,
+    SectionHeight = 24,
+    SectionTextSize = 10,
+    SectionGap = 4,
+    RowHeight = 34,
+    TallRowHeight = 48,
+    FieldHeight = 20,
+    FieldTextSize = 10,
+    BodyTextSize = 11,
+    MetaTextSize = 10,
+    UtilityTextSize = 10,
+    UtilityMetaSize = 9,
+    OverlayRadius = 8,
+    OverlayPadding = 8,
+    OverlayHeaderHeight = 30,
+    FloatingTitleSize = 11,
+    FloatingLineSize = 10,
+    NotificationWidth = 316,
+    NotificationCompactWidth = 304,
+    NotificationCompact = true,
 }
+
+local DensityStyles = {
+    Compact = {
+        WindowWidth = 580,
+        WindowHeight = 420,
+        TitleBarHeight = 36,
+        CollapsedWindowHeight = 36,
+        SidebarWidth = 122,
+        SidebarFooterHeight = 24,
+        TabHeight = 28,
+        SidebarPadding = 6,
+        TabIconSize = 14,
+        TabTextSize = 11,
+        SectionHeight = 24,
+        SectionTextSize = 10,
+        SectionGap = 4,
+        RowHeight = 34,
+        TallRowHeight = 48,
+        FieldHeight = 20,
+        FieldTextSize = 10,
+        BodyTextSize = 11,
+        MetaTextSize = 10,
+        UtilityTextSize = 10,
+        UtilityMetaSize = 9,
+        OverlayRadius = 8,
+        OverlayPadding = 8,
+        OverlayHeaderHeight = 30,
+        FloatingTitleSize = 11,
+        FloatingLineSize = 10,
+        NotificationWidth = 316,
+        NotificationCompactWidth = 304,
+        NotificationCompact = true,
+    },
+    Readable = {
+        WindowWidth = 620,
+        WindowHeight = 450,
+        TitleBarHeight = 38,
+        CollapsedWindowHeight = 38,
+        SidebarWidth = 134,
+        SidebarFooterHeight = 26,
+        TabHeight = 31,
+        SidebarPadding = 7,
+        TabIconSize = 15,
+        TabTextSize = 12,
+        SectionHeight = 26,
+        SectionTextSize = 11,
+        SectionGap = 5,
+        RowHeight = 38,
+        TallRowHeight = 54,
+        FieldHeight = 22,
+        FieldTextSize = 11,
+        BodyTextSize = 12,
+        MetaTextSize = 11,
+        UtilityTextSize = 11,
+        UtilityMetaSize = 10,
+        OverlayRadius = 8,
+        OverlayPadding = 10,
+        OverlayHeaderHeight = 32,
+        FloatingTitleSize = 12,
+        FloatingLineSize = 11,
+        NotificationWidth = 340,
+        NotificationCompactWidth = 326,
+        NotificationCompact = false,
+    },
+    Streamer = {
+        WindowWidth = 660,
+        WindowHeight = 470,
+        TitleBarHeight = 40,
+        CollapsedWindowHeight = 40,
+        SidebarWidth = 142,
+        SidebarFooterHeight = 28,
+        TabHeight = 34,
+        SidebarPadding = 8,
+        TabIconSize = 16,
+        TabTextSize = 13,
+        SectionHeight = 28,
+        SectionTextSize = 12,
+        SectionGap = 6,
+        RowHeight = 40,
+        TallRowHeight = 58,
+        FieldHeight = 24,
+        FieldTextSize = 12,
+        BodyTextSize = 13,
+        MetaTextSize = 11,
+        UtilityTextSize = 12,
+        UtilityMetaSize = 11,
+        OverlayRadius = 8,
+        OverlayPadding = 12,
+        OverlayHeaderHeight = 34,
+        FloatingTitleSize = 13,
+        FloatingLineSize = 12,
+        NotificationWidth = 360,
+        NotificationCompactWidth = 344,
+        NotificationCompact = false,
+    },
+}
+
+local Motion = {
+    Micro = {Duration = 0.12, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    Soft = {Duration = 0.16, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    Panel = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    OverlayIn = {Duration = 0.24, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    OverlayOut = {Duration = 0.18, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
+}
+
+local CurrentDensityMode = "Compact"
+local function ApplyDensityTokens(mode)
+    local preset = DensityStyles[mode] or DensityStyles.Compact
+    CurrentDensityMode = DensityStyles[mode] and mode or "Compact"
+    for k, v in pairs(preset) do
+        CompactStyle[k] = v
+    end
+end
+
+ApplyDensityTokens(CurrentDensityMode)
 
 --// ═══════════════════════════════════════════════════════════
 --// KEY UTILS MODULE
@@ -668,6 +821,69 @@ local function AccentTint(color, factor)
     )
 end
 
+local function TweenMotion(inst, props, motion)
+    local spec = Motion[motion] or Motion.Micro
+    return TweenObject(inst, props, spec.Duration, spec.Style, spec.Direction)
+end
+
+local function StylePanelShell(frame, radius, strokeColor, strokeTransparency)
+    if not frame then return nil end
+    ApplyCorner(frame, radius or CompactStyle.OverlayRadius or 8)
+    return ApplyStroke(frame, strokeColor or Theme.Border, 1, strokeTransparency == nil and 0.22 or strokeTransparency)
+end
+
+local function StyleUtilityOverlay(frame, accentColor)
+    if not frame then return nil, nil end
+    frame.BackgroundColor3 = Theme.UtilityBg
+    local stroke = StylePanelShell(frame, CompactStyle.OverlayRadius or 8, Theme.BorderSoft, 0.16)
+    local tint = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = AccentTint(accentColor or Theme.UtilityAccent, 0.06),
+        BackgroundTransparency = 0.42,
+        BorderSizePixel = 0,
+        ZIndex = frame.ZIndex,
+        Parent = frame,
+    })
+    ApplyCorner(tint, CompactStyle.OverlayRadius or 8)
+    return stroke, tint
+end
+
+local function StyleQuietHeader(frame, height, zIndex)
+    if not frame then return nil, nil end
+    local header = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, height or CompactStyle.OverlayHeaderHeight or 30),
+        BackgroundColor3 = Theme.UtilityHeader,
+        BorderSizePixel = 0,
+        ZIndex = zIndex or frame.ZIndex + 1,
+        Parent = frame,
+    })
+    ApplyCorner(header, CompactStyle.OverlayRadius or 8)
+    Create("Frame", {
+        Size = UDim2.new(1, 0, 0, math.min(8, height or CompactStyle.OverlayHeaderHeight or 30)),
+        Position = UDim2.new(0, 0, 1, -math.min(8, height or CompactStyle.OverlayHeaderHeight or 30)),
+        BackgroundColor3 = Theme.UtilityHeader,
+        BorderSizePixel = 0,
+        ZIndex = (zIndex or frame.ZIndex + 1),
+        Parent = header,
+    })
+    local divider = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        BackgroundColor3 = Theme.BorderSoft,
+        BorderSizePixel = 0,
+        ZIndex = (zIndex or frame.ZIndex + 1) + 1,
+        Parent = header,
+    })
+    return header, divider
+end
+
+local function StyleInputField(field, radius, strokeColor)
+    if not field then return nil end
+    field.BackgroundColor3 = Theme.InputBg
+    ApplyCorner(field, radius or CompactStyle.InputRadius or 4)
+    return ApplyStroke(field, strokeColor or Theme.BorderSoft, 1, 0.2)
+end
+
 local function GetViewportSize()
     local cam = workspace.CurrentCamera
     if cam then
@@ -983,18 +1199,176 @@ local LucideBloxAssets = {
     ["x-circle"]        = "rbxassetid://7743878496",
 }
 
+local SafeLucideText = {
+    ["activity"] = "AC",
+    ["alert-circle"] = "!",
+    ["alert-octagon"] = "!",
+    ["alert-triangle"] = "!",
+    ["arrow-down"] = "v",
+    ["arrow-left"] = "<",
+    ["arrow-right"] = ">",
+    ["arrow-up"] = "^",
+    ["arrow-up-right"] = "^>",
+    ["bell"] = "B",
+    ["bookmark"] = "BM",
+    ["calendar"] = "CAL",
+    ["camera"] = "CAM",
+    ["check"] = "OK",
+    ["check-circle"] = "OK",
+    ["chevron-down"] = "v",
+    ["chevron-left"] = "<",
+    ["chevron-right"] = ">",
+    ["chevron-up"] = "^",
+    ["chevrons-down"] = "vv",
+    ["chevrons-right"] = ">>",
+    ["clipboard"] = "CL",
+    ["clock"] = "TM",
+    ["code"] = "</>",
+    ["compass"] = "CP",
+    ["copy"] = "CP",
+    ["cpu"] = "CPU",
+    ["crosshair"] = "+",
+    ["crown"] = "CR",
+    ["database"] = "DB",
+    ["download"] = "DN",
+    ["expand"] = "+",
+    ["external-link"] = "EX",
+    ["eye"] = "O",
+    ["eye-off"] = "NO",
+    ["file-text"] = "TXT",
+    ["filter"] = "FL",
+    ["flag"] = "FG",
+    ["flame"] = "FM",
+    ["folder"] = "FD",
+    ["gamepad"] = "GP",
+    ["gamepad-2"] = "GP",
+    ["gauge"] = "GU",
+    ["gem"] = "GM",
+    ["globe"] = "GL",
+    ["grid"] = "GD",
+    ["hammer"] = "HM",
+    ["hard-drive"] = "HD",
+    ["hash"] = "#",
+    ["heart"] = "HP",
+    ["help-circle"] = "?",
+    ["home"] = "HM",
+    ["image"] = "IMG",
+    ["info"] = "i",
+    ["key"] = "K",
+    ["layers"] = "LY",
+    ["layout"] = "LY",
+    ["link"] = "LK",
+    ["lock"] = "LK",
+    ["mail"] = "ML",
+    ["map"] = "MP",
+    ["map-pin"] = "PN",
+    ["maximize"] = "+",
+    ["menu"] = "M",
+    ["message-circle"] = "CH",
+    ["mic"] = "MC",
+    ["minimize"] = "-",
+    ["minus"] = "-",
+    ["moon"] = "MN",
+    ["more-horizontal"] = "...",
+    ["more-vertical"] = ":",
+    ["move"] = "+",
+    ["music"] = "MU",
+    ["navigation"] = "NV",
+    ["package"] = "PK",
+    ["palette"] = "PL",
+    ["panel-left"] = "PL",
+    ["panel-right"] = "PR",
+    ["pen-tool"] = "PT",
+    ["pencil"] = "PN",
+    ["pin"] = "PN",
+    ["plus"] = "+",
+    ["power"] = "PW",
+    ["radio"] = "RD",
+    ["refresh-cw"] = "RF",
+    ["rotate-ccw"] = "RT",
+    ["scan"] = "SC",
+    ["search"] = "?",
+    ["send"] = ">",
+    ["server"] = "SV",
+    ["settings"] = "ST",
+    ["shield"] = "SH",
+    ["shield-check"] = "OK",
+    ["shrink"] = "-",
+    ["sidebar"] = "SB",
+    ["sliders"] = "=",
+    ["sort-asc"] = "^",
+    ["sort-desc"] = "v",
+    ["star"] = "*",
+    ["sun"] = "SN",
+    ["target"] = "+",
+    ["terminal"] = ">_",
+    ["timer"] = "TM",
+    ["trash"] = "TR",
+    ["unlock"] = "UL",
+    ["upload"] = "UP",
+    ["user"] = "U",
+    ["users"] = "US",
+    ["volume-2"] = "VO",
+    ["volume-x"] = "VX",
+    ["wifi"] = "WF",
+    ["wrench"] = "WR",
+    ["x"] = "x",
+    ["x-circle"] = "X",
+    ["chevron_r"] = ">",
+    ["chevron_d"] = "v",
+    ["warn"] = "!",
+}
+
+local function BuildSafeIconFallback(iconName)
+    local kebab = tostring(iconName or "")
+        :gsub("([a-z])([A-Z])", function(a, b) return a .. "-" .. b:lower() end)
+        :lower()
+    local direct = SafeLucideText[kebab] or SafeLucideText[iconName]
+    if direct and direct ~= "" then
+        return direct
+    end
+
+    local parts = {}
+    for token in kebab:gmatch("[^%-_]+") do
+        if token ~= "" then
+            parts[#parts + 1] = token
+        end
+    end
+    if #parts == 0 then
+        return "?"
+    end
+    if #parts == 1 then
+        return parts[1]:sub(1, math.min(2, #parts[1])):upper()
+    end
+    local abbrev = ""
+    for i = 1, math.min(2, #parts) do
+        abbrev = abbrev .. parts[i]:sub(1, 1):upper()
+    end
+    return abbrev ~= "" and abbrev or "?"
+end
+
+local function UseDefaultIconSet()
+    if IconBaseURL ~= "" or next(IconOverrides) ~= nil then return end
+    for k, v in pairs(LucideBloxAssets) do
+        IconOverrides[k] = v
+    end
+end
+
 local function GetLucideFallback(iconName)
     if not iconName then return nil end
+    if SafeLucideText[iconName] then return SafeLucideText[iconName] end
     -- Direct lookup
     if LucideIcons[iconName] then return LucideIcons[iconName] end
     -- Try kebab-case conversion: "chevronRight" → "chevron-right"
     local kebab = iconName:gsub("([a-z])([A-Z])", function(a,b) return a.."-"..b:lower() end):lower()
+    if SafeLucideText[kebab] then return SafeLucideText[kebab] end
     if LucideIcons[kebab] then return LucideIcons[kebab] end
     return nil
 end
 
 local function GetIconURL(iconName)
     if not iconName then return "" end
+    UseDefaultIconSet()
     -- Cache check
     if IconCache[iconName] then return IconCache[iconName] end
     local url = ""
@@ -1029,7 +1403,7 @@ local function CreateIconOrText(parent, iconName, fallbackText, size, position, 
     -- Auto-resolve Lucide fallback if no explicit fallback provided
     local text = fallbackText
     if (not text or text == "") and iconName then
-        text = GetLucideFallback(iconName)
+        text = BuildSafeIconFallback(iconName)
     end
     -- Final fallback: first character of icon name, uppercased
     if (not text or text == "") and iconName and #iconName > 0 then
@@ -1041,6 +1415,8 @@ local function CreateIconOrText(parent, iconName, fallbackText, size, position, 
         Font = font or FontBold,
         TextSize = textSize or 12,
         TextColor3 = color or Theme.TextSecondary,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
         Size = size or UDim2.new(0, 16, 0, 16),
         Position = position or UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
@@ -1063,10 +1439,13 @@ local MIDNIGHT = {
 
     _NotificationPosition = "TopRight",
     _NotificationMaxStack = 5,
+    _NotificationStyle = "Compact",
     _MenuKey    = Enum.KeyCode.RightShift,
     _MenuKeyStr = "RShift",
     _MenuOpen   = false,
     _MenuToggleConn = nil,
+    _DensityMode = "Compact",
+    _StylePreset = "Midnight",
 
     _FPS = 0, _FPSCounter = 0, _LastFPSTick = 0,
     _Lagspike = false, _Ping = 0,
@@ -1099,6 +1478,8 @@ local MIDNIGHT = {
     _TargetHUD              = nil,   -- frame
     _TargetHUDVisible       = false,
     _TargetHUDHideThread    = nil,
+    _CommandPaletteKey      = Enum.KeyCode.Semicolon,
+    _CommandPaletteConn     = nil,
 
     -- Config system
     _ConfigKey              = nil,   -- current config save key
@@ -1180,6 +1561,7 @@ end
 
 function MIDNIGHT:SetIcons(iconTable)
     if type(iconTable) ~= "table" then return end
+    UseDefaultIconSet()
     for k, v in pairs(iconTable) do
         if type(k) == "string" and type(v) == "string" then
             IconOverrides[k] = v
@@ -1251,6 +1633,10 @@ function MIDNIGHT:SetThemeColor(color)
     Theme.ToggleOn     = color
     Theme.SliderFill   = color
     Theme.TextAccent   = LightenColor(color, 28)
+    Theme.AccentSoft   = LightenColor(color, 22)
+    Theme.AccentMuted  = DarkenColor(color, 60)
+    Theme.AccentFaint  = AccentTint(color, 0.22)
+    Theme.UtilityAccent = LightenColor(color, 8)
     local r, g, b = ColorToRGB(color)
     Theme.BorderAccent = Color3.fromRGB(
         math.floor(r * 0.57),
@@ -1259,6 +1645,45 @@ function MIDNIGHT:SetThemeColor(color)
     )
     Theme.Info = color
     for _, cb in ipairs(self._ThemeCallbacks) do pcall(cb, color) end
+end
+
+function MIDNIGHT:SetDensityMode(mode)
+    ApplyDensityTokens(mode)
+    self._DensityMode = CurrentDensityMode
+    return self._DensityMode
+end
+
+function MIDNIGHT:GetDensityMode()
+    return self._DensityMode or CurrentDensityMode
+end
+
+function MIDNIGHT:GetDensityModes()
+    return {"Compact", "Readable", "Streamer"}
+end
+
+function MIDNIGHT:SetNotificationStyle(style)
+    style = tostring(style or "Compact")
+    self._NotificationStyle = (style == "Readable" or style == "Classic") and "Readable" or "Compact"
+end
+
+function MIDNIGHT:ApplyStylePreset(name)
+    local preset = string.lower(tostring(name or "midnight"))
+    if preset == "readable" then
+        self:SetDensityMode("Readable")
+        self:SetNotificationStyle("Readable")
+        self._StylePreset = "Readable"
+        return self._StylePreset
+    elseif preset == "streamer" then
+        self:SetDensityMode("Streamer")
+        self:SetNotificationStyle("Readable")
+        self._StylePreset = "Streamer"
+        return self._StylePreset
+    end
+    self:SetDensityMode("Compact")
+    self:SetNotificationStyle("Compact")
+    self:SetThemeColor(Color3.fromRGB(96, 190, 255))
+    self._StylePreset = "Midnight"
+    return self._StylePreset
 end
 
 function MIDNIGHT:SetMenuKey(keyStr)
@@ -1336,7 +1761,7 @@ MIDNIGHT._SidebarFooters = {}
 MIDNIGHT._SidebarFooterCache = ""
 function MIDNIGHT:_UpdateSidebarFooters()
     if #self._SidebarFooters == 0 then return end
-    local str = "v" .. self.Version .. "  |  " .. self._FPS .. " fps  " .. self._Ping .. "ms"
+    local str = "v" .. self.Version .. "  •  " .. self._FPS .. " fps  •  " .. self._Ping .. " ms"
     if str == self._SidebarFooterCache then return end
     self._SidebarFooterCache = str
     for _, footer in ipairs(self._SidebarFooters) do
@@ -1415,7 +1840,15 @@ function MIDNIGHT:Reset()
     self._MenuCloseThreads = {}
     self._KeybindDispatcherInit = false
     self._SliderDispatcherInit = false
+    self._NotificationStyle = "Compact"
+    self._DensityMode = CurrentDensityMode
+    self._StylePreset = "Midnight"
+    self._CommandPaletteConn = nil
     self._ConfigWidgets = {}  -- v7.1: reset widget registry (config key is preserved)
+    IconCache = {}
+    IconOverrides = {}
+    IconBaseURL = ""
+    UseDefaultIconSet()
     -- Re-initialize
     self:_InitScreenGui()
     _InitSliderDispatcher()
@@ -1481,7 +1914,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     local currentKeyStr  = config.CurrentKeyStr or "None"
     local onKeyChange    = config.OnKeyChange
 
-    local panelW, panelHFinal = 188, 148
+    local panelW, panelHFinal = 198, 156
 
     local vpSize = GetViewportSize()
     local posX = position.X + 4
@@ -1494,21 +1927,20 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         Name = "KeybindSettingsBg",
         Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
-        BackgroundColor3 = Theme.WindowBg,
+        BackgroundColor3 = Theme.UtilityBg,
         BorderSizePixel  = 0,
         BackgroundTransparency = 1,
         Active = false,
         ZIndex = ZIndex.POPUP,
         Parent = self._ScreenGui,
     })
-    ApplyCorner(bgFill, 7)
-    ApplyStroke(bgFill, Theme.Border, 1)
+    StylePanelShell(bgFill, 8, Theme.BorderSoft, 0.18)
 
     local pf = Create("Frame", {
         Name = "KeybindSettings",
         Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
-        BackgroundColor3 = Theme.WindowBg,
+        BackgroundColor3 = Theme.UtilityBg,
         BorderSizePixel  = 0,
         ClipsDescendants = false,
         BackgroundTransparency = 1,
@@ -1516,37 +1948,21 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         ZIndex = ZIndex.POPUP + 1,
         Parent = self._ScreenGui,
     })
-    ApplyCorner(pf, 7)
-    ApplyStroke(pf, Theme.Border, 1)
-
-    local accentLine = CreateAccentLine(pf, 7)
-    if accentLine then
-        accentLine.BackgroundColor3 = AccentTint(Theme.Accent, 0.65)
-        accentLine.BackgroundTransparency = 0.55
-    end
-    local accentCb = function(color)
-        if accentLine then
-            accentLine.BackgroundColor3 = AccentTint(color, 0.65)
-            accentLine.BackgroundTransparency = 0.55
-        end
-    end
-    table.insert(self._ThemeCallbacks, accentCb)
-    self._KeybindSettingsCb = accentCb
-
-    ApplyPadding(pf, 8, 8, 8, 8)
+    StyleUtilityOverlay(pf, Theme.Accent)
+    ApplyPadding(pf, 9, 9, 9, 9)
 
     -- Title row
     local titleRow = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 18),
+        Size = UDim2.new(1, 0, 0, 20),
         BackgroundTransparency = 1,
         ZIndex = ZIndex.POPUP + 2,
         Parent = pf,
     })
-    CreateIconOrText(titleRow, "settings", nil, UDim2.new(0,11,0,11), UDim2.new(0,0,0,3), Theme.Accent, FontBold, 10)
+    CreateIconOrText(titleRow, "settings", nil, UDim2.new(0,12,0,12), UDim2.new(0,0,0,4), Theme.UtilityAccent, FontBold, 10)
     Create("TextLabel", {
-        Text = "Keybind Settings", Font = FontBold, TextSize = 10,
+        Text = "Keybind Settings", Font = FontBold, TextSize = 11,
         TextColor3 = Theme.TextPrimary,
-        Size = UDim2.new(1,-36,1,0), Position = UDim2.new(0,16,0,0),
+        Size = UDim2.new(1,-38,1,0), Position = UDim2.new(0,18,0,0),
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1, ZIndex = ZIndex.POPUP + 2, Parent = titleRow,
     })
@@ -1559,6 +1975,9 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         ZIndex = ZIndex.TOP, Active = true, Parent = pf,
     })
     ApplyCorner(closeX, 4)
+    closeX.Text = "x"
+    closeX.TextSize = 10
+    closeX.Position = UDim2.new(1,-22,0,2)
     closeX.MouseEnter:Connect(function() TweenObject(closeX, {BackgroundColor3=Theme.CloseHover, TextColor3=Color3.fromRGB(255,255,255)}, 0.12) end)
     closeX.MouseLeave:Connect(function() TweenObject(closeX, {BackgroundColor3=Theme.InputBg, TextColor3=Theme.TextMuted}, 0.12) end)
     closeX.MouseButton1Click:Connect(function()
@@ -1568,22 +1987,22 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     -- KEY label
     Create("TextLabel", {
-        Text = "KEY", Font = FontBold, TextSize = 8,
+        Text = "KEY", Font = FontBold, TextSize = 9,
         TextColor3 = Theme.TextMuted, Size = UDim2.new(1,0,0,12),
-        Position = UDim2.new(0,0,0,22),
+        Position = UDim2.new(0,0,0,24),
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1, ZIndex = ZIndex.POPUP+2, Parent = pf,
     })
 
     local keyBtn = Create("TextButton", {
         Text = "[ " .. currentKeyStr .. " ]",
-        Font = FontBold, TextSize = 10,
+        Font = FontBold, TextSize = 11,
         TextColor3 = Theme.TextAccent,
-        Size = UDim2.new(1,0,0,24), Position = UDim2.new(0,0,0,34),
+        Size = UDim2.new(1,0,0,26), Position = UDim2.new(0,0,0,36),
         BackgroundColor3 = Theme.InputBg, BorderSizePixel = 0,
         ZIndex = ZIndex.POPUP+2, Parent = pf,
     })
-    ApplyCorner(keyBtn, 4); ApplyStroke(keyBtn, Theme.Border, 1)
+    ApplyCorner(keyBtn, 4); ApplyStroke(keyBtn, Theme.BorderSoft, 1, 0.22)
 
     local listening = false
     keyBtn.MouseButton1Click:Connect(function()
@@ -1620,19 +2039,19 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     -- MODE label
     Create("TextLabel", {
-        Text = "MODE", Font = FontBold, TextSize = 8,
+        Text = "MODE", Font = FontBold, TextSize = 9,
         TextColor3 = Theme.TextMuted, Size = UDim2.new(1,0,0,12),
-        Position = UDim2.new(0,0,0,64),
+        Position = UDim2.new(0,0,0,68),
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1, ZIndex = ZIndex.POPUP+2, Parent = pf,
     })
 
     local modeRow = Create("Frame", {
-        Size = UDim2.new(1,0,0,24), Position = UDim2.new(0,0,0,76),
+        Size = UDim2.new(1,0,0,24), Position = UDim2.new(0,0,0,80),
         BackgroundTransparency = 1, ZIndex = ZIndex.POPUP+2, Parent = pf,
     })
     local pressBtn = Create("TextButton", {
-        Text = "Press", Font = FontBold, TextSize = 9,
+        Text = "Press", Font = FontBold, TextSize = 10,
         TextColor3 = currentMode=="Press" and Color3.fromRGB(255,255,255) or Theme.TextSecondary,
         Size = UDim2.new(0.5,-2,1,0), Position = UDim2.new(0,0,0,0),
         BackgroundColor3 = currentMode=="Press" and Theme.Accent or Theme.InputBg,
@@ -1640,7 +2059,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     })
     ApplyCorner(pressBtn, 4)
     local holdBtn = Create("TextButton", {
-        Text = "Hold", Font = FontBold, TextSize = 9,
+        Text = "Hold", Font = FontBold, TextSize = 10,
         TextColor3 = currentMode=="Hold" and Color3.fromRGB(255,255,255) or Theme.TextSecondary,
         Size = UDim2.new(0.5,-2,1,0), Position = UDim2.new(0.5,2,0,0),
         BackgroundColor3 = currentMode=="Hold" and Theme.Accent or Theme.InputBg,
@@ -1661,13 +2080,13 @@ function MIDNIGHT:_ShowKeybindSettings(config)
 
     -- Show in keybind list
     local visRow = Create("Frame", {
-        Size = UDim2.new(1,0,0,22), Position = UDim2.new(0,0,0,106),
+        Size = UDim2.new(1,0,0,24), Position = UDim2.new(0,0,0,112),
         BackgroundColor3 = Theme.InputBg, BorderSizePixel = 0,
         ZIndex = ZIndex.POPUP+2, Parent = pf,
     })
-    ApplyCorner(visRow, 4); ApplyPadding(visRow,0,0,8,8)
+    ApplyCorner(visRow, 4); ApplyStroke(visRow, Theme.BorderSoft, 1, 0.3); ApplyPadding(visRow,0,0,8,8)
     Create("TextLabel", {
-        Text = "Show in Keybind List", Font = Font, TextSize = 9,
+        Text = "Show in Keybind List", Font = Font, TextSize = 10,
         TextColor3 = Theme.TextSecondary, Size = UDim2.new(0.65,0,1,0),
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1, ZIndex = ZIndex.POPUP+3, Parent = visRow,
@@ -1840,6 +2259,12 @@ function MIDNIGHT:_OpenDropdown(config)
             if isSel then
                 Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
                     Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkBox})
+            end
+            local existingMark = checkBox:FindFirstChildWhichIsA("TextLabel")
+            if existingMark then
+                existingMark.Text = "x"
+                existingMark.TextXAlignment = Enum.TextXAlignment.Center
+                existingMark.TextYAlignment = Enum.TextYAlignment.Center
             end
             checkEl = checkBox
         end
@@ -2132,25 +2557,24 @@ function MIDNIGHT:CreateWatermark(config)
     self._WatermarkSizeUpdate = nil
 
     local wmFrame = Create("Frame",{
-        Name = "Watermark", Size = UDim2.new(0,500,0,28),
-        Position = UDim2.new(0,12,0,4),
-        BackgroundColor3 = Theme.WatermarkBg,
+        Name = "Watermark", Size = UDim2.new(0,500,0,30),
+        Position = UDim2.new(0,12,0,6),
+        BackgroundColor3 = Theme.UtilityBg,
         BorderSizePixel = 0, ClipsDescendants = true,
         ZIndex = ZIndex.NOTIFY,
         Parent = self._ScreenGui,
     })
-    ApplyCorner(wmFrame,6); ApplyStroke(wmFrame,Theme.Border,1)
-    CreateAccentLine(wmFrame,6)
+    StyleUtilityOverlay(wmFrame, Theme.Accent)
 
     local content = Create("Frame",{
-        Name="Content", Size=UDim2.new(1,-14,1,-4),
-        Position=UDim2.new(0,7,0,4),
+        Name="Content", Size=UDim2.new(1,-18,1,-6),
+        Position=UDim2.new(0,9,0,4),
         BackgroundTransparency=1, Parent=wmFrame,
     })
     Create("UIListLayout",{
         FillDirection=Enum.FillDirection.Horizontal,
         SortOrder=Enum.SortOrder.LayoutOrder,
-        Padding=UDim.new(0,6),
+        Padding=UDim.new(0,7),
         VerticalAlignment=Enum.VerticalAlignment.Center,
         Parent=content,
     })
@@ -2159,38 +2583,38 @@ function MIDNIGHT:CreateWatermark(config)
     local function addSep()
         lo = lo + 1
         Create("TextLabel",{
-            Text="|",Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
-            Size=UDim2.new(0,0,0,14),AutomaticSize=Enum.AutomaticSize.X,
+            Text="•",Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
+            Size=UDim2.new(0,0,0,16),AutomaticSize=Enum.AutomaticSize.X,
             BackgroundTransparency=1,LayoutOrder=lo,Parent=content,
         })
     end
     local function addLabel(n, text, font, size, color, visible)
         lo = lo + 1
         return Create("TextLabel",{
-            Name=n, Text=text, Font=font or FontRegular, TextSize=size or 10,
+            Name=n, Text=text, Font=font or FontRegular, TextSize=size or CompactStyle.UtilityTextSize,
             TextColor3=color or Theme.TextSecondary,
-            Size=UDim2.new(0,0,0,14), AutomaticSize=Enum.AutomaticSize.X,
+            Size=UDim2.new(0,0,0,16), AutomaticSize=Enum.AutomaticSize.X,
             BackgroundTransparency=1, LayoutOrder=lo, Visible=visible~=false,
             Parent=content,
         })
     end
 
     if self._WatermarkConfig.ShowName then
-        local mi = CreateIconOrText(content,"moon",nil,UDim2.new(0,12,0,12),UDim2.new(0,0,0,0),Theme.Accent,FontBold,11)
+        local mi = CreateIconOrText(content,"moon",nil,UDim2.new(0,13,0,13),UDim2.new(0,0,0,1),Theme.UtilityAccent,FontBold,11)
         lo=lo+1; if mi then mi.LayoutOrder=lo end
-        addLabel("NameLabel", name, FontBold,11,Theme.Accent); addSep()
+        addLabel("NameLabel", name, FontBold,11,Theme.TextPrimary); addSep()
     end
     if self._WatermarkConfig.ShowUser then
-        addLabel("UserLabel", LocalPlayer.DisplayName.."@"..LocalPlayer.Name); addSep()
+        addLabel("UserLabel", LocalPlayer.DisplayName.." @"..LocalPlayer.Name, FontRegular, CompactStyle.UtilityTextSize, Theme.TextSecondary); addSep()
     end
-    if self._WatermarkConfig.ShowFPS  then addLabel("FPSLabel","0 fps"); addSep() end
-    if self._WatermarkConfig.ShowPing then addLabel("PingLabel","0ms"); addSep() end
+    if self._WatermarkConfig.ShowFPS  then addLabel("FPSLabel","0 fps", FontBold, CompactStyle.UtilityTextSize, Theme.TextPrimary); addSep() end
+    if self._WatermarkConfig.ShowPing then addLabel("PingLabel","0 ms", FontRegular, CompactStyle.UtilityTextSize, Theme.TextSecondary); addSep() end
     if self._WatermarkConfig.ShowLagspike then
-        addLabel("LagspikeLabel","LAGSPIKE",FontBold,10,Theme.Error,false)
+        addLabel("LagspikeLabel","LAG",FontBold,CompactStyle.UtilityMetaSize + 1,Theme.Error,false)
     end
-    if self._WatermarkConfig.ShowTime then addLabel("TimeLabel","") end
+    if self._WatermarkConfig.ShowTime then addLabel("TimeLabel","", FontRegular, CompactStyle.UtilityTextSize, Theme.TextSecondary) end
     -- Custom text label
-    addLabel("CustomLabel","",FontRegular,10,Theme.TextSecondary,false)
+    addLabel("CustomLabel","",FontRegular,CompactStyle.UtilityTextSize,Theme.TextSecondary,false)
 
     self._WatermarkFrame = wmFrame
 
@@ -2199,20 +2623,20 @@ function MIDNIGHT:CreateWatermark(config)
         local pos = self._WatermarkPosition
         if pos == "TopLeft" then
             wmFrame.AnchorPoint = Vector2.new(0,0)
-            wmFrame.Position = UDim2.new(0,12,0,4)
+            wmFrame.Position = UDim2.new(0,12,0,6)
         elseif pos == "TopCenter" then
             wmFrame.AnchorPoint = Vector2.new(0.5,0)
-            wmFrame.Position = UDim2.new(0.5,0,0,4)
+            wmFrame.Position = UDim2.new(0.5,0,0,6)
         elseif pos == "TopRight" then
             wmFrame.AnchorPoint = Vector2.new(1,0)
-            wmFrame.Position = UDim2.new(1,-12,0,4)
+            wmFrame.Position = UDim2.new(1,-12,0,6)
         end
     end
 
     local function updateSize()
         task.defer(function()
             if not wmFrame or not wmFrame.Parent then return end
-            local tw = 14  -- left+right padding (7px each)
+            local tw = 18
             local lastVisible = 0
             local children = content:GetChildren()
             -- first pass: collect visible widths
@@ -2229,11 +2653,11 @@ function MIDNIGHT:CreateWatermark(config)
             -- second pass: sum with gap only between elements, not after last
             for i, cw in ipairs(widths) do
                 tw = tw + cw
-                if i < lastVisible then tw = tw + 6 end  -- gap between items only
+                if i < lastVisible then tw = tw + 7 end
             end
             -- Clamp minimum size so watermark doesn't collapse to zero
             if tw < 60 then tw = 60 end
-            wmFrame.Size = UDim2.new(0, tw, 0, 28)
+            wmFrame.Size = UDim2.new(0, tw, 0, 30)
             task.defer(positionWM)
         end)
     end
@@ -2274,13 +2698,13 @@ function MIDNIGHT:SetWatermarkPosition(pos)
     local newAP, newPos
     if pos=="TopLeft" then
         newAP = Vector2.new(0,0)
-        newPos = UDim2.new(0,12,0,4)
+        newPos = UDim2.new(0,12,0,6)
     elseif pos=="TopCenter" then
         newAP = Vector2.new(0.5,0)
-        newPos = UDim2.new(0.5,0,0,4)
+        newPos = UDim2.new(0.5,0,0,6)
     elseif pos=="TopRight" then
         newAP = Vector2.new(1,0)
-        newPos = UDim2.new(1,-12,0,4)
+        newPos = UDim2.new(1,-12,0,6)
     else
         return
     end
@@ -2401,13 +2825,13 @@ function MIDNIGHT:CreateTargetHUD(config)
     self:_InitScreenGui()
 
     local POS   = config.Position or "BottomLeft"
-    local W, H  = 260, 72
+    local W, H  = 248, 70
 
     -- ── Root frame ────────────────────────────────────────────
     local hf = Create("Frame", {
         Name = "TargetHUD",
         Size = UDim2.new(0, W, 0, H),
-        BackgroundColor3 = Theme.WindowBg,
+        BackgroundColor3 = Theme.Surface0,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ClipsDescendants = false,
@@ -2416,7 +2840,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Parent = self._ScreenGui,
     })
     ApplyCorner(hf, 8)
-    ApplyStroke(hf, Theme.Border, 1)
+    ApplyStroke(hf, Theme.BorderSoft, 1, 0.16)
 
     -- Drop shadow
     Create("ImageLabel", {
@@ -2425,7 +2849,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         BackgroundTransparency = 1,
         Image = "rbxassetid://6015897843",
         ImageColor3 = Theme.Shadow,
-        ImageTransparency = 0.55,
+        ImageTransparency = 0.68,
         ScaleType = Enum.ScaleType.Slice,
         SliceCenter = Rect.new(49, 49, 450, 450),
         ZIndex = ZIndex.OVERLAY - 1,
@@ -2433,19 +2857,20 @@ function MIDNIGHT:CreateTargetHUD(config)
     })
 
     -- Accent line top
-    CreateAccentLine(hf, 8)
+    local hudAccent = CreateAccentLine(hf, 8)
+    if hudAccent then hudAccent.BackgroundTransparency = 0.84 end
 
     -- ── Avatar frame (left column) ───────────────────────────
     local avatarFrame = Create("Frame", {
-        Size = UDim2.new(0, 52, 0, 52),
-        Position = UDim2.new(0, 10, 0.5, -26),
-        BackgroundColor3 = Theme.InputBg,
+        Size = UDim2.new(0, 50, 0, 50),
+        Position = UDim2.new(0, 10, 0.5, -25),
+        BackgroundColor3 = Theme.Surface2,
         BorderSizePixel = 0,
         ZIndex = ZIndex.OVERLAY + 1,
         Parent = hf,
     })
     ApplyCorner(avatarFrame, 6)
-    ApplyStroke(avatarFrame, Theme.BorderLight, 1)
+    ApplyStroke(avatarFrame, Theme.BorderSoft, 1, 0.28)
 
     local avatarImg = Create("ImageLabel", {
         Name = "Avatar",
@@ -2464,8 +2889,8 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     -- ── Info column (right of avatar) ────────────────────────
     local infoFrame = Create("Frame", {
-        Size = UDim2.new(1, -74, 1, -16),
-        Position = UDim2.new(0, 70, 0, 10),
+        Size = UDim2.new(1, -72, 1, -16),
+        Position = UDim2.new(0, 68, 0, 10),
         BackgroundTransparency = 1,
         ZIndex = ZIndex.OVERLAY + 1,
         Parent = hf,
@@ -2476,7 +2901,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Name = "NameLabel",
         Text = "",
         Font = FontBold,
-        TextSize = 13,
+        TextSize = 12,
         TextColor3 = Theme.TextPrimary,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -3153,7 +3578,9 @@ function MIDNIGHT:Notify(config)
     local contentText = tostring(config.Content or "")
     local notifType   = string.lower(config.Type or "info")
     local duration    = math.max(0.4, tonumber(config.Duration) or 5)
-    local width       = math.clamp(math.floor(tonumber(config.Width) or 332), 280, 420)
+    local styleName   = tostring(config.Style or self._NotificationStyle or (CompactStyle.NotificationCompact and "Compact" or "Readable"))
+    local compactMode = string.lower(styleName) ~= "readable"
+    local width       = math.clamp(math.floor(tonumber(config.Width) or (compactMode and CompactStyle.NotificationCompactWidth or CompactStyle.NotificationWidth)), 280, 420)
 
     self:_InitScreenGui()
 
@@ -3168,39 +3595,39 @@ function MIDNIGHT:Notify(config)
     end
     self:_TrimNotifications(self._NotificationMaxStack)
 
-    local iconSize  = 32
-    local leftPad   = 12
-    local topPad    = 12
+    local iconSize  = compactMode and 28 or 32
+    local leftPad   = compactMode and 11 or 12
+    local topPad    = compactMode and 10 or 12
     local rightPad  = 12
     local closeArea = 28
-    local textX     = leftPad + iconSize + 10
+    local textX     = leftPad + iconSize + (compactMode and 9 or 10)
     local textW     = math.max(120, width - textX - rightPad - closeArea)
-    local badgeH    = 16
+    local badgeH    = compactMode and 14 or 16
     local badgeY    = topPad
-    local titleY    = badgeY + badgeH + 6
-    local titleH    = math.max(14, MeasureText(title, FontBold, 12, Vector2.new(textW, 200)).Y)
-    local contentH  = contentText ~= "" and math.max(12, MeasureText(contentText, FontRegular, 10, Vector2.new(textW, 600)).Y) or 0
-    local contentY  = titleY + titleH + (contentH > 0 and 4 or 0)
+    local titleY    = badgeY + badgeH + (compactMode and 5 or 6)
+    local titleH    = math.max(14, MeasureText(title, FontBold, compactMode and 11 or 12, Vector2.new(textW, 200)).Y)
+    local contentH  = contentText ~= "" and math.max(12, MeasureText(contentText, FontRegular, compactMode and 10 or 10, Vector2.new(textW, 600)).Y) or 0
+    local contentY  = titleY + titleH + (contentH > 0 and (compactMode and 3 or 4) or 0)
     local contentBottom = contentH > 0 and (contentY + contentH) or (titleY + titleH)
-    local cardH = math.max(72, contentBottom + 18)
+    local cardH = math.max(compactMode and 68 or 72, contentBottom + (compactMode and 16 or 18))
 
     local nf = Create("Frame",{
         Name="Notification",
         Size=UDim2.new(0,width,0,cardH),
         Position=UDim2.new(0,-width,0,0),
-        BackgroundColor3=Theme.WindowBg,
+        BackgroundColor3=compactMode and Theme.OverlayBg or Theme.WindowBg,
         BackgroundTransparency=1,
         BorderSizePixel=0,
         Active=true,
         ZIndex=ZIndex.NOTIFY,
         Parent=self._ScreenGui,
     })
-    ApplyCorner(nf,10)
-    local nfStroke = ApplyStroke(nf, Theme.Border, 1, 1)
-    local nfScale = Create("UIScale",{Scale=0.97,Parent=nf})
+    ApplyCorner(nf,compactMode and 8 or 10)
+    local nfStroke = ApplyStroke(nf, Theme.BorderSoft, 1, 1)
+    local nfScale = Create("UIScale",{Scale=compactMode and 0.985 or 0.97,Parent=nf})
 
     local shadow = Create("ImageLabel",{
-        Size=UDim2.new(1,24,1,24),Position=UDim2.new(0,-12,0,-10),
+        Size=UDim2.new(1,compactMode and 18 or 24,1,compactMode and 18 or 24),Position=UDim2.new(0,compactMode and -9 or -12,0,compactMode and -8 or -10),
         BackgroundTransparency=1,Image="rbxassetid://6015897843",
         ImageColor3=Theme.Shadow,ImageTransparency=1,
         ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
@@ -3209,27 +3636,27 @@ function MIDNIGHT:Notify(config)
 
     local tintOverlay = Create("Frame",{
         Size=UDim2.new(1,0,1,0),
-        BackgroundColor3=AccentTint(typeColor,0.08),
+        BackgroundColor3=AccentTint(typeColor,compactMode and 0.05 or 0.08),
         BackgroundTransparency=1,
         BorderSizePixel=0,
         ZIndex=ZIndex.NOTIFY,
         Parent=nf,
     })
-    ApplyCorner(tintOverlay,10)
+    ApplyCorner(tintOverlay,compactMode and 8 or 10)
 
-    local accentLine = CreateAccentLine(nf,10,typeColor)
+    local accentLine = CreateAccentLine(nf,compactMode and 8 or 10,typeColor)
     if accentLine then accentLine.BackgroundTransparency = 1 end
 
     local iconBg = Create("Frame",{
         Size=UDim2.new(0,iconSize,0,iconSize),
         Position=UDim2.new(0,leftPad,0,topPad),
-        BackgroundColor3=AccentTint(typeColor,0.16),
+        BackgroundColor3=AccentTint(typeColor,compactMode and 0.12 or 0.16),
         BackgroundTransparency=1,
         BorderSizePixel=0,
         ZIndex=ZIndex.NOTIFY+2,
         Parent=nf,
     })
-    ApplyCorner(iconBg,8)
+    ApplyCorner(iconBg,compactMode and 7 or 8)
     local iconBgStroke = ApplyStroke(iconBg, typeColor, 1, 1)
 
     local iconGlow = Create("Frame",{
@@ -3240,10 +3667,10 @@ function MIDNIGHT:Notify(config)
         ZIndex=ZIndex.NOTIFY+2,
         Parent=iconBg,
     })
-    ApplyCorner(iconGlow,8)
+    ApplyCorner(iconGlow,compactMode and 7 or 8)
 
     local iconEl = CreateIconOrText(iconBg, iconName, nil,
-        UDim2.new(0,15,0,15), UDim2.new(0.5,-7,0.5,-7), typeColor, FontBold, 14)
+        UDim2.new(0,compactMode and 14 or 15,0,compactMode and 14 or 15), UDim2.new(0.5,-7,0.5,-7), typeColor, FontBold, compactMode and 13 or 14)
     if iconEl and iconEl:IsA("TextLabel") then
         iconEl.TextXAlignment = Enum.TextXAlignment.Center
         iconEl.TextYAlignment = Enum.TextYAlignment.Center
@@ -3283,18 +3710,18 @@ function MIDNIGHT:Notify(config)
         Size=UDim2.new(0,0,0,badgeH),
         AutomaticSize=Enum.AutomaticSize.X,
         Position=UDim2.new(0,textX,0,badgeY),
-        BackgroundColor3=AccentTint(typeColor,0.12),
+        BackgroundColor3=AccentTint(typeColor,compactMode and 0.08 or 0.12),
         BackgroundTransparency=1,
         BorderSizePixel=0,
         ZIndex=ZIndex.NOTIFY+2,
         Parent=nf,
     })
-    ApplyCorner(typeBadge,8)
-    ApplyPadding(typeBadge,0,0,7,7)
+    ApplyCorner(typeBadge,7)
+    ApplyPadding(typeBadge,0,0,compactMode and 6 or 7,compactMode and 6 or 7)
     local typeBadgeStroke = ApplyStroke(typeBadge, typeColor, 1, 1)
     local typeLabel = Create("TextLabel",{
         Text=typeLabels[notifType] or string.upper(notifType),
-        Font=FontBold,TextSize=8,TextColor3=typeColor,
+        Font=FontBold,TextSize=compactMode and 7 or 8,TextColor3=typeColor,
         Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
         BackgroundTransparency=1,TextTransparency=1,
         ZIndex=ZIndex.NOTIFY+3,Parent=typeBadge,
@@ -3303,7 +3730,7 @@ function MIDNIGHT:Notify(config)
     local titleLabel = Create("TextLabel",{
         Text=title,
         Font=FontBold,
-        TextSize=12,
+        TextSize=compactMode and 11 or 12,
         TextColor3=Theme.TextPrimary,
         TextTransparency=1,
         TextWrapped=true,
@@ -3319,7 +3746,7 @@ function MIDNIGHT:Notify(config)
     local contentLabel = Create("TextLabel",{
         Text=contentText,
         Font=FontRegular,
-        TextSize=10,
+        TextSize=compactMode and 10 or 10,
         TextColor3=Theme.TextSecondary,
         TextTransparency=1,
         TextWrapped=true,
@@ -3345,7 +3772,7 @@ function MIDNIGHT:Notify(config)
         Parent=nf,
     })
     ApplyCorner(closeNBtn,5)
-    local closeStroke = ApplyStroke(closeNBtn, Theme.Border, 1, 1)
+    local closeStroke = ApplyStroke(closeNBtn, Theme.BorderSoft, 1, 1)
     local closeIcon = CreateIconOrText(closeNBtn,"x",nil,UDim2.new(0,8,0,8),UDim2.new(0.5,-4,0.5,-4),Theme.TextMuted,FontBold,8)
     if closeIcon and closeIcon:IsA("TextLabel") then
         closeIcon.TextXAlignment = Enum.TextXAlignment.Center
@@ -3357,7 +3784,7 @@ function MIDNIGHT:Notify(config)
 
     local pBg = Create("Frame",{
         Size=UDim2.new(1,-24,0,2),
-        Position=UDim2.new(0,12,1,-10),
+        Position=UDim2.new(0,12,1,-9),
         BackgroundColor3=Theme.SliderTrack,
         BackgroundTransparency=1,
         BorderSizePixel=0,
@@ -3496,17 +3923,17 @@ function MIDNIGHT:Notify(config)
 
     local function pulseNotification()
         if dismissed then return end
-        TweenObject(nfScale,{Scale=1.015},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+        TweenObject(nfScale,{Scale=compactMode and 1.008 or 1.015},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
         task.delay(0.13,function()
             if not dismissed and nfScale.Parent then
                 TweenObject(nfScale,{Scale=1},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             end
         end)
         if shadow then
-            TweenObject(shadow,{ImageTransparency=0.72},0.1)
+            TweenObject(shadow,{ImageTransparency=compactMode and 0.82 or 0.72},0.1)
             task.delay(0.13,function()
                 if not dismissed and shadow.Parent then
-                    TweenObject(shadow,{ImageTransparency=0.8},0.18)
+                    TweenObject(shadow,{ImageTransparency=compactMode and 0.9 or 0.8},0.18)
                 end
             end)
         end
@@ -3538,8 +3965,8 @@ function MIDNIGHT:Notify(config)
             return
         end
         local slideOut = self:_GetNotifSlideOffset(self._NotificationPosition)
-        TweenObject(nf,{Position=nf.Position+slideOut, BackgroundTransparency=1},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
-        TweenObject(nfScale,{Scale=0.96},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+        TweenObject(nf,{Position=nf.Position+slideOut, BackgroundTransparency=1},compactMode and 0.2 or 0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+        TweenObject(nfScale,{Scale=compactMode and 0.985 or 0.96},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
         if nfStroke then TweenObject(nfStroke,{Transparency=1},0.2) end
         if shadow then TweenObject(shadow,{ImageTransparency=1},0.2) end
         if tintOverlay then TweenObject(tintOverlay,{BackgroundTransparency=1},0.2) end
@@ -3581,7 +4008,7 @@ function MIDNIGHT:Notify(config)
     closeNBtn.MouseButton1Click:Connect(dismiss)
 
     closeNBtn.MouseEnter:Connect(function()
-        TweenObject(closeNBtn,{BackgroundTransparency=0.04,BackgroundColor3=AccentTint(typeColor,0.18)},0.12)
+        TweenObject(closeNBtn,{BackgroundTransparency=0.04,BackgroundColor3=AccentTint(typeColor,compactMode and 0.14 or 0.18)},0.12)
         if closeStroke then TweenObject(closeStroke,{Color=typeColor,Transparency=0.18},0.12) end
         if closeIcon then
             if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=typeColor},0.12)
@@ -3589,8 +4016,8 @@ function MIDNIGHT:Notify(config)
         end
     end)
     closeNBtn.MouseLeave:Connect(function()
-        TweenObject(closeNBtn,{BackgroundTransparency=0.28,BackgroundColor3=Theme.InputBg},0.14)
-        if closeStroke then TweenObject(closeStroke,{Color=Theme.Border,Transparency=0.4},0.14) end
+        TweenObject(closeNBtn,{BackgroundTransparency=compactMode and 0.34 or 0.28,BackgroundColor3=Theme.InputBg},0.14)
+        if closeStroke then TweenObject(closeStroke,{Color=Theme.BorderSoft,Transparency=0.4},0.14) end
         if closeIcon then
             if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=Theme.TextMuted},0.14)
             elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageColor3=Theme.TextMuted},0.14) end
@@ -3619,20 +4046,20 @@ function MIDNIGHT:Notify(config)
     local slideOffset = self:_GetNotifSlideOffset(self._NotificationPosition)
     nf.Position = finalPos + slideOffset
     task.defer(function()
-        TweenObject(nf,{Position=finalPos,BackgroundTransparency=0},0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-        TweenObject(nfScale,{Scale=1},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-        if nfStroke then TweenObject(nfStroke,{Transparency=0.18},0.18) end
-        if shadow then TweenObject(shadow,{ImageTransparency=0.8},0.22) end
-        if tintOverlay then TweenObject(tintOverlay,{BackgroundTransparency=0.44},0.18) end
-        if accentLine then TweenObject(accentLine,{BackgroundTransparency=0.68},0.18) end
-        TweenObject(iconBg,{BackgroundTransparency=0.16},0.18)
-        if iconBgStroke then TweenObject(iconBgStroke,{Transparency=0.62},0.18) end
-        if iconGlow then TweenObject(iconGlow,{BackgroundTransparency=0.94},0.18) end
-        TweenObject(typeBadge,{BackgroundTransparency=0.14},0.18)
-        if typeBadgeStroke then TweenObject(typeBadgeStroke,{Transparency=0.68},0.18) end
-        TweenObject(closeNBtn,{BackgroundTransparency=0.28},0.18)
+        TweenMotion(nf,{Position=finalPos,BackgroundTransparency=0},"OverlayIn")
+        TweenMotion(nfScale,{Scale=1},"OverlayIn")
+        if nfStroke then TweenObject(nfStroke,{Transparency=compactMode and 0.26 or 0.18},0.18) end
+        if shadow then TweenObject(shadow,{ImageTransparency=compactMode and 0.9 or 0.8},0.22) end
+        if tintOverlay then TweenObject(tintOverlay,{BackgroundTransparency=compactMode and 0.62 or 0.44},0.18) end
+        if accentLine then TweenObject(accentLine,{BackgroundTransparency=compactMode and 0.86 or 0.68},0.18) end
+        TweenObject(iconBg,{BackgroundTransparency=compactMode and 0.26 or 0.16},0.18)
+        if iconBgStroke then TweenObject(iconBgStroke,{Transparency=compactMode and 0.74 or 0.62},0.18) end
+        if iconGlow then TweenObject(iconGlow,{BackgroundTransparency=compactMode and 0.98 or 0.94},0.18) end
+        TweenObject(typeBadge,{BackgroundTransparency=compactMode and 0.24 or 0.14},0.18)
+        if typeBadgeStroke then TweenObject(typeBadgeStroke,{Transparency=compactMode and 0.8 or 0.68},0.18) end
+        TweenObject(closeNBtn,{BackgroundTransparency=compactMode and 0.34 or 0.28},0.18)
         if closeStroke then TweenObject(closeStroke,{Transparency=0.4},0.18) end
-        TweenObject(pBg,{BackgroundTransparency=0.26},0.18)
+        TweenObject(pBg,{BackgroundTransparency=compactMode and 0.38 or 0.26},0.18)
         TweenObject(pFill,{BackgroundTransparency=0},0.2)
         tweenVisualTransparency(iconEl, 0, 0.16)
         tweenVisualTransparency(closeIcon, 0, 0.16)
@@ -3654,24 +4081,30 @@ function MIDNIGHT:CreateKeybindList(config)
     self:_InitScreenGui()
 
     local kf = Create("Frame",{
-        Name="KeybindList", Size=UDim2.new(0,188,0,28),
+        Name="KeybindList", Size=UDim2.new(0,196,0,30),
         Position=UDim2.new(1,-204,0,38),
-        BackgroundColor3=Theme.KeybindBg, BorderSizePixel=0,
+        BackgroundColor3=Theme.UtilityBg, BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
-    ApplyCorner(kf,8); ApplyStroke(kf,Theme.Border,1)
+    StyleUtilityOverlay(kf, Theme.Accent)
 
-    local tb2 = Create("Frame",{Size=UDim2.new(1,0,0,24),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,ClipsDescendants=true,Parent=kf})
-    ApplyCorner(tb2,8)
-    Create("Frame",{Size=UDim2.new(1,0,0,8),Position=UDim2.new(0,0,1,-8),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,Parent=tb2})
-    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=tb2})
+    local tb2 = StyleQuietHeader(kf, 28, ZIndex.WINDOW + 1)
+    local tc2 = Create("Frame",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,8,0,0),BackgroundTransparency=1,Parent=tb2})
+    local icon = CreateIconOrText(tc2,"key",nil,UDim2.new(0,12,0,12),UDim2.new(0,0,0.5,-6),Theme.UtilityAccent,FontBold,10)
+    if icon and icon:IsA("TextLabel") then
+        icon.TextXAlignment = Enum.TextXAlignment.Center
+        icon.TextYAlignment = Enum.TextYAlignment.Center
+    end
+    Create("TextLabel",{
+        Text=title,Font=FontBold,TextSize=CompactStyle.UtilityTextSize,
+        TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,18,0,0),
+        TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
+        BackgroundTransparency=1,Parent=tc2
+    })
 
-    local tc2 = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=tb2})
-    Create("TextLabel",{Text=title,Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.new(0.5,0,0.5,0),TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,BackgroundTransparency=1,Parent=tc2})
-
-    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-24),Position=UDim2.new(0,0,0,24),BackgroundTransparency=1,Parent=kf})
+    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-30),Position=UDim2.new(0,0,0,30),BackgroundTransparency=1,Parent=kf})
     Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=lc2})
-    ApplyPadding(lc2,3,3,5,5)
+    ApplyPadding(lc2,4,4,6,6)
 
     self._KeybindListFrame   = kf
     self._KeybindListContent = lc2
@@ -3688,42 +4121,43 @@ function MIDNIGHT:CreateKeybindList(config)
                 count = count + 1
                 local isActive = kb._Active
                 local row = Create("Frame",{
-                    Size=UDim2.new(1,0,0,20),
-                    BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.08) or Theme.InputBg,
-                    BackgroundTransparency = isActive and 0 or 0.12,
+                    Size=UDim2.new(1,0,0,22),
+                    BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.12) or Theme.Surface2,
+                    BackgroundTransparency = isActive and 0.02 or 0.08,
                     BorderSizePixel=0, LayoutOrder=count, Parent=lc2,
                 })
-                ApplyCorner(row,4)
+                ApplyCorner(row,5)
+                ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.42)
                 if isActive then
-                    Create("Frame",{Size=UDim2.new(0,1,0.7,0),Position=UDim2.new(0,0,0.15,0),BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=row})
+                    Create("Frame",{Size=UDim2.new(0,2,0.66,0),Position=UDim2.new(0,0,0.17,0),BackgroundColor3=Theme.UtilityAccent,BorderSizePixel=0,Parent=row})
                 end
                 Create("TextLabel",{
-                    Text=kb._Name, Font=FontRegular, TextSize=9,
+                    Text=kb._Name, Font=FontRegular, TextSize=CompactStyle.UtilityTextSize,
                     TextColor3=isActive and Theme.TextPrimary or Theme.TextSecondary,
                     TextXAlignment=Enum.TextXAlignment.Left,
-                    Size=UDim2.new(0.55,0,1,0), Position=UDim2.new(0,isActive and 6 or 4,0,0),
+                    Size=UDim2.new(0.58,0,1,0), Position=UDim2.new(0,isActive and 8 or 6,0,0),
                     BackgroundTransparency=1, Parent=row,
                 })
-                -- Keybind badge: InputBg background, rounded corners
                 local badge = Create("Frame",{
-                    Size=UDim2.new(0,0,0,15),
+                    Size=UDim2.new(0,0,0,16),
                     AutomaticSize=Enum.AutomaticSize.X,
-                    Position=UDim2.new(1,-4,0.5,-8),
+                    Position=UDim2.new(1,-5,0.5,-8),
                     AnchorPoint=Vector2.new(1,0),
-                    BackgroundColor3=Theme.InputBg,
+                    BackgroundColor3=isActive and AccentTint(Theme.Accent,0.16) or Theme.InputBg,
                     BorderSizePixel=0, Parent=row,
                 })
                 ApplyCorner(badge,4)
+                ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.28 or 0.48)
                 ApplyPadding(badge,0,0,4,4)
                 Create("TextLabel",{
-                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=8,
+                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=CompactStyle.UtilityMetaSize,
                     TextColor3=isActive and Theme.TextAccent or Theme.TextMuted,
                     Size=UDim2.new(0,0,1,0), AutomaticSize=Enum.AutomaticSize.X,
                     BackgroundTransparency=1, Parent=badge,
                 })
             end
         end
-        kf.Size = UDim2.new(0,188,0,24+count*22+8)
+        kf.Size = UDim2.new(0,196,0,30+count*24+10)
     end
 
     self._RefreshKeybindList = refresh
@@ -3828,11 +4262,11 @@ function MIDNIGHT:MakeWindow(config)
     Create("ImageLabel",{
         Size=UDim2.new(1,24,1,24),Position=UDim2.new(0,-12,0,-12),
         BackgroundTransparency=1,Image="rbxassetid://6015897843",
-        ImageColor3=Theme.Shadow,ImageTransparency=0.58,
+        ImageColor3=Theme.Shadow,ImageTransparency=0.68,
         ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
         ZIndex=ZIndex.WINDOW-1,Parent=wf,
     })
-    ApplyStroke(wf,Theme.Border,1)
+    ApplyStroke(wf,Theme.BorderSoft,1,0.16)
 
     wf.BackgroundTransparency = 1
     wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2+12)
@@ -3864,13 +4298,13 @@ function MIDNIGHT:MakeWindow(config)
     -- TITLE BAR
     local tb = Create("Frame",{
         Name="TitleBar", Size=UDim2.new(1,0,0,titleBarH),
-        BackgroundColor3=Theme.TitleBarBg, BorderSizePixel=0,
+        BackgroundColor3=Theme.UtilityHeader, BorderSizePixel=0,
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
-    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.TitleBarBg,BorderSizePixel=0,Parent=tb})
-    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=tb})
-    CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.Accent,FontBold,12)
+    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.UtilityHeader,BorderSizePixel=0,Parent=tb})
+    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=tb})
+    CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
     Create("TextLabel",{
         Text=windowName,Font=FontBold,TextSize=12,TextColor3=Theme.TextPrimary,
         Size=UDim2.new(1,-108,1,0),Position=UDim2.new(0,32,0,0),
@@ -3980,9 +4414,9 @@ function MIDNIGHT:MakeWindow(config)
     -- SIDEBAR
     local sidebar = Create("Frame",{
         Name="Sidebar",Size=UDim2.new(0,sidebarW,1,-footerH),
-        BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,Parent=body,
+        BackgroundColor3=Theme.Surface1,BorderSizePixel=0,Parent=body,
     })
-    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=sidebar})
+    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=sidebar})
 
     local tabList = Create("ScrollingFrame",{
         Name="TabList",Size=UDim2.new(1,0,1,-4),Position=UDim2.new(0,0,0,4),
@@ -3992,27 +4426,27 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.CONTENT,Parent=sidebar,
     })
     Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=tabList})
-    ApplyPadding(tabList,4,4,6,6)
+    ApplyPadding(tabList,4,4,CompactStyle.SidebarPadding,CompactStyle.SidebarPadding)
 
     -- Sidebar footer: version + fps/ping
     -- Uses UICorner with CornerRadiusMode to only round the bottom-left corner
     local sidebarFooterBg = Create("Frame",{
         Size=UDim2.new(0,sidebarW,0,footerH),Position=UDim2.new(0,0,1,-footerH),
-        BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,
+        BackgroundColor3=Theme.Surface1,BorderSizePixel=0,
         ClipsDescendants=true, Parent=body,
     })
     -- Bottom-left rounded corner: cover top-left, top-right, bottom-right with a square overlay
     -- The window frame (wf) already has radius=10 at bottom-left — we need footer to match
     Create("UICorner",{CornerRadius=UDim.new(0,10),Parent=sidebarFooterBg})
     -- Square off top-left, top-right, bottom-right by overlaying flush rectangles
-    Create("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
-    Create("Frame",{Size=UDim2.new(0.5,0,1,0),Position=UDim2.new(0.5,0,0,0),BackgroundColor3=Theme.SidebarBg,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface1,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(0.5,0,1,0),Position=UDim2.new(0.5,0,0,0),BackgroundColor3=Theme.Surface1,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
     -- Border lines
-    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
-    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Border,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
+    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex+1,Parent=sidebarFooterBg})
     local footerLabel = Create("TextLabel",{
-        Text="v"..self.Version.."  |  0 fps  0ms",
-        Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
+        Text="v"..self.Version.."  •  0 fps  •  0 ms",
+        Font=FontRegular,TextSize=CompactStyle.UtilityMetaSize,TextColor3=Theme.TextMuted,
         Size=UDim2.new(1,-8,1,0),Position=UDim2.new(0,6,0,0),
         TextXAlignment=Enum.TextXAlignment.Left,
         BackgroundTransparency=1,Parent=sidebarFooterBg,
@@ -4022,17 +4456,18 @@ function MIDNIGHT:MakeWindow(config)
     -- CONTENT AREA
     local contentFrame = Create("Frame",{
         Name="ContentFrame",Size=UDim2.new(1,-sidebarW,1,0),Position=UDim2.new(0,sidebarW,0,0),
-        BackgroundColor3=Theme.ContentBg,BorderSizePixel=0,
+        BackgroundColor3=Theme.Surface0,BorderSizePixel=0,
         ZIndex=ZIndex.CONTENT,Parent=body,
     })
     ApplyCorner(contentFrame,CompactStyle.WindowRadius)
-    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.ContentBg,BorderSizePixel=0,Parent=contentFrame})
+    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface0,BorderSizePixel=0,Parent=contentFrame})
 
     local wd = {
         _Frame=wf, _TitleBar=tb, _Body=body, _Sidebar=sidebar,
         _TabList=tabList, _ContentFrame=contentFrame,
         _Tabs={}, _ActiveTab=nil, _FloatingWindows={},
         _AdminLogsWindow=nil, _AdminPresenceWidget=nil, _ChatLoggerWindow=nil,
+        _Commands={}, _CommandPalette=nil,
         _TabCount=0,
         _IsMinimized=false,  -- BUG-E FIX: track minimized state in wd so MenuKey open restores correctly
     }
@@ -4047,6 +4482,37 @@ function MIDNIGHT:MakeWindow(config)
         h = math.max(minWinH, h or winH)
         winW, winH = w, h
         TweenObject(wf,{Size=UDim2.new(0,w,0,self._IsMinimized and collapsedH or h)},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+    end
+
+    function wd:_RegisterCommand(entry)
+        if type(entry) ~= "table" then return entry end
+        self._Commands[#self._Commands + 1] = entry
+        return entry
+    end
+
+    function wd:_CollectCommands()
+        local commands = {}
+        for _, t in ipairs(self._Tabs) do
+            if t._Name and t._Button and t._Button.Visible ~= false then
+                commands[#commands + 1] = {
+                    Title = t._Name,
+                    Subtitle = "Open tab",
+                    Search = (t._Name .. " tab open switch"):lower(),
+                    Action = function()
+                        if t._Select then t._Select() end
+                    end,
+                }
+            end
+        end
+        for _, cmd in ipairs(self._Commands) do
+            if type(cmd) == "table" and type(cmd.Action) == "function" then
+                commands[#commands + 1] = cmd
+            end
+        end
+        table.sort(commands, function(a, b)
+            return tostring(a.Title or "") < tostring(b.Title or "")
+        end)
+        return commands
     end
 
     table.insert(self._Windows, wd)
@@ -4068,39 +4534,39 @@ function MIDNIGHT:MakeWindow(config)
         local btn = Create("TextButton",{
             Name="Tab_"..tabName,
             Size=UDim2.new(1,0,0,CompactStyle.TabHeight),
-            BackgroundColor3=Theme.TabBg,
+            BackgroundColor3=Theme.Surface2,
             BorderSizePixel=0, Text="",
             LayoutOrder=self._TabCount,
             ZIndex=ZIndex.CONTENT+1,
             Parent=tabList,
         })
-        ApplyCorner(btn,4)
+        ApplyCorner(btn,5)
 
-        local btnContent = Create("Frame",{Size=UDim2.new(1,-10,1,0),Position=UDim2.new(0,5,0,0),BackgroundTransparency=1,Parent=btn})
-        Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
+        local btnContent = Create("Frame",{Size=UDim2.new(1,-12,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Parent=btn})
+        Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
 
         local tabIconEl = nil
         if tabIcon ~= "" then
-            tabIconEl = CreateIconOrText(btnContent,tabIcon,nil,UDim2.new(0,13,0,13),UDim2.new(0,0,0,0),Theme.TextMuted,FontBold,10)
+            tabIconEl = CreateIconOrText(btnContent,tabIcon,nil,UDim2.new(0,CompactStyle.TabIconSize,0,CompactStyle.TabIconSize),UDim2.new(0,0,0,0),Theme.TextMuted,FontBold,10)
             if tabIconEl then tabIconEl.LayoutOrder=1 end
         end
 
         local tabLabel = Create("TextLabel",{
-            Text=tabName,Font=Font,TextSize=10,TextColor3=Theme.TextSecondary,
+            Text=tabName,Font=Font,TextSize=CompactStyle.TabTextSize,TextColor3=Theme.TextSecondary,
             TextXAlignment=Enum.TextXAlignment.Left,
             Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
             BackgroundTransparency=1,LayoutOrder=2,Parent=btnContent,
         })
 
         local indicator = Create("Frame",{
-            Size=UDim2.new(0,2,0,0),Position=UDim2.new(0,0,0.5,0),
+            Size=UDim2.new(0,3,0,0),Position=UDim2.new(0,0,0.5,0),
             BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=btn,
         })
         ApplyCorner(indicator,1)
 
         -- Active tab glow stroke
         local tabGlowStroke = Create("UIStroke",{
-            Color=Theme.Accent,Thickness=1,Transparency=1,
+            Color=Theme.AccentMuted,Thickness=1,Transparency=1,
             Parent=btn,
         })
 
@@ -4182,7 +4648,7 @@ function MIDNIGHT:MakeWindow(config)
             Parent=pageClip,
         })
         Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=page})
-        ApplyPadding(page,1,1,4,4)
+        ApplyPadding(page,2,2,6,6)
         setupScrollbarAutoHide(page)
 
         -- Empty placeholder
@@ -4198,6 +4664,7 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         local td = {
+            _Name=tabName,
             _Button=btn, _Page=page, _PageClip=pageClip,
             _Layout=nil, _Window=wd, _ItemCount=0,
             _Indicator=indicator, _Label=tabLabel,
@@ -4232,8 +4699,8 @@ function MIDNIGHT:MakeWindow(config)
                         end)
                     end
                 end
-                TweenObject(t._Button,{BackgroundColor3=Theme.TabBg},0.2)
-                TweenObject(t._Indicator,{Size=UDim2.new(0,2,0,0)},0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
+                TweenObject(t._Button,{BackgroundColor3=Theme.Surface2},0.2)
+                TweenObject(t._Indicator,{Size=UDim2.new(0,3,0,0)},0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
                 if t._Label then TweenObject(t._Label,{TextColor3=Theme.TextSecondary},0.18) end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then TweenObject(t._IconEl,{ImageColor3=Theme.TextMuted},0.18)
@@ -4251,10 +4718,10 @@ function MIDNIGHT:MakeWindow(config)
             TweenObject(page,{Position=UDim2.new(0,4,0,4)},0.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
 
             TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.2)
-            TweenObject(indicator,{Size=UDim2.new(0,2,0,0)},0.05)
+            TweenObject(indicator,{Size=UDim2.new(0,3,0,0)},0.05)
             task.delay(0.06,function()
                 if td._IndicatorAnimToken ~= indicatorToken or self._ActiveTab ~= td then return end
-                TweenObject(indicator,{Size=UDim2.new(0,2,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             end)
             if tabLabel then TweenObject(tabLabel,{TextColor3=Theme.TextAccent},0.2) end
             if tabIconEl then
@@ -4267,18 +4734,18 @@ function MIDNIGHT:MakeWindow(config)
         td._Select = selectTab
 
         btn.MouseButton1Click:Connect(selectTab)
-        ApplyHoverEffect(btn, Theme.TabBg, Theme.TabHoverBg, false, {
+        ApplyHoverEffect(btn, Theme.Surface2, Theme.Surface3, false, {
             GetNormalBg = function()
-                return self._ActiveTab == td and Theme.TabActiveBg or Theme.TabBg
+                return self._ActiveTab == td and Theme.TabActiveBg or Theme.Surface2
             end,
             GetHoverBg = function()
-                return self._ActiveTab == td and Theme.TabActiveBg or Theme.TabHoverBg
+                return self._ActiveTab == td and Theme.TabActiveBg or Theme.Surface3
             end,
         })
         if #self._Tabs == 1 then
             pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
             TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.18)
-            TweenObject(indicator,{Size=UDim2.new(0,2,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
             if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
             self._ActiveTab=td
@@ -4313,17 +4780,29 @@ function MIDNIGHT:MakeWindow(config)
             return td._ItemCount
         end
 
+        local function registerCommand(title, kind, action, extraSearch)
+            return wd:_RegisterCommand({
+                Title = title,
+                Subtitle = tabName .. " / " .. (kind or "Action"),
+                Search = string.lower(table.concat({title or "", tabName or "", kind or "", extraSearch or ""}, " ")),
+                Action = function()
+                    selectTab()
+                    if action then action() end
+                end,
+            })
+        end
+
         --// ADDSECTION
         function td:AddSection(sc)
             sc = sc or {}; local nm = sc.Name or "Section"
-            local sf = Create("Frame",{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,LayoutOrder=nextOrder(),Parent=page})
-            local sc2 = Create("Frame",{Size=UDim2.new(1,0,0,14),Position=UDim2.new(0,0,0,1),BackgroundTransparency=1,Parent=sf})
+            local sf = Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.SectionHeight),BackgroundTransparency=1,LayoutOrder=nextOrder(),Parent=page})
+            local sc2 = Create("Frame",{Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,2),BackgroundTransparency=1,Parent=sf})
             Create("TextLabel",{
-                Text=string.upper(nm),Font=FontBold,TextSize=9,
-                TextColor3=Theme.TextMuted,TextXAlignment=Enum.TextXAlignment.Left,
+                Text=nm,Font=FontBold,TextSize=CompactStyle.SectionTextSize,
+                TextColor3=Theme.TextSecondary,TextXAlignment=Enum.TextXAlignment.Left,
                 Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=sc2,
             })
-            Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-2),BackgroundColor3=Theme.BorderLight,BorderSizePixel=0,Parent=sf})
+            Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-3),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=sf})
             return sf
         end
 
@@ -4338,7 +4817,7 @@ function MIDNIGHT:MakeWindow(config)
             lc = lc or {}; local nm = lc.Name or "Label"
             local lf = Create("Frame",{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,LayoutOrder=nextOrder(),Parent=page})
             local lbl = Create("TextLabel",{
-                Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextSecondary,
+                Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextSecondary,
                 TextXAlignment=Enum.TextXAlignment.Left,
                 Size=UDim2.new(1,-8,1,0),Position=UDim2.new(0,4,0,0),
                 BackgroundTransparency=1,Parent=lf,
@@ -4359,15 +4838,15 @@ function MIDNIGHT:MakeWindow(config)
             local cfgFlag  = tc.Flag
 
             local item = Create("Frame",{
-                Size=UDim2.new(1,0,0,32),BackgroundColor3=Theme.ItemBg,
+                Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,
                 BorderSizePixel=0,Active=true,LayoutOrder=nextOrder(),Parent=page,
             })
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
 
             local ic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
             Create("TextLabel",{
-                Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,
+                Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,
                 TextXAlignment=Enum.TextXAlignment.Left,
                 Size=UDim2.new(0.55,0,1,0),BackgroundTransparency=1,Parent=ic,
             })
@@ -4376,12 +4855,12 @@ function MIDNIGHT:MakeWindow(config)
             local keyBadge = Create("Frame",{
                 Size=UDim2.new(0,0,0,16),AutomaticSize=Enum.AutomaticSize.X,
                 Position=UDim2.new(0.55,0,0.5,-8),
-                BackgroundColor3=Theme.InputBg,BorderSizePixel=0,Parent=ic,
+                BackgroundColor3=Theme.Surface3,BorderSizePixel=0,Parent=ic,
             })
-            ApplyCorner(keyBadge,4); ApplyPadding(keyBadge,0,0,4,4)
+            ApplyCorner(keyBadge,4); ApplyStroke(keyBadge,Theme.BorderSoft,1,0.35); ApplyPadding(keyBadge,0,0,4,4)
             local keyBadgeLabel = Create("TextLabel",{
                 Text=bindKey~=Enum.KeyCode.Unknown and KeyCodeToName(bindKey) or "",
-                Font=FontBold,TextSize=8,TextColor3=Theme.TextMuted,
+                Font=FontBold,TextSize=CompactStyle.UtilityMetaSize,TextColor3=Theme.TextMuted,
                 Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
                 BackgroundTransparency=1,Parent=keyBadge,
             })
@@ -4496,6 +4975,9 @@ function MIDNIGHT:MakeWindow(config)
                     "toggle"
                 )
             end
+            registerCommand(nm, "Toggle", function()
+                data:Set(not data._Value)
+            end, "toggle switch enable disable")
             return data
         end
 
@@ -4519,15 +5001,15 @@ function MIDNIGHT:MakeWindow(config)
             local range = mx - mn
 
             local item = Create("Frame",{
-                Size=UDim2.new(1,0,0,46),BackgroundColor3=Theme.ItemBg,
+                Size=UDim2.new(1,0,0,CompactStyle.TallRowHeight),BackgroundColor3=Theme.Surface2,
                 BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page,
             })
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,5,5,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,6,6,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
 
             local ic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
             Create("TextLabel",{
-                Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,
+                Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,
                 TextXAlignment=Enum.TextXAlignment.Left,
                 Size=UDim2.new(0.65,0,0,16),BackgroundTransparency=1,Parent=ic,
             })
@@ -4535,13 +5017,13 @@ function MIDNIGHT:MakeWindow(config)
             -- Value label (right-aligned, fixed width so it doesn't jump)
             local vl = Create("TextLabel",{
                 Text=pct and def.."%" or tostring(def),
-                Font=FontBold,TextSize=11,TextColor3=Theme.Accent,
+                Font=FontBold,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextAccent,
                 TextXAlignment=Enum.TextXAlignment.Right,
                 Size=UDim2.new(0,50,0,16),Position=UDim2.new(1,-50,0,0),
                 BackgroundTransparency=1,Parent=ic,
             })
 
-            local track = Create("Frame",{Size=UDim2.new(1,0,0,4),Position=UDim2.new(0,0,0,22),BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic})
+            local track = Create("Frame",{Size=UDim2.new(1,0,0,4),Position=UDim2.new(0,0,0,24),BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic})
             ApplyCorner(track,2)
             local r0 = (def-mn)/range
             local fill = Create("Frame",{Size=UDim2.new(r0,0,1,0),BackgroundColor3=Theme.SliderFill,BorderSizePixel=0,Parent=track})
@@ -4666,6 +5148,9 @@ function MIDNIGHT:MakeWindow(config)
                     "slider"
                 )
             end
+            registerCommand(nm, "Slider", function()
+                data:Set(math.min(mx, data._Value + step))
+            end, "slider increase adjust")
             return data
         end
 
@@ -4676,17 +5161,17 @@ function MIDNIGHT:MakeWindow(config)
             local mode = kc.Mode or "Press"; local cb = kc.Callback; local isMenuKey = kc.IsMenuKey or false
             local cfgFlag = kc.Flag
 
-            local item = Create("Frame",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,Active=true,LayoutOrder=nextOrder(),Parent=page})
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            local item = Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,Active=true,LayoutOrder=nextOrder(),Parent=page})
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
 
             local ic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
             local nc = Create("Frame",{Size=UDim2.new(0.5,0,0.5,0),BackgroundTransparency=1,Parent=ic})
             Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,5),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=nc})
             local ki2 = CreateIconOrText(nc,"key",nil,UDim2.new(0,11,0,11),UDim2.new(0,0,0,0),Theme.TextPrimary,FontBold,10)
             if ki2 then ki2.LayoutOrder=1 end
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,BackgroundTransparency=1,LayoutOrder=2,Parent=nc})
-            local modeLbl = Create("TextLabel",{Text=mode:upper(),Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.5,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundTransparency=1,Parent=ic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,BackgroundTransparency=1,LayoutOrder=2,Parent=nc})
+            local modeLbl = Create("TextLabel",{Text=mode:upper(),Font=FontRegular,TextSize=CompactStyle.UtilityMetaSize,TextColor3=Theme.TextMuted,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.5,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundTransparency=1,Parent=ic})
 
             local function updateModeLabel(m)
                 mode=m; modeLbl.Text=m:upper()
@@ -4696,11 +5181,11 @@ function MIDNIGHT:MakeWindow(config)
             local kbBadge = Create("Frame",{
                 Size=UDim2.new(0,0,0,20),AutomaticSize=Enum.AutomaticSize.X,
                 Position=UDim2.new(1,-4,0.5,-10),AnchorPoint=Vector2.new(1,0),
-                BackgroundColor3=Theme.InputBg,BorderSizePixel=0,Parent=ic,
+                BackgroundColor3=Theme.Surface3,BorderSizePixel=0,Parent=ic,
             })
-            ApplyCorner(kbBadge,4); ApplyStroke(kbBadge,Theme.BorderLight,1); ApplyPadding(kbBadge,0,0,5,5)
+            ApplyCorner(kbBadge,4); ApplyStroke(kbBadge,Theme.BorderSoft,1,0.35); ApplyPadding(kbBadge,0,0,5,5)
             local kbLabel = Create("TextLabel",{
-                Text=KeyCodeToName(key),Font=FontBold,TextSize=10,
+                Text=KeyCodeToName(key),Font=FontBold,TextSize=CompactStyle.FieldTextSize,
                 TextColor3=Theme.TextAccent,Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
                 BackgroundTransparency=1,Parent=kbBadge,
             })
@@ -4782,6 +5267,16 @@ function MIDNIGHT:MakeWindow(config)
                     "keybind"
                 )
             end
+            registerCommand(nm, "Keybind", function()
+                local ap=kbBadge.AbsolutePosition
+                MIDNIGHT:_ShowKeybindSettings({
+                    Position=Vector2.new(ap.X,ap.Y),Mode=mode,Visible=kd._Visible,
+                    CurrentKeyStr=key~=Enum.KeyCode.Unknown and KeyCodeToName(key) or "None",
+                    OnKeyChange=function(nk,ns) key=nk; kbLabel.Text=ns; kd._Key=nk end,
+                    OnModeChange=function(nm2) updateModeLabel(nm2); kd._Mode=nm2 end,
+                    OnVisibleChange=function(vis) kd._Visible=vis end,
+                })
+            end, "keybind hotkey mode")
             return kd
         end
 
@@ -4796,22 +5291,22 @@ function MIDNIGHT:MakeWindow(config)
             local cfgFlag = dc.Flag
 
             -- Height: single=34, multi can show tags so also 34 base
-            local item=Create("Frame",{Size=UDim2.new(1,0,0,32),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            local item=Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
             local ic=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.45,0,1,0),BackgroundTransparency=1,Parent=ic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.45,0,1,0),BackgroundTransparency=1,Parent=ic})
 
             -- The selector button
             local sb=Create("TextButton",{
                 Text = multi and "Select..." or (def or ""),
-                Font=Font,TextSize=10,TextColor3=Theme.TextSecondary,
+                Font=Font,TextSize=CompactStyle.FieldTextSize,TextColor3=Theme.TextSecondary,
                 Size=UDim2.new(0,104,0,20),Position=UDim2.new(1,-104,0.5,-10),
-                BackgroundColor3=Theme.InputBg,BorderSizePixel=0,Parent=ic,
+                BackgroundColor3=Theme.Surface3,BorderSizePixel=0,Parent=ic,
                 TextTruncate=Enum.TextTruncate.AtEnd,
                 ClipsDescendants=true,
             })
-            ApplyCorner(sb,4); ApplyStroke(sb,Theme.Border,1)
+            ApplyCorner(sb,4); ApplyStroke(sb,Theme.BorderSoft,1,0.22)
             -- BUG-5 FIX: capture the chevron element directly from the return value.
             -- FindFirstChildWhichIsA("TextLabel") could return any TextLabel child (e.g. the sb's
             -- own Text property rendered as a child), picking the wrong element for rotation.
@@ -4925,20 +5420,20 @@ function MIDNIGHT:MakeWindow(config)
             local itemH    = 22
 
             local wrapper = Create("Frame",{
-                Size=UDim2.new(1,0,0,baseH), BackgroundColor3=Theme.ItemBg,
+                Size=UDim2.new(1,0,0,baseH), BackgroundColor3=Theme.Surface2,
                 BorderSizePixel=0, LayoutOrder=nextOrder(), Parent=page,
                 ClipsDescendants=true,
             })
-            ApplyCorner(wrapper,6); ApplyStroke(wrapper,Theme.Border,1)
+            ApplyCorner(wrapper,6); ApplyStroke(wrapper,Theme.BorderSoft,1,0.24)
 
             local header = Create("Frame",{Size=UDim2.new(1,0,0,baseH),BackgroundTransparency=1,Parent=wrapper})
-            ApplyPadding(header,0,0,8,8)
+            ApplyPadding(header,0,0,10,10)
             local hic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=header})
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.48,0,1,0),BackgroundTransparency=1,Parent=hic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(0.48,0,1,0),BackgroundTransparency=1,Parent=hic})
 
             local selLabel = Create("TextLabel",{
                 Text = multi and "None" or (def or ""),
-                Font=FontBold, TextSize=10, TextColor3=Theme.TextAccent,
+                Font=FontBold, TextSize=CompactStyle.FieldTextSize, TextColor3=Theme.TextAccent,
                 TextXAlignment=Enum.TextXAlignment.Right,
                 Size=UDim2.new(0.42,0,1,0), Position=UDim2.new(0.5,0,0,0),
                 BackgroundTransparency=1, Parent=hic,
@@ -4955,6 +5450,7 @@ function MIDNIGHT:MakeWindow(config)
                 Size=UDim2.new(1,0,1,0), TextXAlignment=Enum.TextXAlignment.Center,
                 BackgroundTransparency=1, Parent=chevFrame,
             })
+            chevLabel.Text = "v"
 
             local function getLabel()
                 if not multi then return sel or "" end
@@ -4995,7 +5491,7 @@ function MIDNIGHT:MakeWindow(config)
                 local isSel = multi and selSet[opt] or opt==def
                 local ob = Create("Frame",{
                     Size=UDim2.new(1,0,0,itemH),
-                    BackgroundColor3=isSel and Theme.TabActiveBg or Theme.InputBg,
+                BackgroundColor3=isSel and Theme.TabActiveBg or Theme.Surface3,
                     BorderSizePixel=0, LayoutOrder=i, Parent=listFrame,
                 })
                 ApplyCorner(ob,4)
@@ -5012,7 +5508,7 @@ function MIDNIGHT:MakeWindow(config)
                 if multi then
                     local cb2 = Create("Frame",{
                         Size=UDim2.new(0,12,0,12), Position=UDim2.new(1,-18,0.5,-6),
-                        BackgroundColor3=isSel and Theme.Accent or Theme.InputBg,
+                        BackgroundColor3=isSel and Theme.Accent or Theme.Surface3,
                         BorderSizePixel=0, Parent=ob,
                     })
                     ApplyCorner(cb2,3); ApplyStroke(cb2,isSel and Theme.Accent or Theme.BorderLight,1)
@@ -5035,12 +5531,12 @@ function MIDNIGHT:MakeWindow(config)
 
                 clickBtn.MouseEnter:Connect(function()
                     local curSel = multi and selSet[opt] or opt==sel
-                    if not curSel then TweenObject(ob,{BackgroundColor3=Theme.ItemHoverBg},0.08) end
+                    if not curSel then TweenObject(ob,{BackgroundColor3=Theme.Surface3},0.08) end
                     TweenObject(lbl,{TextColor3=Theme.TextPrimary},0.08)
                 end)
                 clickBtn.MouseLeave:Connect(function()
                     local curSel = multi and selSet[opt] or opt==sel
-                    TweenObject(ob,{BackgroundColor3=curSel and Theme.TabActiveBg or Theme.InputBg},0.1)
+                    TweenObject(ob,{BackgroundColor3=curSel and Theme.TabActiveBg or Theme.Surface3},0.1)
                     TweenObject(lbl,{TextColor3=curSel and Theme.TextAccent or Theme.TextSecondary},0.1)
                 end)
 
@@ -5050,11 +5546,11 @@ function MIDNIGHT:MakeWindow(config)
                         if multi then
                             selSet[opt] = not selSet[opt]
                             local nowSel = selSet[opt]
-                            TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.InputBg},0.12)
+                            TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.Surface3},0.12)
                             TweenObject(lbl,{TextColor3=nowSel and Theme.TextAccent or Theme.TextSecondary},0.12)
                             TweenObject(selBar,{BackgroundTransparency=nowSel and 0 or 1},0.12)
                             if checkEl then
-                                TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.InputBg},0.12)
+                                TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.Surface3},0.12)
                                 for _, ch in ipairs(checkEl:GetChildren()) do if ch:IsA("TextLabel") then ch:Destroy() end end
                                 if nowSel then Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=checkEl}) end
                             end
@@ -5067,7 +5563,7 @@ function MIDNIGHT:MakeWindow(config)
                             sel = opt; data._Value = opt; refreshSelectionLabel()
                             for _, bb in ipairs(optBtns) do
                                 local isThis = bb._opt == opt
-                                TweenObject(bb._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.InputBg},0.12)
+                                TweenObject(bb._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.Surface3},0.12)
                                 TweenObject(bb._lbl,{TextColor3=isThis and Theme.TextAccent or Theme.TextSecondary},0.12)
                                 TweenObject(bb._bar,{BackgroundTransparency=isThis and 0 or 1},0.12)
                             end
@@ -5126,30 +5622,21 @@ function MIDNIGHT:MakeWindow(config)
         --// ADDBUTTON
         function td:AddButton(bc)
             bc = bc or {}; local nm=bc.Name or "Button"; local cb=bc.Callback
-            local item=Create("Frame",{Size=UDim2.new(1,0,0,32),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,8,8)
+            local item=Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
             local ic=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
             local btn=Create("TextButton",{
-                Text=nm,Font=FontBold,TextSize=11,TextColor3=Theme.TextPrimary,
+                Text=nm,Font=FontBold,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,
                 TextXAlignment=Enum.TextXAlignment.Left,
-                Size=UDim2.new(1,0,1,0),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,Parent=ic,
+                Size=UDim2.new(1,0,1,0),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,Parent=ic,
             })
             ApplyCorner(btn,6)
-            -- Accent left stripe (hidden normally, shown on hover)
-            local accentStripe = Create("Frame",{
-                Size=UDim2.new(0,2,0.7,0), Position=UDim2.new(0,0,0.15,0),
-                BackgroundColor3=Theme.Accent, BorderSizePixel=0,
-                BackgroundTransparency=1, Parent=item,
-            })
-            ApplyCorner(accentStripe,1)
             btn.MouseEnter:Connect(function()
-                TweenObject(btn,{BackgroundColor3=Theme.ItemHoverBg},0.15)
-                TweenObject(accentStripe,{BackgroundTransparency=0},0.15)
+                TweenObject(btn,{BackgroundColor3=Theme.Surface3},0.15)
                 TweenObject(btn,{TextColor3=Theme.TextAccent},0.15)
             end)
             btn.MouseLeave:Connect(function()
-                TweenObject(btn,{BackgroundColor3=Theme.ItemBg},0.18)
-                TweenObject(accentStripe,{BackgroundTransparency=1},0.18)
+                TweenObject(btn,{BackgroundColor3=Theme.Surface2},0.18)
                 TweenObject(btn,{TextColor3=Theme.TextPrimary},0.18)
             end)
             btn.MouseButton1Click:Connect(function()
@@ -5158,12 +5645,15 @@ function MIDNIGHT:MakeWindow(config)
                 local stroke = item:FindFirstChildWhichIsA("UIStroke")
                 if stroke then TweenObject(stroke,{Color=Theme.Accent,Thickness=1.2},0.06) end
                 task.delay(0.1,function()
-                    TweenObject(btn,{BackgroundColor3=Theme.ItemHoverBg},0.25,Enum.EasingStyle.Quint)
+                    TweenObject(btn,{BackgroundColor3=Theme.Surface3},0.25,Enum.EasingStyle.Quint)
                     TweenObject(btn,{TextColor3=Theme.TextAccent},0.25)
-                    if stroke then TweenObject(stroke,{Color=Theme.Border,Thickness=1},0.3) end
+                    if stroke then TweenObject(stroke,{Color=Theme.BorderSoft,Thickness=1},0.3) end
                 end)
                 if cb then cb() end
             end)
+            registerCommand(nm, "Button", function()
+                if cb then cb() end
+            end, "button run execute")
             return {_Frame=item,_Button=btn}
         end
 
@@ -5177,19 +5667,19 @@ function MIDNIGHT:MakeWindow(config)
             local multiLine = tbc.MultiLine or false
             local cfgFlag = tbc.Flag
 
-            local h = multiLine and 48 or 34
-            local item=Create("Frame",{Size=UDim2.new(1,0,0,h),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,3,3,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            local h = multiLine and math.max(48, CompactStyle.TallRowHeight + 2) or CompactStyle.RowHeight
+            local item=Create("Frame",{Size=UDim2.new(1,0,0,h),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,4,4,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
 
             local ic=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
             Create("TextLabel",{
-                Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,
+                Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,
                 TextXAlignment=Enum.TextXAlignment.Left,
                 Size=UDim2.new(1,0,0,14),BackgroundTransparency=1,Parent=ic,
             })
             local box=Create("TextBox",{
-                Text=def,PlaceholderText=ph,Font=Font,TextSize=10,
+                Text=def,PlaceholderText=ph,Font=Font,TextSize=CompactStyle.FieldTextSize,
                 TextColor3=Theme.TextPrimary,PlaceholderColor3=Theme.TextMuted,
                 Size=UDim2.new(1,0,0,multiLine and 26 or 16),
                 Position=UDim2.new(0,0,0,16),
@@ -5198,7 +5688,7 @@ function MIDNIGHT:MakeWindow(config)
                 MultiLine=multiLine,Parent=ic,
             })
             ApplyCorner(box,4)
-            local boxStroke = ApplyStroke(box,Theme.Border,1)
+            local boxStroke = ApplyStroke(box,Theme.BorderSoft,1,0.22)
             ApplyPadding(box,2,2,4,4)
 
             -- Focus highlight — reuse stroke instead of creating new ones
@@ -5220,19 +5710,25 @@ function MIDNIGHT:MakeWindow(config)
                     "textbox"
                 )
             end
+            registerCommand(nm, "Text", function()
+                selectTab()
+                task.defer(function()
+                    if box and box.Parent then box:CaptureFocus() end
+                end)
+            end, "textbox input edit")
             return tdata
         end
 
         --// ADDCOLORPICKER (popup)
         function td:AddColorPicker(cc)
             cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Theme.Accent; local cb=cc.Callback; local cfgFlag=cc.Flag
-            local item=Create("Frame",{Size=UDim2.new(1,0,0,32),BackgroundColor3=Theme.ItemBg,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
-            ApplyCorner(item,6); ApplyStroke(item,Theme.Border,1); ApplyPadding(item,0,0,8,8)
-            ApplyHoverEffect(item, Theme.ItemBg, Theme.ItemHoverBg, true)
+            local item=Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
+            ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
+            ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
             local ic=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
-            Create("TextLabel",{Text=nm,Font=Font,TextSize=11,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(1,-44,1,0),BackgroundTransparency=1,Parent=ic})
+            Create("TextLabel",{Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextPrimary,TextXAlignment=Enum.TextXAlignment.Left,Size=UDim2.new(1,-44,1,0),BackgroundTransparency=1,Parent=ic})
             local cBtn=Create("TextButton",{Text="",Size=UDim2.new(0,28,0,18),Position=UDim2.new(1,-28,0.5,-9),BackgroundColor3=def,BorderSizePixel=0,Parent=ic})
-            ApplyCorner(cBtn,4); ApplyStroke(cBtn,Theme.BorderLight,1)
+            ApplyCorner(cBtn,4); ApplyStroke(cBtn,Theme.BorderSoft,1,0.2)
             local data={_Value=def}
             cBtn.MouseButton1Click:Connect(function()
                 MIDNIGHT:_OpenColorPicker({
@@ -5249,6 +5745,12 @@ function MIDNIGHT:MakeWindow(config)
                     "color"
                 )
             end
+            registerCommand(nm, "Color", function()
+                MIDNIGHT:_OpenColorPicker({
+                    ButtonPos=item.AbsolutePosition,Current=cBtn.BackgroundColor3,
+                    OnColor=function(c) cBtn.BackgroundColor3=c; data._Value=c; if cb then cb(c) end end,
+                })
+            end, "color picker")
             return data
         end
 
@@ -5402,28 +5904,32 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             -- ── outer frame ────────────────────────────────────────────
-            local totalH = 20 -- section label
-                + (searchable and 30 or 0)
-                + 28           -- header row
-                + rowH*maxVis  -- body rows
-                + 4            -- bottom pad
+            local totalH = 28
+                + (searchable and 34 or 0)
+                + 30
+                + rowH * maxVis
+                + 10
 
             local outer = Create("Frame",{
                 Size=UDim2.new(1,0,0,totalH),
-                BackgroundTransparency=1,
+                BackgroundColor3=Theme.Surface1,
+                BorderSizePixel=0,
                 LayoutOrder=nextOrder(),Parent=page,
             })
+            ApplyCorner(outer, 6)
+            ApplyStroke(outer, Theme.BorderSoft, 1, 0.22)
 
             -- Section label
             local sLbl = Create("TextLabel",{
-                Text=nm, Font=FontBold, TextSize=11,
-                TextColor3=Theme.Accent,
+                Text=nm, Font=FontBold, TextSize=CompactStyle.SectionTextSize,
+                TextColor3=Theme.TextSecondary,
                 TextXAlignment=Enum.TextXAlignment.Left,
-                Size=UDim2.new(1,0,0,16),
+                Size=UDim2.new(1,-16,0,14),
+                Position=UDim2.new(0,8,0,8),
                 BackgroundTransparency=1, Parent=outer,
             })
 
-            local yOff = 20
+            local yOff = 26
 
             -- Search box
             local searchText = ""
@@ -5431,36 +5937,38 @@ function MIDNIGHT:MakeWindow(config)
             if searchable then
                 local sBox = Create("TextBox",{
                     Text="", PlaceholderText="🔍  Search...",
-                    Font=Font, TextSize=11, TextColor3=Theme.TextPrimary,
+                    Font=Font, TextSize=CompactStyle.FieldTextSize, TextColor3=Theme.TextPrimary,
                     PlaceholderColor3=Theme.TextMuted,
-                    Size=UDim2.new(1,0,0,22),
-                    Position=UDim2.new(0,0,0,yOff),
-                    BackgroundColor3=Theme.InputBg, BorderSizePixel=0,
+                    Size=UDim2.new(1,-16,0,24),
+                    Position=UDim2.new(0,8,0,yOff),
+                    BackgroundColor3=Theme.Surface2, BorderSizePixel=0,
                     ClearTextOnFocus=false, Parent=outer,
                 })
-                ApplyCorner(sBox,5); ApplyStroke(sBox,Theme.Border,1)
-                ApplyPadding(sBox,2,2,6,6)
-                sBox.Changed:Connect(function(prop)
-                    if prop=="Text" then searchText=sBox.Text:lower(); rebuild() end
+                StyleInputField(sBox, 4, Theme.BorderSoft)
+                ApplyPadding(sBox,0,0,8,8)
+                sBox.PlaceholderText = "Search..."
+                sBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    searchText=sBox.Text:lower()
+                    rebuild()
                 end)
-                yOff = yOff + 28
+                yOff = yOff + 32
             end
 
             -- ── header row ─────────────────────────────────────────────
             local headerFrame = Create("Frame",{
-                Size=UDim2.new(1,0,0,28),
-                Position=UDim2.new(0,0,0,yOff),
-                BackgroundColor3=Theme.TabBg,
+                Size=UDim2.new(1,-16,0,28),
+                Position=UDim2.new(0,8,0,yOff),
+                BackgroundColor3=Theme.Surface2,
                 BorderSizePixel=0, Parent=outer,
             })
             ApplyCorner(headerFrame,6)
-            ApplyStroke(headerFrame,Theme.Border,1)
+            ApplyStroke(headerFrame,Theme.BorderSoft,1,0.2)
 
             -- ── scrolling body ─────────────────────────────────────────
             local bodyScroll = Create("ScrollingFrame",{
-                Size=UDim2.new(1,0,0,rowH*maxVis),
-                Position=UDim2.new(0,0,0,yOff+28),
-                BackgroundColor3=Theme.ContentBg,
+                Size=UDim2.new(1,-16,0,rowH*maxVis),
+                Position=UDim2.new(0,8,0,yOff+30),
+                BackgroundColor3=Theme.Surface0,
                 BorderSizePixel=0,
                 ScrollBarThickness=3,
                 ScrollBarImageColor3=Theme.ScrollBarColor,
@@ -5468,7 +5976,8 @@ function MIDNIGHT:MakeWindow(config)
                 ZIndex=ZIndex.CONTENT, Parent=outer,
             })
             ApplyCorner(bodyScroll,6)
-            ApplyStroke(bodyScroll,Theme.Border,1)
+            ApplyStroke(bodyScroll,Theme.BorderSoft,1,0.18)
+            ApplyPadding(bodyScroll,2,2,2,2)
 
             -- ── data state ─────────────────────────────────────────────
             local allRows     = {}  -- master copy
@@ -5524,18 +6033,19 @@ function MIDNIGHT:MakeWindow(config)
                     local even = (ri % 2 == 0)
                     local rf = Create("Frame",{
                         Size=UDim2.new(1,0,0,rowH),
-                        BackgroundColor3=even and Theme.TabBg or Theme.ItemBg,
+                        BackgroundColor3=even and Theme.Surface1 or Theme.Surface2,
                         BorderSizePixel=0,
                         LayoutOrder=ri, Parent=bodyScroll,
                     })
+                    ApplyCorner(rf,4)
                     rowFrames[ri] = rf
 
                     -- Hover effect
                     rf.MouseEnter:Connect(function()
-                        TweenObject(rf,{BackgroundColor3=Theme.ItemHoverBg},0.1)
+                        TweenObject(rf,{BackgroundColor3=Theme.Surface3},0.1)
                     end)
                     rf.MouseLeave:Connect(function()
-                        TweenObject(rf,{BackgroundColor3=even and Theme.TabBg or Theme.ItemBg},0.1)
+                        TweenObject(rf,{BackgroundColor3=even and Theme.Surface1 or Theme.Surface2},0.1)
                     end)
 
                     local xOff = 0
@@ -5544,12 +6054,12 @@ function MIDNIGHT:MakeWindow(config)
                         local cellVal = tostring(row[ci] or "")
                         Create("TextLabel",{
                             Text=cellVal,
-                            Font=Font, TextSize=11,
-                            TextColor3=Theme.TextSecondary,
+                            Font=Font, TextSize=CompactStyle.MetaTextSize,
+                            TextColor3=Theme.TextPrimary,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd,
-                            Size=UDim2.new(0,cw-8,1,0),
-                            Position=UDim2.new(0,xOff+4,0,0),
+                            Size=UDim2.new(0,cw-10,1,0),
+                            Position=UDim2.new(0,xOff+5,0,0),
                             BackgroundTransparency=1,
                             ZIndex=ZIndex.CONTENT+1, Parent=rf,
                         })
@@ -5558,7 +6068,7 @@ function MIDNIGHT:MakeWindow(config)
                             Create("Frame",{
                                 Size=UDim2.new(0,1,0,rowH-8),
                                 Position=UDim2.new(0,xOff+cw-1,0,4),
-                                BackgroundColor3=Theme.Border,
+                                BackgroundColor3=Theme.BorderSoft,
                                 BorderSizePixel=0, Parent=rf,
                             })
                         end
@@ -5570,7 +6080,8 @@ function MIDNIGHT:MakeWindow(config)
                 for ci, lbl in ipairs(headerCells) do
                     if sortCol == ci then
                         lbl.Text = cols[ci]..(sortAsc and " ↑" or " ↓")
-                        lbl.TextColor3 = Theme.Accent
+                        lbl.Text = cols[ci]..(sortAsc and " ^" or " v")
+                        lbl.TextColor3 = Theme.TextAccent
                     else
                         lbl.Text = cols[ci]
                         lbl.TextColor3 = Theme.TextSecondary
@@ -5585,11 +6096,11 @@ function MIDNIGHT:MakeWindow(config)
             for ci=1,ncols do
                 local hBtn = Create("TextButton",{
                     Text=cols[ci],
-                    Font=FontBold, TextSize=11,
+                    Font=FontBold, TextSize=CompactStyle.MetaTextSize,
                     TextColor3=Theme.TextSecondary,
                     TextXAlignment=Enum.TextXAlignment.Left,
                     Size=UDim2.new(fracW, ci==ncols and 0 or -1, 1, 0),
-                    Position=UDim2.new(fracW*(ci-1),4,0,0),
+                    Position=UDim2.new(fracW*(ci-1),6,0,0),
                     BackgroundTransparency=1,
                     ZIndex=ZIndex.CONTENT+1, Parent=headerFrame,
                 })
@@ -5599,7 +6110,7 @@ function MIDNIGHT:MakeWindow(config)
                     Create("Frame",{
                         Size=UDim2.new(0,1,0,16),
                         Position=UDim2.new(fracW*ci,-1,0.5,-8),
-                        BackgroundColor3=Theme.Border,
+                        BackgroundColor3=Theme.BorderSoft,
                         BorderSizePixel=0, Parent=headerFrame,
                     })
                 end
@@ -5692,16 +6203,13 @@ function MIDNIGHT:MakeWindow(config)
         local fw=Create("Frame",{
             Name="FW_"..nm,Size=UDim2.new(0,sz[1],0,sz[2]),
             Position=UDim2.new(0.5,-sz[1]/2,0.5,-sz[2]/2),
-            BackgroundColor3=Theme.WindowBg,BorderSizePixel=0,ClipsDescendants=true,
+            BackgroundColor3=Theme.OverlayBg,BorderSizePixel=0,ClipsDescendants=true,
             Visible=false,ZIndex=ZIndex.POPUP,Parent=MIDNIGHT._ScreenGui,
         })
-        ApplyCorner(fw,8); ApplyStroke(fw,Theme.Border,1)
+        StyleUtilityOverlay(fw, Theme.Accent)
 
-        local ftb=Create("Frame",{Size=UDim2.new(1,0,0,28),BackgroundColor3=Theme.TitleBarBg,BorderSizePixel=0,ClipsDescendants=true,ZIndex=ZIndex.POPUP+1,Parent=fw})
-        ApplyCorner(ftb,8)
-        Create("Frame",{Size=UDim2.new(1,0,0,8),Position=UDim2.new(0,0,1,-8),BackgroundColor3=Theme.TitleBarBg,BorderSizePixel=0,Parent=ftb})
-        Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.Border,BorderSizePixel=0,Parent=ftb})
-        Create("TextLabel",{Text=nm,Font=FontBold,TextSize=10,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-46,1,0),Position=UDim2.new(0,9,0,0),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+2,Parent=ftb})
+        local ftb=StyleQuietHeader(fw, CompactStyle.OverlayHeaderHeight, ZIndex.POPUP+1)
+        Create("TextLabel",{Text=nm,Font=FontBold,TextSize=CompactStyle.FloatingTitleSize,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-46,1,0),Position=UDim2.new(0,10,0,0),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+2,Parent=ftb})
 
         local fwClose=Create("TextButton",{Text="",Size=UDim2.new(0,20,0,14),Position=UDim2.new(1,-24,0,7),BackgroundColor3=Theme.CloseNormal,BorderSizePixel=0,ZIndex=ZIndex.POPUP+3,Parent=ftb})
         ApplyCorner(fwClose,4)
@@ -5709,9 +6217,9 @@ function MIDNIGHT:MakeWindow(config)
         Create("Frame",{Size=UDim2.new(0,7,0,1),Position=UDim2.new(0.5,-3,0.5,0),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=-45,Parent=fwClose})
         ApplyHoverEffect(fwClose,Theme.CloseNormal,Theme.CloseHover,false)
 
-        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-8,1,-34),Position=UDim2.new(0,4,0,30),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
+        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
         Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=fScroll})
-        ApplyPadding(fScroll,3,3,4,4)
+        ApplyPadding(fScroll,4,4,5,5)
 
         MakeDraggable(fw,ftb,function() MIDNIGHT:_CloseAllPopups() end)
 
@@ -5793,23 +6301,102 @@ function MIDNIGHT:MakeWindow(config)
                 end
                 fw.Visible = true
                 fw.BackgroundTransparency = 1
-                TweenObject(fw,{Size=UDim2.new(0,curFW,0,curFH)},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                TweenObject(fw,{BackgroundTransparency=0},0.2)
+                TweenMotion(fw,{Size=UDim2.new(0,curFW,0,curFH)},"Panel")
+                TweenMotion(fw,{BackgroundTransparency=0},"Soft")
             else
-                TweenObject(fw,{Size=UDim2.new(0,0,0,0)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-                TweenObject(fw,{BackgroundTransparency=1},0.18)
+                TweenObject(fw,{Size=UDim2.new(0,0,0,0)},Motion.OverlayOut.Duration,Motion.OverlayOut.Style,Motion.OverlayOut.Direction)
+                TweenMotion(fw,{BackgroundTransparency=1},"OverlayOut")
                 task.delay(0.25,function() if not self._Visible and fw.Parent then fw.Visible=false end end)
             end
         end
 
         function fData:AddLine(text,color)
-            return Create("TextLabel",{Text=text or "",Font=FontRegular,TextSize=10,TextColor3=color or Theme.TextSecondary,TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,Size=UDim2.new(1,0,0,16),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+2,Parent=fScroll})
+            local row=Create("Frame",{
+                Size=UDim2.new(1,0,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundColor3=Theme.Surface2,
+                BorderSizePixel=0,
+                ZIndex=ZIndex.POPUP+2,
+                Parent=fScroll
+            })
+            ApplyCorner(row,5)
+            ApplyStroke(row,Theme.BorderSoft,1,0.34)
+            ApplyPadding(row,6,6,8,8)
+            Create("TextLabel",{
+                Text=text or "",
+                Font=FontRegular,
+                TextSize=CompactStyle.FloatingLineSize,
+                TextColor3=color or Theme.TextSecondary,
+                TextXAlignment=Enum.TextXAlignment.Left,
+                TextYAlignment=Enum.TextYAlignment.Top,
+                TextWrapped=true,
+                Size=UDim2.new(1,0,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundTransparency=1,
+                ZIndex=ZIndex.POPUP+3,
+                Parent=row
+            })
+            return row
         end
         function fData:AddRichLine(name,text,nameColor,textColor)
-            local row=Create("Frame",{Size=UDim2.new(1,0,0,18),BackgroundTransparency=1,ZIndex=ZIndex.POPUP+2,Parent=fScroll})
-            Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=row})
-            Create("TextLabel",{Text=name,Font=FontBold,TextSize=10,TextColor3=nameColor or Theme.Accent,Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+3,Parent=row})
-            Create("TextLabel",{Text=text,Font=FontRegular,TextSize=10,TextColor3=textColor or Theme.TextSecondary,Size=UDim2.new(1,0,1,0),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+3,Parent=row})
+            local row=Create("Frame",{
+                Size=UDim2.new(1,0,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundColor3=Theme.Surface2,
+                BorderSizePixel=0,
+                ZIndex=ZIndex.POPUP+2,
+                Parent=fScroll
+            })
+            ApplyCorner(row,5)
+            ApplyStroke(row,Theme.BorderSoft,1,0.34)
+            local rail = Create("Frame",{
+                Size=UDim2.new(0,2,1,-10),
+                Position=UDim2.new(0,5,0,5),
+                BackgroundColor3=nameColor or Theme.UtilityAccent,
+                BorderSizePixel=0,
+                ZIndex=ZIndex.POPUP+3,
+                Parent=row,
+            })
+            ApplyCorner(rail,1)
+            local content=Create("Frame",{
+                Size=UDim2.new(1,-16,0,0),
+                Position=UDim2.new(0,12,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundTransparency=1,
+                ZIndex=ZIndex.POPUP+3,
+                Parent=row
+            })
+            ApplyPadding(content,6,6,4,6)
+            Create("UIListLayout",{
+                SortOrder=Enum.SortOrder.LayoutOrder,
+                Padding=UDim.new(0,2),
+                Parent=content
+            })
+            Create("TextLabel",{
+                Text=name,
+                Font=FontBold,
+                TextSize=CompactStyle.UtilityMetaSize,
+                TextColor3=nameColor or Theme.UtilityAccent,
+                Size=UDim2.new(1,0,0,12),
+                TextXAlignment=Enum.TextXAlignment.Left,
+                BackgroundTransparency=1,
+                ZIndex=ZIndex.POPUP+4,
+                Parent=content
+            })
+            Create("TextLabel",{
+                Text=text,
+                Font=FontRegular,
+                TextSize=CompactStyle.FloatingLineSize,
+                TextColor3=textColor or Theme.TextSecondary,
+                TextXAlignment=Enum.TextXAlignment.Left,
+                TextYAlignment=Enum.TextYAlignment.Top,
+                TextWrapped=true,
+                Size=UDim2.new(1,0,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundTransparency=1,
+                ZIndex=ZIndex.POPUP+4,
+                Parent=content
+            })
             return row
         end
         function fData:Clear()
@@ -5855,6 +6442,361 @@ function MIDNIGHT:MakeWindow(config)
         return fData
     end
 
+    function wd:CreateCommandPalette(config)
+        if self._CommandPalette and self._CommandPalette.IsAlive and self._CommandPalette:IsAlive() then
+            return self._CommandPalette
+        end
+
+        config = config or {}
+        MIDNIGHT:_InitScreenGui()
+
+        local paletteW = math.max(360, math.floor(tonumber(config.Width) or 420))
+        local paletteH = math.max(260, math.floor(tonumber(config.Height) or 320))
+        local scrim = Create("Frame",{
+            Name="CommandPaletteScrim",
+            Size=UDim2.new(1,0,1,0),
+            BackgroundColor3=Theme.Shadow,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            Visible=false,
+            ZIndex=ZIndex.OVERLAY + 10,
+            Parent=MIDNIGHT._ScreenGui,
+        })
+        local pf = Create("Frame",{
+            Name="CommandPalette",
+            Size=UDim2.new(0,paletteW,0,paletteH),
+            Position=UDim2.new(0.5,-paletteW/2,0.5,-paletteH/2),
+            BackgroundColor3=Theme.OverlayBg,
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            Visible=false,
+            ZIndex=ZIndex.OVERLAY + 12,
+            Parent=MIDNIGHT._ScreenGui,
+        })
+        StyleUtilityOverlay(pf, Theme.Accent)
+        local pfScale = Create("UIScale",{Scale=0.985,Parent=pf})
+
+        local header = StyleQuietHeader(pf, CompactStyle.OverlayHeaderHeight, ZIndex.OVERLAY + 13)
+        CreateIconOrText(header,"search",nil,UDim2.new(0,12,0,12),UDim2.new(0,10,0.5,-6),Theme.UtilityAccent,FontBold,10)
+        Create("TextLabel",{
+            Text="Command Palette",
+            Font=FontBold,
+            TextSize=11,
+            TextColor3=Theme.TextPrimary,
+            Size=UDim2.new(1,-20,1,0),
+            Position=UDim2.new(0,28,0,0),
+            TextXAlignment=Enum.TextXAlignment.Left,
+            BackgroundTransparency=1,
+            ZIndex=ZIndex.OVERLAY + 14,
+            Parent=header,
+        })
+
+        local body = Create("Frame",{
+            Size=UDim2.new(1,-12,1,-(CompactStyle.OverlayHeaderHeight+10)),
+            Position=UDim2.new(0,6,0,CompactStyle.OverlayHeaderHeight+4),
+            BackgroundTransparency=1,
+            ZIndex=ZIndex.OVERLAY + 13,
+            Parent=pf,
+        })
+
+        local searchBox = Create("TextBox",{
+            Text="",
+            PlaceholderText="Search tabs, buttons, toggles...",
+            Font=Font,
+            TextSize=CompactStyle.FieldTextSize,
+            TextColor3=Theme.TextPrimary,
+            PlaceholderColor3=Theme.TextMuted,
+            Size=UDim2.new(1,0,0,26),
+            BackgroundColor3=Theme.Surface2,
+            BorderSizePixel=0,
+            ClearTextOnFocus=false,
+            ZIndex=ZIndex.OVERLAY + 14,
+            Parent=body,
+        })
+        local searchStroke = StyleInputField(searchBox, 5, Theme.BorderSoft)
+        ApplyPadding(searchBox,0,0,10,10)
+
+        local list = Create("ScrollingFrame",{
+            Size=UDim2.new(1,0,1,-52),
+            Position=UDim2.new(0,0,0,34),
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            ScrollBarThickness=3,
+            ScrollBarImageColor3=Theme.ScrollBarColor,
+            AutomaticCanvasSize=Enum.AutomaticSize.Y,
+            ZIndex=ZIndex.OVERLAY + 13,
+            Parent=body,
+        })
+        Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=list})
+        ApplyPadding(list,0,4,0,0)
+
+        Create("TextLabel",{
+            Text="ENTER run   ESC close   ; toggle",
+            Font=FontRegular,
+            TextSize=CompactStyle.UtilityMetaSize,
+            TextColor3=Theme.TextMuted,
+            TextXAlignment=Enum.TextXAlignment.Right,
+            Size=UDim2.new(1,0,0,12),
+            Position=UDim2.new(0,0,1,-12),
+            BackgroundTransparency=1,
+            ZIndex=ZIndex.OVERLAY + 14,
+            Parent=body,
+        })
+
+        local emptyLabel = Create("TextLabel",{
+            Text="No matching commands",
+            Font=FontRegular,
+            TextSize=CompactStyle.BodyTextSize,
+            TextColor3=Theme.TextMuted,
+            Size=UDim2.new(1,0,0,18),
+            BackgroundTransparency=1,
+            Visible=false,
+            ZIndex=ZIndex.OVERLAY + 14,
+            Parent=list,
+        })
+
+        local palette = {
+            _Frame=pf,
+            _Scrim=scrim,
+            _Body=body,
+            _Search=searchBox,
+            _List=list,
+            _Visible=false,
+            _Destroyed=false,
+            _OwnerWindow=self,
+            _Key=Enum.KeyCode.Semicolon,
+            _BindConn=nil,
+            _OutsideConn=nil,
+            _FirstCommand=nil,
+        }
+        self._CommandPalette = palette
+
+        local function clearRows()
+            for _, ch in ipairs(list:GetChildren()) do
+                if ch:IsA("Frame") then
+                    ch:Destroy()
+                end
+            end
+        end
+
+        local function scoreCommand(cmd, query)
+            local hay = string.lower((cmd.Title or "") .. " " .. (cmd.Subtitle or "") .. " " .. (cmd.Search or ""))
+            if query == "" then return 1 end
+            local pos = hay:find(query, 1, true)
+            if not pos then return nil end
+            return pos
+        end
+
+        function palette:IsAlive()
+            return not self._Destroyed and self._Frame and self._Frame.Parent ~= nil
+        end
+
+        function palette:Refresh(query)
+            if self._Destroyed then return end
+            query = string.lower(tostring(query or ""))
+            self._FirstCommand = nil
+            clearRows()
+
+            local matches = {}
+            for _, cmd in ipairs(self._OwnerWindow:_CollectCommands()) do
+                local score = scoreCommand(cmd, query)
+                if score then
+                    matches[#matches + 1] = {Cmd = cmd, Score = score}
+                end
+            end
+            table.sort(matches, function(a, b)
+                if a.Score == b.Score then
+                    return tostring(a.Cmd.Title or "") < tostring(b.Cmd.Title or "")
+                end
+                return a.Score < b.Score
+            end)
+
+            emptyLabel.Visible = #matches == 0
+            if #matches == 0 then return end
+
+            for index, entry in ipairs(matches) do
+                if index > 30 then break end
+                local cmd = entry.Cmd
+                if index == 1 then
+                    self._FirstCommand = cmd
+                end
+                local row = Create("Frame",{
+                    Size=UDim2.new(1,0,0,40),
+                    BackgroundColor3=index == 1 and AccentTint(Theme.Accent,0.12) or Theme.Surface2,
+                    BorderSizePixel=0,
+                    LayoutOrder=index,
+                    ZIndex=ZIndex.OVERLAY + 14,
+                    Parent=list,
+                })
+                ApplyCorner(row,6)
+                ApplyStroke(row, index == 1 and Theme.AccentMuted or Theme.BorderSoft, 1, index == 1 and 0.22 or 0.38)
+
+                Create("TextLabel",{
+                    Text=cmd.Title or "Command",
+                    Font=FontBold,
+                    TextSize=CompactStyle.BodyTextSize,
+                    TextColor3=Theme.TextPrimary,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Size=UDim2.new(1,-18,0,16),
+                    Position=UDim2.new(0,9,0,6),
+                    BackgroundTransparency=1,
+                    ZIndex=ZIndex.OVERLAY + 15,
+                    Parent=row,
+                })
+                Create("TextLabel",{
+                    Text=cmd.Subtitle or "",
+                    Font=FontRegular,
+                    TextSize=CompactStyle.UtilityMetaSize,
+                    TextColor3=Theme.TextMuted,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Size=UDim2.new(1,-18,0,12),
+                    Position=UDim2.new(0,9,0,22),
+                    BackgroundTransparency=1,
+                    ZIndex=ZIndex.OVERLAY + 15,
+                    Parent=row,
+                })
+                local click = Create("TextButton",{
+                    Text="",
+                    Size=UDim2.new(1,0,1,0),
+                    BackgroundTransparency=1,
+                    ZIndex=ZIndex.OVERLAY + 16,
+                    Parent=row,
+                })
+                click.MouseEnter:Connect(function()
+                    TweenObject(row,{BackgroundColor3=AccentTint(Theme.Accent,0.16)},0.12)
+                end)
+                click.MouseLeave:Connect(function()
+                    TweenObject(row,{BackgroundColor3=index == 1 and AccentTint(Theme.Accent,0.12) or Theme.Surface2},0.14)
+                end)
+                click.MouseButton1Click:Connect(function()
+                    self:Close()
+                    if cmd.Action then cmd.Action() end
+                end)
+            end
+        end
+
+        function palette:Open(prefill)
+            if self._Destroyed then return end
+            self._Visible = true
+            if scrim then
+                scrim.Visible = true
+                scrim.BackgroundTransparency = 1
+            end
+            pf.Visible = true
+            pf.BackgroundTransparency = 1
+            pfScale.Scale = 0.985
+            if prefill ~= nil then
+                searchBox.Text = tostring(prefill)
+            end
+            self:Refresh(searchBox.Text)
+            if scrim then
+                TweenObject(scrim,{BackgroundTransparency=0.44},0.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+            end
+            TweenMotion(pf,{BackgroundTransparency=0},"OverlayIn")
+            TweenMotion(pfScale,{Scale=1},"OverlayIn")
+            if searchStroke then TweenObject(searchStroke,{Transparency=0.22},0.18) end
+            task.defer(function()
+                if searchBox and searchBox.Parent then
+                    searchBox:CaptureFocus()
+                end
+            end)
+            if self._OutsideConn then
+                SafeDisconnect(self._OutsideConn)
+            end
+            self._OutsideConn = RegConn(UserInputService.InputBegan:Connect(function(input, gp)
+                if gp or not self._Visible then return end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 and pf and pf.Parent then
+                    local mp = UserInputService:GetMouseLocation()
+                    local pp, ps = pf.AbsolutePosition, pf.AbsoluteSize
+                    if mp.X < pp.X or mp.X > pp.X + ps.X or mp.Y < pp.Y or mp.Y > pp.Y + ps.Y then
+                        self:Close()
+                    end
+                elseif input.KeyCode == Enum.KeyCode.Escape then
+                    self:Close()
+                elseif input.KeyCode == Enum.KeyCode.Return and self._FirstCommand and UserInputService:GetFocusedTextBox() == searchBox then
+                    local cmd = self._FirstCommand
+                    self:Close()
+                    if cmd.Action then cmd.Action() end
+                end
+            end))
+        end
+
+        function palette:Close()
+            if self._Destroyed or not self._Visible then return end
+            self._Visible = false
+            SafeDisconnect(self._OutsideConn)
+            self._OutsideConn = nil
+            if scrim then
+                TweenObject(scrim,{BackgroundTransparency=1},0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
+            end
+            TweenMotion(pf,{BackgroundTransparency=1},"OverlayOut")
+            TweenMotion(pfScale,{Scale=0.985},"OverlayOut")
+            task.delay(0.2,function()
+                if not self._Visible and scrim and scrim.Parent then
+                    scrim.Visible = false
+                end
+                if not self._Visible and pf.Parent then
+                    pf.Visible = false
+                end
+            end)
+        end
+
+        function palette:Toggle()
+            if self._Visible then
+                self:Close()
+            else
+                self:Open("")
+            end
+        end
+
+        function palette:Bind(keyStr)
+            self._Key = ParseKeyCode(keyStr or "Semicolon")
+            SafeDisconnect(self._BindConn)
+            self._BindConn = RegConn(UserInputService.InputBegan:Connect(function(input, gp)
+                if gp or self._Destroyed then return end
+                if input.KeyCode == self._Key then
+                    self:Toggle()
+                end
+            end))
+            return self
+        end
+
+        function palette:Destroy()
+            if self._Destroyed then return end
+            self._Destroyed = true
+            self._Visible = false
+            SafeDisconnect(self._BindConn)
+            SafeDisconnect(self._OutsideConn)
+            self._BindConn = nil
+            self._OutsideConn = nil
+            if self._OwnerWindow and self._OwnerWindow._CommandPalette == self then
+                self._OwnerWindow._CommandPalette = nil
+            end
+            if pf then
+                pcall(function() pf:Destroy() end)
+            end
+            if scrim then
+                pcall(function() scrim:Destroy() end)
+            end
+            self._Frame = nil
+        end
+
+        searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+            palette:Refresh(searchBox.Text)
+        end)
+
+        if config.Key then
+            palette:Bind(config.Key)
+        end
+        return palette
+    end
+
+    function wd:BindCommandPalette(keyStr)
+        local palette = self:CreateCommandPalette()
+        palette:Bind(keyStr or "Semicolon")
+        return palette
+    end
+
     function wd:CreateAdminPresenceWidget(config)
         if self._AdminPresenceWidget and self._AdminPresenceWidget.IsAlive and self._AdminPresenceWidget:IsAlive() then
             if config and config.LogsWindow then
@@ -5867,7 +6809,7 @@ function MIDNIGHT:MakeWindow(config)
         MIDNIGHT:_InitScreenGui()
 
         local widgetW = math.max(340, math.floor(tonumber(config.Width) or 360))
-        local widgetH = math.max(320, math.floor(tonumber(config.Height) or 336))
+        local widgetH = math.max(336, math.floor(tonumber(config.Height) or 344))
         local marginX = math.floor(tonumber(config.MarginX) or 18)
         local marginY = math.floor(tonumber(config.MarginY) or 76)
         local shownPos = UDim2.new(1, -marginX, 0, marginY)
@@ -6246,8 +7188,8 @@ function MIDNIGHT:MakeWindow(config)
         local confirmNoStroke = ApplyStroke(confirmNo, Theme.Border, 1, 1)
 
         local buttonGrid = Create("Frame",{
-            Size=UDim2.new(1,0,0,52),
-            Position=UDim2.new(0,0,0,236),
+            Size=UDim2.new(1,0,0,56),
+            Position=UDim2.new(0,0,0,232),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+1,
             Parent=body,
