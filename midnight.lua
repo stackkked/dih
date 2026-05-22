@@ -135,6 +135,8 @@ local Players          = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
 local TweenService     = game:GetService("TweenService")
+local TextService      = game:GetService("TextService")
+local HttpService      = game:GetService("HttpService")
 local CoreGui          = game:GetService("CoreGui")
 local Stats            = game:GetService("Stats")
 
@@ -567,6 +569,19 @@ local function LetterSpace(text)
     -- Note: in Lua, $ in a pattern anchors to end-of-string, so " $" correctly
     -- matches a trailing space. The outer () ensures only the string is returned.
     return (text:gsub(".", function(c) return c .. " " end):gsub(" $", ""))
+end
+
+local function MeasureText(text, font, textSize, bounds)
+    local ok, size = pcall(function()
+        return TextService:GetTextSize(
+            tostring(text or ""),
+            textSize or 12,
+            font or FontRegular,
+            bounds or Vector2.new(9999, 9999)
+        )
+    end)
+    if ok and size then return size end
+    return Vector2.new(0, textSize or 12)
 end
 
 --// ═══════════════════════════════════════════════════════════
@@ -1952,7 +1967,11 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         w._Frame.Visible = true
                         w._Frame.BackgroundTransparency = 1
                         -- BUG-E FIX: respect minimized state — don't force full height if window was minimized
-                        w._Frame.Size = w._IsMinimized and UDim2.new(0,600,0,40) or UDim2.new(0,600,0,440)
+                        local openW, openH = 600, (w._IsMinimized and 40 or 440)
+                        if w._GetCurrentFrameSize then
+                            openW, openH = w:_GetCurrentFrameSize()
+                        end
+                        w._Frame.Size = UDim2.new(0, openW, 0, openH)
                         -- Smooth fade in
                         TweenObject(w._Frame, {BackgroundTransparency=0}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
@@ -2755,10 +2774,11 @@ function MIDNIGHT:SetNotificationPosition(pos)
     self:_RepositionNotifications()
 end
 
-function MIDNIGHT:_GetNotifPos(idx, totalH)
+function MIDNIGHT:_GetNotifPos(notif, totalH)
     local pos = self._NotificationPosition
     local vs  = GetViewportSize()
-    -- Offset Y down if watermark is at the top
+    local margin = 12
+
     local wmOffset = 0
     if self._WatermarkFrame and self._WatermarkFrame.Parent then
         local wmPos = self._WatermarkPosition
@@ -2766,35 +2786,70 @@ function MIDNIGHT:_GetNotifPos(idx, totalH)
             wmOffset = 36
         end
     end
-    local x, y
-    if     pos=="TopCenter"    then x=vs.X/2-175;      y=wmOffset+4+totalH
-    elseif pos=="TopLeft"      then x=12;              y=wmOffset+4+totalH
-    elseif pos=="TopRight"     then x=vs.X-362;        y=wmOffset+4+totalH
-    elseif pos=="BottomLeft"   then x=12;              y=vs.Y-84-totalH
-    elseif pos=="BottomRight"  then x=vs.X-362;        y=vs.Y-84-totalH
-    elseif pos=="BottomCenter" then x=vs.X/2-175;      y=vs.Y-84-totalH
-    else                            x=vs.X-362;        y=wmOffset+4+totalH
+
+    local width, height = 350, 72
+    if type(notif) == "table" then
+        if notif._ExpectedWidth and notif._ExpectedWidth > 0 then width = notif._ExpectedWidth end
+        if notif._ExpectedHeight and notif._ExpectedHeight > 0 then height = notif._ExpectedHeight end
+        if notif._Frame and notif._Frame.Parent then
+            local abs = notif._Frame.AbsoluteSize
+            if abs.X > 0 then width = abs.X end
+            if abs.Y > 0 then height = abs.Y end
+        end
     end
-    return UDim2.new(0,x,0,y)
+
+    local x, y
+    if pos == "TopCenter" then
+        x = vs.X/2 - width/2
+        y = wmOffset + margin + totalH
+    elseif pos == "TopLeft" then
+        x = margin
+        y = wmOffset + margin + totalH
+    elseif pos == "TopRight" then
+        x = vs.X - width - margin
+        y = wmOffset + margin + totalH
+    elseif pos == "BottomLeft" then
+        x = margin
+        y = vs.Y - margin - height - totalH
+    elseif pos == "BottomRight" then
+        x = vs.X - width - margin
+        y = vs.Y - margin - height - totalH
+    elseif pos == "BottomCenter" then
+        x = vs.X/2 - width/2
+        y = vs.Y - margin - height - totalH
+    else
+        x = vs.X - width - margin
+        y = wmOffset + margin + totalH
+    end
+
+    return UDim2.new(0, math.floor(x + 0.5), 0, math.floor(y + 0.5))
 end
 
 function MIDNIGHT:_GetNotifSlideOffset(pos)
-    if pos=="TopRight"    or pos=="BottomRight"  then return UDim2.new(0,80,0,0)
-    elseif pos=="TopLeft" or pos=="BottomLeft"   then return UDim2.new(0,-80,0,0)
-    else return UDim2.new(0,0,0,-40) end
+    if pos=="TopRight" or pos=="BottomRight" then
+        return UDim2.new(0,100,0,0)
+    elseif pos=="TopLeft" or pos=="BottomLeft" then
+        return UDim2.new(0,-100,0,0)
+    elseif pos=="BottomCenter" then
+        return UDim2.new(0,0,0,36)
+    else
+        return UDim2.new(0,0,0,-36)
+    end
 end
 
 function MIDNIGHT:_RepositionNotifications()
     local totalH = 0
-    for i, n in ipairs(self._Notifications) do
+    for _, n in ipairs(self._Notifications) do
         if n._Frame and n._Frame.Parent then
-            TweenObject(n._Frame,{Position=self:_GetNotifPos(i,totalH)},0.32,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-            totalH = totalH + n._Frame.AbsoluteSize.Y + 8
+            TweenObject(n._Frame,{Position=self:_GetNotifPos(n,totalH)},0.36,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+            local absH = n._Frame.AbsoluteSize.Y
+            local notifH = absH > 0 and absH or (n._ExpectedHeight or 72)
+            totalH = totalH + notifH + (n._Gap or 10)
         end
     end
 end
 
-function MIDNIGHT:Notify(config)
+function MIDNIGHT:_LegacyNotify(config)
     config = config or {}
     local title       = config.Title    or "MIDNIGHT"
     local contentText = config.Content  or ""
@@ -2918,6 +2973,329 @@ function MIDNIGHT:Notify(config)
     nf.Position = finalPos + slideOffset
     TweenObject(nf,{Position=finalPos},0.45,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
     task.defer(function() self:_RepositionNotifications() end)
+
+    TweenObject(pFill,{Size=UDim2.new(0,0,1,0)},duration,Enum.EasingStyle.Linear)
+    task.delay(duration, dismiss)
+
+    return nd
+end
+
+-- Notification v2 override: dynamic card layout + improved motion/stacking.
+function MIDNIGHT:Notify(config)
+    config = config or {}
+    local title       = tostring(config.Title or "MIDNIGHT")
+    local contentText = tostring(config.Content or "")
+    local notifType   = string.lower(config.Type or "info")
+    local duration    = math.max(0.4, tonumber(config.Duration) or 5)
+    local width       = math.clamp(math.floor(tonumber(config.Width) or 360), 300, 460)
+
+    self:_InitScreenGui()
+
+    local typeColors = {success=Theme.Success,warning=Theme.Warning,error=Theme.Error,info=Theme.Info}
+    local typeLabels = {success="SUCCESS",warning="WARNING",error="ERROR",info="INFO"}
+    local typeColor  = typeColors[notifType] or Theme.Info
+    local iconName   = notifType=="success" and "check" or notifType=="error" and "x" or notifType=="warning" and "alert-triangle" or "info"
+
+    local iconSize  = 40
+    local leftPad   = 14
+    local topPad    = 14
+    local rightPad  = 16
+    local closeArea = 38
+    local textX     = leftPad + iconSize + 12
+    local textW     = math.max(120, width - textX - rightPad - closeArea)
+    local badgeH    = 18
+    local badgeY    = topPad
+    local titleY    = badgeY + badgeH + 8
+    local titleH    = math.max(16, MeasureText(title, FontBold, 13, Vector2.new(textW, 200)).Y)
+    local contentH  = contentText ~= "" and math.max(14, MeasureText(contentText, FontRegular, 11, Vector2.new(textW, 600)).Y) or 0
+    local contentY  = titleY + titleH + (contentH > 0 and 6 or 0)
+    local contentBottom = contentH > 0 and (contentY + contentH) or (titleY + titleH)
+    local cardH = math.max(82, contentBottom + 22)
+
+    local nf = Create("Frame",{
+        Name="Notification",
+        Size=UDim2.new(0,width,0,cardH),
+        Position=UDim2.new(0,-width,0,0),
+        BackgroundColor3=Theme.WindowBg,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        Active=true,
+        ZIndex=ZIndex.NOTIFY,
+        Parent=self._ScreenGui,
+    })
+    ApplyCorner(nf,12)
+    local nfStroke = ApplyStroke(nf, Theme.Border, 1, 1)
+    local nfScale = Create("UIScale",{Scale=0.94,Parent=nf})
+
+    local shadow = Create("ImageLabel",{
+        Size=UDim2.new(1,34,1,34),Position=UDim2.new(0,-17,0,-15),
+        BackgroundTransparency=1,Image="rbxassetid://6015897843",
+        ImageColor3=Theme.Shadow,ImageTransparency=1,
+        ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
+        ZIndex=ZIndex.NOTIFY-1,Parent=nf,
+    })
+
+    local tintOverlay = Create("Frame",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundColor3=AccentTint(typeColor,0.1),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY,
+        Parent=nf,
+    })
+    ApplyCorner(tintOverlay,12)
+
+    local accentLine = CreateAccentLine(nf,12,typeColor)
+    if accentLine then accentLine.BackgroundTransparency = 1 end
+
+    local iconBg = Create("Frame",{
+        Size=UDim2.new(0,iconSize,0,iconSize),
+        Position=UDim2.new(0,leftPad,0,topPad),
+        BackgroundColor3=AccentTint(typeColor,0.22),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=nf,
+    })
+    ApplyCorner(iconBg,11)
+    local iconBgStroke = ApplyStroke(iconBg, typeColor, 1, 1)
+
+    local iconGlow = Create("Frame",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundColor3=typeColor,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=iconBg,
+    })
+    ApplyCorner(iconGlow,11)
+
+    local iconEl = CreateIconOrText(iconBg, iconName, nil,
+        UDim2.new(0,18,0,18), UDim2.new(0.5,-9,0.5,-9), typeColor, FontBold, 16)
+    if iconEl and iconEl:IsA("TextLabel") then
+        iconEl.TextXAlignment = Enum.TextXAlignment.Center
+        iconEl.TextYAlignment = Enum.TextYAlignment.Center
+        iconEl.TextTransparency = 1
+    elseif iconEl and iconEl:IsA("ImageLabel") then
+        iconEl.ImageTransparency = 1
+    end
+
+    local typeBadge = Create("Frame",{
+        Size=UDim2.new(0,0,0,badgeH),
+        AutomaticSize=Enum.AutomaticSize.X,
+        Position=UDim2.new(0,textX,0,badgeY),
+        BackgroundColor3=AccentTint(typeColor,0.2),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=nf,
+    })
+    ApplyCorner(typeBadge,9)
+    ApplyPadding(typeBadge,0,0,8,8)
+    local typeBadgeStroke = ApplyStroke(typeBadge, typeColor, 1, 1)
+    local typeLabel = Create("TextLabel",{
+        Text=typeLabels[notifType] or string.upper(notifType),
+        Font=FontBold,TextSize=9,TextColor3=typeColor,
+        Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
+        BackgroundTransparency=1,TextTransparency=1,
+        ZIndex=ZIndex.NOTIFY+3,Parent=typeBadge,
+    })
+
+    local titleLabel = Create("TextLabel",{
+        Text=title,
+        Font=FontBold,
+        TextSize=13,
+        TextColor3=Theme.TextPrimary,
+        TextTransparency=1,
+        TextWrapped=true,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        TextYAlignment=Enum.TextYAlignment.Top,
+        Size=UDim2.new(0,textW,0,titleH),
+        Position=UDim2.new(0,textX,0,titleY),
+        BackgroundTransparency=1,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=nf,
+    })
+
+    local contentLabel = Create("TextLabel",{
+        Text=contentText,
+        Font=FontRegular,
+        TextSize=11,
+        TextColor3=Theme.TextSecondary,
+        TextTransparency=1,
+        TextWrapped=true,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        TextYAlignment=Enum.TextYAlignment.Top,
+        Size=UDim2.new(0,textW,0,contentH),
+        Position=UDim2.new(0,textX,0,contentY),
+        BackgroundTransparency=1,
+        Visible=contentH > 0,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=nf,
+    })
+
+    local closeNBtn = Create("TextButton",{
+        Text="",
+        Size=UDim2.new(0,22,0,22),
+        Position=UDim2.new(1,-rightPad-22,0,topPad),
+        BackgroundColor3=Theme.InputBg,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        AutoButtonColor=false,
+        ZIndex=ZIndex.NOTIFY+3,
+        Parent=nf,
+    })
+    ApplyCorner(closeNBtn,7)
+    local closeStroke = ApplyStroke(closeNBtn, Theme.Border, 1, 1)
+    local closeIcon = CreateIconOrText(closeNBtn,"x",nil,UDim2.new(0,10,0,10),UDim2.new(0.5,-5,0.5,-5),Theme.TextMuted,FontBold,10)
+    if closeIcon and closeIcon:IsA("TextLabel") then
+        closeIcon.TextXAlignment = Enum.TextXAlignment.Center
+        closeIcon.TextYAlignment = Enum.TextYAlignment.Center
+        closeIcon.TextTransparency = 1
+    elseif closeIcon and closeIcon:IsA("ImageLabel") then
+        closeIcon.ImageTransparency = 1
+    end
+
+    local pBg = Create("Frame",{
+        Size=UDim2.new(1,-28,0,4),
+        Position=UDim2.new(0,14,1,-12),
+        BackgroundColor3=Theme.SliderTrack,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY+1,
+        Parent=nf,
+    })
+    ApplyCorner(pBg,2)
+    local pFill = Create("Frame",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundColor3=typeColor,
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.NOTIFY+2,
+        Parent=pBg,
+    })
+    ApplyCorner(pFill,2)
+
+    local nd = {
+        _Frame=nf,
+        _StartTime=tick(),
+        _Duration=duration,
+        _ExpectedWidth=width,
+        _ExpectedHeight=cardH,
+        _Gap=10,
+    }
+    table.insert(self._Notifications, nd)
+
+    local function tweenVisualTransparency(inst, value, dur)
+        if not inst then return end
+        if inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+            TweenObject(inst,{TextTransparency=value},dur)
+        elseif inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
+            TweenObject(inst,{ImageTransparency=value},dur)
+        end
+    end
+
+    local dismissed = false
+    local function dismiss()
+        if dismissed then return end
+        dismissed = true
+        if not nf or not nf.Parent then return end
+        local slideOut = self:_GetNotifSlideOffset(self._NotificationPosition)
+        TweenObject(nf,{Position=nf.Position+slideOut, BackgroundTransparency=1},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+        TweenObject(nfScale,{Scale=0.92},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
+        if nfStroke then TweenObject(nfStroke,{Transparency=1},0.2) end
+        if shadow then TweenObject(shadow,{ImageTransparency=1},0.2) end
+        if tintOverlay then TweenObject(tintOverlay,{BackgroundTransparency=1},0.2) end
+        if accentLine then TweenObject(accentLine,{BackgroundTransparency=1},0.18) end
+        TweenObject(iconBg,{BackgroundTransparency=1},0.2)
+        if iconBgStroke then TweenObject(iconBgStroke,{Transparency=1},0.18) end
+        if iconGlow then TweenObject(iconGlow,{BackgroundTransparency=1},0.18) end
+        TweenObject(typeBadge,{BackgroundTransparency=1},0.18)
+        if typeBadgeStroke then TweenObject(typeBadgeStroke,{Transparency=1},0.18) end
+        TweenObject(closeNBtn,{BackgroundTransparency=1},0.18)
+        if closeStroke then TweenObject(closeStroke,{Transparency=1},0.18) end
+        TweenObject(pBg,{BackgroundTransparency=1},0.18)
+        TweenObject(pFill,{BackgroundTransparency=1},0.18)
+        tweenVisualTransparency(iconEl, 1, 0.16)
+        tweenVisualTransparency(closeIcon, 1, 0.16)
+        tweenVisualTransparency(typeLabel, 1, 0.16)
+        TweenObject(titleLabel,{TextTransparency=1},0.16)
+        TweenObject(contentLabel,{TextTransparency=1},0.16)
+        task.delay(0.26,function()
+            pcall(function() nf:Destroy() end)
+            for i, n in ipairs(self._Notifications) do
+                if n==nd then table.remove(self._Notifications,i); break end
+            end
+            self:_RepositionNotifications()
+        end)
+    end
+
+    function nd:Dismiss()
+        dismiss()
+    end
+
+    closeNBtn.MouseButton1Click:Connect(dismiss)
+
+    closeNBtn.MouseEnter:Connect(function()
+        TweenObject(closeNBtn,{BackgroundTransparency=0,BackgroundColor3=typeColor},0.14)
+        if closeStroke then TweenObject(closeStroke,{Color=typeColor,Transparency=0.05},0.14) end
+        if closeIcon then
+            if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=Color3.fromRGB(255,255,255)},0.14)
+            elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageColor3=Color3.fromRGB(255,255,255)},0.14) end
+        end
+    end)
+    closeNBtn.MouseLeave:Connect(function()
+        TweenObject(closeNBtn,{BackgroundTransparency=0.15,BackgroundColor3=Theme.InputBg},0.16)
+        if closeStroke then TweenObject(closeStroke,{Color=Theme.Border,Transparency=0.28},0.16) end
+        if closeIcon then
+            if closeIcon:IsA("TextLabel") then TweenObject(closeIcon,{TextColor3=Theme.TextMuted},0.16)
+            elseif closeIcon:IsA("ImageLabel") then TweenObject(closeIcon,{ImageColor3=Theme.TextMuted},0.16) end
+        end
+    end)
+
+    nf.MouseEnter:Connect(function()
+        if nfStroke then TweenObject(nfStroke,{Color=LightenColor(typeColor,10),Transparency=0.04},0.16) end
+        TweenObject(tintOverlay,{BackgroundTransparency=0.18},0.16)
+        TweenObject(iconBg,{BackgroundTransparency=0.02},0.16)
+    end)
+    nf.MouseLeave:Connect(function()
+        if nfStroke then TweenObject(nfStroke,{Color=Theme.Border,Transparency=0.12},0.18) end
+        TweenObject(tintOverlay,{BackgroundTransparency=0.32},0.18)
+        TweenObject(iconBg,{BackgroundTransparency=0.08},0.18)
+    end)
+
+    local totalH = 0
+    for _, n in ipairs(self._Notifications) do
+        if n._Frame and n._Frame.Parent then
+            local absH = n._Frame.AbsoluteSize.Y
+            totalH = totalH + (absH > 0 and absH or (n._ExpectedHeight or 72)) + (n._Gap or 10)
+        end
+    end
+    local finalPos = self:_GetNotifPos(nd, totalH - cardH - nd._Gap)
+    local slideOffset = self:_GetNotifSlideOffset(self._NotificationPosition)
+    nf.Position = finalPos + slideOffset
+    task.defer(function()
+        TweenObject(nf,{Position=finalPos,BackgroundTransparency=0},0.42,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+        TweenObject(nfScale,{Scale=1},0.38,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+        if nfStroke then TweenObject(nfStroke,{Transparency=0.12},0.22) end
+        if shadow then TweenObject(shadow,{ImageTransparency=0.56},0.28) end
+        if tintOverlay then TweenObject(tintOverlay,{BackgroundTransparency=0.32},0.24) end
+        if accentLine then TweenObject(accentLine,{BackgroundTransparency=0},0.2) end
+        TweenObject(iconBg,{BackgroundTransparency=0.08},0.2)
+        if iconBgStroke then TweenObject(iconBgStroke,{Transparency=0.45},0.22) end
+        if iconGlow then TweenObject(iconGlow,{BackgroundTransparency=0.88},0.22) end
+        TweenObject(typeBadge,{BackgroundTransparency=0.08},0.22)
+        if typeBadgeStroke then TweenObject(typeBadgeStroke,{Transparency=0.52},0.22) end
+        TweenObject(closeNBtn,{BackgroundTransparency=0.15},0.2)
+        if closeStroke then TweenObject(closeStroke,{Transparency=0.28},0.2) end
+        TweenObject(pBg,{BackgroundTransparency=0.18},0.2)
+        TweenObject(pFill,{BackgroundTransparency=0},0.2)
+        tweenVisualTransparency(iconEl, 0, 0.18)
+        tweenVisualTransparency(closeIcon, 0, 0.18)
+        tweenVisualTransparency(typeLabel, 0, 0.18)
+        TweenObject(titleLabel,{TextTransparency=0},0.18)
+        TweenObject(contentLabel,{TextTransparency=0},0.18)
+    end)
 
     TweenObject(pFill,{Size=UDim2.new(0,0,1,0)},duration,Enum.EasingStyle.Linear)
     task.delay(duration, dismiss)
@@ -3312,12 +3690,16 @@ function MIDNIGHT:MakeWindow(config)
         _IsMinimized=false,  -- BUG-E FIX: track minimized state in wd so MenuKey open restores correctly
     }
 
+    function wd:_GetCurrentFrameSize()
+        return winW, self._IsMinimized and 40 or winH
+    end
+
     -- v7.1: public resize API on wd
     function wd:SetSize(w, h)
         w = math.max(minWinW, w or winW)
         h = math.max(minWinH, h or winH)
         winW, winH = w, h
-        TweenObject(wf,{Size=UDim2.new(0,w,0,h)},0.25,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+        TweenObject(wf,{Size=UDim2.new(0,w,0,self._IsMinimized and 40 or h)},0.25,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
     end
 
     table.insert(self._Windows, wd)
@@ -3470,6 +3852,7 @@ function MIDNIGHT:MakeWindow(config)
             _Indicator=indicator, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
             _Placeholder=placeholder,
+            _Select=nil,
         }
         table.insert(self._Tabs, td)
 
@@ -3523,6 +3906,7 @@ function MIDNIGHT:MakeWindow(config)
             if tabGlowStroke then TweenObject(tabGlowStroke,{Transparency=0.55},0.28) end
             self._ActiveTab = td
         end
+        td._Select = selectTab
 
         btn.MouseButton1Click:Connect(selectTab)
         ApplyHoverEffect(btn, Theme.TabBg, Theme.TabHoverBg, false)
@@ -3540,11 +3924,19 @@ function MIDNIGHT:MakeWindow(config)
             btn.Visible = bool
             if not bool and self._Window._ActiveTab == td then
                 -- Switch to first visible tab
+                local switched = false
                 for _, t in ipairs(self._Window._Tabs) do
                     if t ~= td and t._Button.Visible then
-                        t._Button.MouseButton1Click:Fire()
+                        if t._Select then
+                            t._Select()
+                            switched = true
+                        end
                         break
                     end
+                end
+                if not switched then
+                    self._Window._ActiveTab = nil
+                    if self._PageClip then self._PageClip.Visible = false end
                 end
             end
         end
@@ -4024,7 +4416,7 @@ function MIDNIGHT:MakeWindow(config)
             if cfgFlag then
                 MIDNIGHT:_RegCfgWidget(cfgFlag,
                     function()
-                        return kd._Key ~= Enum.KeyCode.Unknown and KeyCodeToName(kd._Key) or "Unknown"
+                        return kd._Key or Enum.KeyCode.Unknown
                     end,
                     function(v) kd:Set(v) end,
                     "keybind"
@@ -4490,7 +4882,7 @@ function MIDNIGHT:MakeWindow(config)
 
         --// ADDINLINECOLORPICKER (inline in tab, no popup)
         function td:AddInlineColorPicker(cc)
-            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Color3.fromRGB(139,92,246); local cb=cc.Callback
+            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Color3.fromRGB(139,92,246); local cb=cc.Callback; local cfgFlag=cc.Flag
 
             local presets = {
                 Color3.fromRGB(248,113,113),Color3.fromRGB(251,146,60),Color3.fromRGB(250,204,21),
@@ -4515,14 +4907,28 @@ function MIDNIGHT:MakeWindow(config)
             local currentColor = def
             local previewBtn
             local data={_Value=def}
+            local rB, gB, bB
+
+            local function syncInputs(c)
+                if not c then return end
+                if rB then rB.Text = tostring(math.floor(c.R*255 + 0.5)) end
+                if gB then gB.Text = tostring(math.floor(c.G*255 + 0.5)) end
+                if bB then bB.Text = tostring(math.floor(c.B*255 + 0.5)) end
+            end
+
+            local function applyColor(c, fireCb)
+                currentColor = c
+                data._Value = c
+                syncInputs(c)
+                if previewBtn then previewBtn.BackgroundColor3 = c end
+                if fireCb and cb then cb(c) end
+            end
 
             for i, c in ipairs(presets) do
                 local pb=Create("TextButton",{Text="",BackgroundColor3=c,BorderSizePixel=0,LayoutOrder=i,Parent=grid})
                 ApplyCorner(pb,4); ApplyStroke(pb,Theme.BorderLight,1)
                 pb.MouseButton1Click:Connect(function()
-                    currentColor=c; data._Value=c
-                    if previewBtn then previewBtn.BackgroundColor3=c end
-                    if cb then cb(c) end
+                    applyColor(c, true)
                 end)
             end
 
@@ -4536,9 +4942,9 @@ function MIDNIGHT:MakeWindow(config)
                 ApplyCorner(bx,3); return bx
             end
 
-            local rB=mkInput("R",math.floor(def.R*255),Color3.fromRGB(255,80,80),1)
-            local gB=mkInput("G",math.floor(def.G*255),Color3.fromRGB(80,255,80),2)
-            local bB=mkInput("B",math.floor(def.B*255),Color3.fromRGB(80,80,255),3)
+            rB=mkInput("R",math.floor(def.R*255),Color3.fromRGB(255,80,80),1)
+            gB=mkInput("G",math.floor(def.G*255),Color3.fromRGB(80,255,80),2)
+            bB=mkInput("B",math.floor(def.B*255),Color3.fromRGB(80,80,255),3)
 
             previewBtn=Create("TextButton",{
                 Text="",Size=UDim2.new(0,26,0,22),
@@ -4552,11 +4958,18 @@ function MIDNIGHT:MakeWindow(config)
                 local r=math.clamp(math.floor(tonumber(rB.Text) or 0),0,255)
                 local g=math.clamp(math.floor(tonumber(gB.Text) or 0),0,255)
                 local b=math.clamp(math.floor(tonumber(bB.Text) or 0),0,255)
-                local c=Color3.fromRGB(r,g,b); currentColor=c; data._Value=c
-                previewBtn.BackgroundColor3=c; if cb then cb(c) end
+                local c=Color3.fromRGB(r,g,b)
+                applyColor(c, true)
             end)
 
-            function data:Set(c) currentColor=c; data._Value=c; previewBtn.BackgroundColor3=c; if cb then cb(c) end end
+            function data:Set(c) applyColor(c, true) end
+            if cfgFlag then
+                MIDNIGHT:_RegCfgWidget(cfgFlag,
+                    function() return data._Value end,
+                    function(v) if typeof(v)=="Color3" then applyColor(v, false) end end,
+                    "color"
+                )
+            end
             return data
         end
 
@@ -4642,6 +5055,7 @@ function MIDNIGHT:MakeWindow(config)
 
             -- Search box
             local searchText = ""
+            local rebuild
             if searchable then
                 local sBox = Create("TextBox",{
                     Text="", PlaceholderText="🔍  Search...",
@@ -4722,7 +5136,7 @@ function MIDNIGHT:MakeWindow(config)
             -- ── row rendering ──────────────────────────────────────────
             local rowFrames = {}
 
-            function rebuild()  -- upvalue; referenced by search box closure above
+            rebuild = function()  -- upvalue; referenced by search box closure above
                 -- Clear old row frames
                 for _, rf in ipairs(rowFrames) do
                     pcall(function() rf:Destroy() end)
@@ -4902,6 +5316,7 @@ function MIDNIGHT:MakeWindow(config)
     --// FLOATING WINDOW
     function wd:MakeFloatingWindow(fc)
         fc = fc or {}; local nm=fc.Name or "Window"; local sz=fc.Size or {300,300}; local canResize=fc.Resizable
+        local curFW, curFH = sz[1], sz[2]
         local fw=Create("Frame",{
             Name="FW_"..nm,Size=UDim2.new(0,sz[1],0,sz[2]),
             Position=UDim2.new(0.5,-sz[1]/2,0.5,-sz[2]/2),
@@ -5006,7 +5421,7 @@ function MIDNIGHT:MakeWindow(config)
                 end
                 fw.Visible = true
                 fw.BackgroundTransparency = 1
-                TweenObject(fw,{Size=UDim2.new(0,sz[1],0,sz[2])},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                TweenObject(fw,{Size=UDim2.new(0,curFW,0,curFH)},0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                 TweenObject(fw,{BackgroundTransparency=0},0.25)
             else
                 TweenObject(fw,{Size=UDim2.new(0,0,0,0)},0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
@@ -5057,7 +5472,9 @@ function MIDNIGHT:MakeWindow(config)
             RegConn(UserInputService.InputChanged:Connect(function(inp)
                 if resDrag and inp.UserInputType==Enum.UserInputType.MouseMovement then
                     local d=inp.Position-resStart
-                    fw.Size=UDim2.new(0,math.max(200,resStartSize.X.Offset+d.X),0,math.max(150,resStartSize.Y.Offset+d.Y))
+                    curFW = math.max(200,resStartSize.X.Offset+d.X)
+                    curFH = math.max(150,resStartSize.Y.Offset+d.Y)
+                    fw.Size=UDim2.new(0,curFW,0,curFH)
                 end
             end))
         end
@@ -5686,7 +6103,7 @@ end
 
     Each widget that participates in config must pass a Flag = "unique_string" in its
     config table. Supported widget types: Toggle, Slider, Dropdown, InlineDropdown,
-    TextBox, ColorPicker, InlineColorPicker, Keybind.
+    TextBox, ColorPicker, InlineColorPicker, Keybind, Table.
 
     Internal registration:
       MIDNIGHT:_RegCfgWidget(flag, getter, setter, wtype)
@@ -5730,7 +6147,20 @@ local function _cfgSerialize(val, wtype)
         end
         return "139,92,246"
     elseif wtype == "keybind" then
-        return tostring(val and val.Name or "Unknown")
+        if typeof(val) == "EnumItem" then
+            return KeyCodeToName(val)
+        end
+        return tostring(val or "Unknown")
+    elseif wtype == "table" then
+        if type(val) == "table" then
+            local ok, encoded = pcall(function()
+                return HttpService:JSONEncode(val)
+            end)
+            if ok and encoded then
+                return "json:" .. encoded
+            end
+        end
+        return "json:[]"
     end
     return tostring(val)
 end
@@ -5757,6 +6187,15 @@ local function _cfgDeserialize(raw, wtype)
         return nil
     elseif wtype == "keybind" then
         return raw  -- pass the key name string; widget's Set() accepts it
+    elseif wtype == "table" then
+        local payload = raw:sub(1,5) == "json:" and raw:sub(6) or raw
+        local ok, decoded = pcall(function()
+            return HttpService:JSONDecode(payload)
+        end)
+        if ok and type(decoded) == "table" then
+            return decoded
+        end
+        return nil
     end
     return raw
 end
