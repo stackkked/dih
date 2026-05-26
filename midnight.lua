@@ -2826,6 +2826,7 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     local POS   = config.Position or "BottomLeft"
     local W, H  = 248, 70
+    local SNAP_THRESHOLD = tonumber(config.SnapThreshold) or 16
 
     -- ── Root frame ────────────────────────────────────────────
     local hf = Create("Frame", {
@@ -3016,6 +3017,116 @@ function MIDNIGHT:CreateTargetHUD(config)
     end
     positionHUD()
 
+    if self._TargetHUDGuideOverlay and self._TargetHUDGuideOverlay.Parent then
+        pcall(function() self._TargetHUDGuideOverlay:Destroy() end)
+    end
+    self._TargetHUDGuideOverlay = nil
+
+    local guideOverlay = Create("Frame", {
+        Name = "TargetHUDGuides",
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Visible = false,
+        ZIndex = ZIndex.OVERLAY - 2,
+        Parent = self._ScreenGui,
+    })
+    self._TargetHUDGuideOverlay = guideOverlay
+
+    local guideDefs = {
+        { Scale = 0.25, IsCenter = false },
+        { Scale = 0.50, IsCenter = true  },
+        { Scale = 0.75, IsCenter = false },
+    }
+    local guideVisibilityToken = 0
+
+    for _, guide in ipairs(guideDefs) do
+        guide.Glow = Create("Frame", {
+            AnchorPoint = Vector2.new(0.5, 0),
+            Position = UDim2.new(guide.Scale, 0, 0, 8),
+            Size = UDim2.new(0, guide.IsCenter and 8 or 6, 1, -16),
+            BackgroundColor3 = guide.IsCenter and Theme.Accent or Theme.BorderStrong,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ZIndex = ZIndex.OVERLAY - 2,
+            Parent = guideOverlay,
+        })
+        ApplyCorner(guide.Glow, 4)
+
+        guide.Line = Create("Frame", {
+            AnchorPoint = Vector2.new(0.5, 0),
+            Position = UDim2.new(guide.Scale, 0, 0, 0),
+            Size = UDim2.new(0, guide.IsCenter and 2 or 1, 1, 0),
+            BackgroundColor3 = guide.IsCenter and Theme.AccentSoft or Theme.BorderStrong,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ZIndex = ZIndex.OVERLAY - 1,
+            Parent = guideOverlay,
+        })
+    end
+
+    local function setGuideState(activeIndex, instant)
+        local dur = instant and 0 or 0.12
+        for index, guide in ipairs(guideDefs) do
+            local isActive = (index == activeIndex)
+            local lineColor = isActive and Theme.AccentHover or (guide.IsCenter and Theme.AccentSoft or Theme.BorderStrong)
+            local glowColor = isActive and Theme.Accent or (guide.IsCenter and Theme.AccentMuted or Theme.BorderStrong)
+            local lineAlpha = isActive and 0.04 or (guide.IsCenter and 0.58 or 0.76)
+            local glowAlpha = isActive and 0.84 or (guide.IsCenter and 0.94 or 0.97)
+
+            if dur == 0 then
+                guide.Line.BackgroundColor3 = lineColor
+                guide.Line.BackgroundTransparency = lineAlpha
+                guide.Glow.BackgroundColor3 = glowColor
+                guide.Glow.BackgroundTransparency = glowAlpha
+            else
+                TweenObject(guide.Line, {
+                    BackgroundColor3 = lineColor,
+                    BackgroundTransparency = lineAlpha,
+                }, dur)
+                TweenObject(guide.Glow, {
+                    BackgroundColor3 = glowColor,
+                    BackgroundTransparency = glowAlpha,
+                }, dur)
+            end
+        end
+    end
+
+    local function setGuidesVisible(visible)
+        if not guideOverlay or not guideOverlay.Parent then return end
+        guideVisibilityToken = guideVisibilityToken + 1
+        local token = guideVisibilityToken
+        if visible then
+            guideOverlay.Visible = true
+            setGuideState(nil, true)
+        else
+            setGuideState(nil, true)
+            for _, guide in ipairs(guideDefs) do
+                TweenObject(guide.Line, {BackgroundTransparency = 1}, 0.1)
+                TweenObject(guide.Glow, {BackgroundTransparency = 1}, 0.1)
+            end
+            task.delay(0.11, function()
+                if token == guideVisibilityToken and guideOverlay and guideOverlay.Parent then
+                    guideOverlay.Visible = false
+                end
+            end)
+        end
+    end
+
+    local function getGuideSnapX(centerX)
+        local vs = GetViewportSize()
+        local bestIndex, bestTargetX, bestDist = nil, nil, SNAP_THRESHOLD + 1
+        for index, guide in ipairs(guideDefs) do
+            local guideX = math.floor(vs.X * guide.Scale + 0.5)
+            local dist = math.abs(centerX - guideX)
+            if dist <= SNAP_THRESHOLD and dist < bestDist then
+                bestIndex = index
+                bestTargetX = guideX
+                bestDist = dist
+            end
+        end
+        return bestTargetX, bestIndex
+    end
+
     -- ── HP color helper ─────────────────────────────────────
     local function hpColor(pct)
         if pct > 0.6 then return Theme.Success
@@ -3078,12 +3189,12 @@ function MIDNIGHT:CreateTargetHUD(config)
     end)
 
     -- ── Drag logic ───────────────────────────────────────────
-    local _dragging   = false
-    local _dragInput  = nil
-    local _dragStart  = nil
-    local _startPos   = nil
+    local _dragging    = false
+    local _dragInput   = nil
+    local _dragStart   = nil
+    local _startAbsPos = nil
     local _dragEndConn = nil
-    local _isDragged  = false  -- true после первого ручного перетаскивания
+    local _isDragged   = false  -- true после первого ручного перетаскивания
 
     RegConn(dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3092,15 +3203,18 @@ function MIDNIGHT:CreateTargetHUD(config)
                 _dragEndConn:Disconnect()
                 _dragEndConn = nil
             end
-            _dragging  = true
-            _dragStart = input.Position
-            _startPos  = hf.Position
+            setGuidesVisible(true)
+            _dragging    = true
+            _dragStart   = input.Position
+            _startAbsPos = hf.AbsolutePosition
             -- После ручного drag — отключаем preset-позиционирование
             _isDragged = true
             POS = nil
             _dragEndConn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     _dragging = false
+                    _dragInput = nil
+                    setGuidesVisible(false)
                     if _dragEndConn then
                         _dragEndConn:Disconnect()
                         _dragEndConn = nil
@@ -3118,12 +3232,25 @@ function MIDNIGHT:CreateTargetHUD(config)
     end))
 
     RegConn(UserInputService.InputChanged:Connect(function(input)
-        if input == _dragInput and _dragging and _startPos then
+        if input == _dragInput and _dragging and _startAbsPos then
             local delta = input.Position - _dragStart
+            local parentSize = hf.Parent and hf.Parent.AbsoluteSize or GetViewportSize()
+            local rawX = _startAbsPos.X + delta.X
+            local rawY = _startAbsPos.Y + delta.Y
+            local snapCenterX, snapIndex = getGuideSnapX(rawX + (W * 0.5))
+            if snapCenterX then
+                rawX = snapCenterX - (W * 0.5)
+            end
+
+            local maxX = math.max(0, parentSize.X - W)
+            local maxY = math.max(0, parentSize.Y - H)
+            rawX = math.clamp(rawX, 0, maxX)
+            rawY = math.clamp(rawY, 0, maxY)
+
+            setGuideState(snapIndex)
             -- Сбрасываем AnchorPoint в (0,0) чтобы offset был предсказуем
             hf.AnchorPoint = Vector2.new(0, 0)
-            hf.Position = UDim2.new(0, _startPos.X.Offset + _startPos.X.Scale * hf.Parent.AbsoluteSize.X + delta.X,
-                                     0, _startPos.Y.Offset + _startPos.Y.Scale * hf.Parent.AbsoluteSize.Y + delta.Y)
+            hf.Position = UDim2.new(0, math.floor(rawX + 0.5), 0, math.floor(rawY + 0.5))
         end
     end))
 
