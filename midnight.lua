@@ -4728,7 +4728,7 @@ function MIDNIGHT:MakeWindow(config)
 
     if not self._LoadingIntroPlayed then
         self._LoadingIntroPlayed = true
-        self:_PlayLoadingIntro({
+        _PlayLoadingIntroImpl(self, {
             Parent = self._ScreenGui,
             Title = windowName,
             Subtitle = "Loading interface...",
