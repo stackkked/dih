@@ -2825,7 +2825,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     self:_InitScreenGui()
 
     local POS   = config.Position or "BottomLeft"
-    local W, H  = 248, 70
+    local W, H  = 264, 72
 
     -- ── Root frame ────────────────────────────────────────────
     local hf = Create("Frame", {
@@ -2841,6 +2841,16 @@ function MIDNIGHT:CreateTargetHUD(config)
     })
     ApplyCorner(hf, 8)
     ApplyStroke(hf, Theme.BorderSoft, 1, 0.16)
+
+    local leftAccent = Create("Frame", {
+        Size = UDim2.new(0, 3, 1, -16),
+        Position = UDim2.new(0, 0, 0, 8),
+        BackgroundColor3 = Theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.OVERLAY + 1,
+        Parent = hf,
+    })
+    ApplyCorner(leftAccent, 2)
 
     -- Drop shadow
     Create("ImageLabel", {
@@ -2901,7 +2911,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Name = "NameLabel",
         Text = "",
         Font = FontBold,
-        TextSize = 12,
+        TextSize = 13,
         TextColor3 = Theme.TextPrimary,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -2942,7 +2952,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Name = "TeamLabel",
         Text = "No Team",
         Font = FontRegular,
-        TextSize = 10,
+        TextSize = 9,
         TextColor3 = Theme.TextMuted,
         TextXAlignment = Enum.TextXAlignment.Left,
         Size = UDim2.new(0, 0, 1, 0),
@@ -2956,7 +2966,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     -- HP bar background
     local hpBg = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 7),
-        Position = UDim2.new(0, 0, 0, 36),
+        Position = UDim2.new(0, 0, 0, 38),
         BackgroundColor3 = Theme.SliderTrack,
         BorderSizePixel = 0,
         ZIndex = ZIndex.OVERLAY + 2,
@@ -2979,11 +2989,11 @@ function MIDNIGHT:CreateTargetHUD(config)
         Name = "HPLabel",
         Text = "100 HP",
         Font = FontBold,
-        TextSize = 9,
+        TextSize = 10,
         TextColor3 = Theme.TextSecondary,
         TextXAlignment = Enum.TextXAlignment.Right,
-        Size = UDim2.new(1, 0, 0, 11),
-        Position = UDim2.new(0, 0, 0, 44),
+        Size = UDim2.new(1, 0, 0, 12),
+        Position = UDim2.new(0, 0, 0, 46),
         BackgroundTransparency = 1,
         ZIndex = ZIndex.OVERLAY + 2,
         Parent = infoFrame,
@@ -3207,7 +3217,7 @@ function MIDNIGHT:CreateTargetHUD(config)
                 end
             end)
             teamDot.BackgroundColor3   = teamColor
-            teamLabel.Text             = teamName
+            teamLabel.Text             = string.upper(teamName)
             teamLabel.TextColor3       = teamColor
         end
 
@@ -4235,6 +4245,7 @@ function MIDNIGHT:MakeWindow(config)
     local resizable   = config.Resizable or false
     local minWinW     = config.MinWidth  or 400
     local minWinH     = config.MinHeight or 200
+    local wd
 
     self:_InitScreenGui()
     if not self._Initialized then
@@ -4347,13 +4358,25 @@ function MIDNIGHT:MakeWindow(config)
                 table.insert(self._MenuCloseThreads, th)
             end
         end
+        for _, fw in ipairs(self._FloatingWindows or {}) do
+            if fw and fw.Hide then
+                pcall(function() fw:Hide() end)
+            elseif fw and fw._Frame then
+                pcall(function()
+                    fw._Visible = false
+                    fw._Frame.Visible = false
+                end)
+            end
+        end
         self:Notify({Title="Menu Hidden",Content="Press ["..self._MenuKeyStr.."] to reopen",Type="info",Duration=4})
     end)
 
     local isMinimized = false
     minBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
-        wd._IsMinimized = isMinimized  -- BUG-E FIX: keep wd in sync so MenuKey open restores right size
+        if wd then
+            wd._IsMinimized = isMinimized
+        end
         if isMinimized then
             TweenObject(wf,{Size=UDim2.new(0,winW,0,collapsedH)},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
         else
@@ -4462,7 +4485,7 @@ function MIDNIGHT:MakeWindow(config)
     ApplyCorner(contentFrame,CompactStyle.WindowRadius)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface0,BorderSizePixel=0,Parent=contentFrame})
 
-    local wd = {
+    wd = {
         _Frame=wf, _TitleBar=tb, _Body=body, _Sidebar=sidebar,
         _TabList=tabList, _ContentFrame=contentFrame,
         _Tabs={}, _ActiveTab=nil, _FloatingWindows={},
@@ -4674,61 +4697,41 @@ function MIDNIGHT:MakeWindow(config)
         }
         table.insert(self._Tabs, td)
 
-        local function selectTab(fromTab)
-            -- Determine slide direction: new tab index vs old tab index
-            local newIdx, oldIdx = 0, 0
-            for idx, t in ipairs(self._Tabs) do
-                if t == td then newIdx = idx end
-                if t == self._ActiveTab then oldIdx = idx end
+        local function selectTab()
+            if self._ActiveTab == td and pageClip.Visible then
+                return
             end
-            local slideDir = newIdx > oldIdx and 1 or -1  -- 1=right-to-left, -1=left-to-right
 
             for _, t in ipairs(self._Tabs) do
-                t._PageAnimToken = (t._PageAnimToken or 0) + 1
-                t._IndicatorAnimToken = (t._IndicatorAnimToken or 0) + 1
+                local active = (t == td)
                 if t._PageClip then
-                    if t == td then continue end
-                    if t._PageClip.Visible then
-                        -- Slide old tab out in correct direction with fade
-                        local pageHideToken = t._PageAnimToken
-                        TweenObject(t._Page,{Position=UDim2.new(-slideDir,4,0,4)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.In)
-                        task.delay(0.22,function()
-                            if t._PageAnimToken ~= pageHideToken or self._ActiveTab == t then return end
-                            if t._PageClip then t._PageClip.Visible=false end
-                            if t._Page then t._Page.Position=UDim2.new(0,4,0,4) end
-                        end)
+                    t._PageClip.Visible = active
+                    if t._Page then
+                        t._Page.Position = UDim2.new(0,4,0,4)
                     end
                 end
-                TweenObject(t._Button,{BackgroundColor3=Theme.Surface2},0.2)
-                TweenObject(t._Indicator,{Size=UDim2.new(0,3,0,0)},0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-                if t._Label then TweenObject(t._Label,{TextColor3=Theme.TextSecondary},0.18) end
-                if t._IconEl then
-                    if t._IconEl:IsA("ImageLabel") then TweenObject(t._IconEl,{ImageColor3=Theme.TextMuted},0.18)
-                    else TweenObject(t._IconEl,{TextColor3=Theme.TextMuted},0.18) end
+                TweenObject(t._Button,{BackgroundColor3 = active and Theme.TabActiveBg or Theme.Surface2},0.18)
+                TweenObject(t._Indicator,{
+                    Size = active and UDim2.new(0,3,0.62,0) or UDim2.new(0,3,0,0),
+                    Position = active and UDim2.new(0,0,0.19,0) or UDim2.new(0,0,0.5,0),
+                },0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                if t._Label then
+                    TweenObject(t._Label,{TextColor3 = active and Theme.TextAccent or Theme.TextSecondary},0.18)
                 end
-                if t._GlowStroke then TweenObject(t._GlowStroke,{Transparency=1},0.18) end
+                if t._IconEl then
+                    if t._IconEl:IsA("ImageLabel") then
+                        TweenObject(t._IconEl,{ImageColor3 = active and Theme.Accent or Theme.TextMuted},0.18)
+                    else
+                        TweenObject(t._IconEl,{TextColor3 = active and Theme.Accent or Theme.TextMuted},0.18)
+                    end
+                end
+                if t._GlowStroke then
+                    TweenObject(t._GlowStroke,{Transparency = active and 0.72 or 1},0.18)
+                end
             end
 
-            -- Slide new tab in from opposite direction
-            td._PageAnimToken = (td._PageAnimToken or 0) + 1
-            td._IndicatorAnimToken = (td._IndicatorAnimToken or 0) + 1
-            local indicatorToken = td._IndicatorAnimToken
             pageClip.Visible = true
-            page.Position = UDim2.new(slideDir, 4, 0, 4)
-            TweenObject(page,{Position=UDim2.new(0,4,0,4)},0.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-
-            TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.2)
-            TweenObject(indicator,{Size=UDim2.new(0,3,0,0)},0.05)
-            task.delay(0.06,function()
-                if td._IndicatorAnimToken ~= indicatorToken or self._ActiveTab ~= td then return end
-                TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-            end)
-            if tabLabel then TweenObject(tabLabel,{TextColor3=Theme.TextAccent},0.2) end
-            if tabIconEl then
-                if tabIconEl:IsA("ImageLabel") then TweenObject(tabIconEl,{ImageColor3=Theme.Accent},0.2)
-                else TweenObject(tabIconEl,{TextColor3=Theme.Accent},0.2) end
-            end
-            if tabGlowStroke then TweenObject(tabGlowStroke,{Transparency=0.72},0.22) end
+            page.Position = UDim2.new(0,4,0,4)
             self._ActiveTab = td
         end
         td._Select = selectTab
@@ -6316,6 +6319,27 @@ function MIDNIGHT:MakeWindow(config)
             return not self._Destroyed and self._Frame and self._Frame.Parent ~= nil
         end
 
+        function fData:Show()
+            if self._Destroyed or not self._Frame then return end
+            self._Visible = true
+            if not fw.Visible then
+                fw.Size = UDim2.new(0, 0, 0, 0)
+            end
+            fw.Visible = true
+            fw.BackgroundTransparency = 1
+            TweenMotion(fw,{Size=UDim2.new(0,curFW,0,curFH)},"Panel")
+            TweenMotion(fw,{BackgroundTransparency=0},"Soft")
+        end
+
+        function fData:Hide()
+            if self._Destroyed or not self._Frame then return end
+            if not self._Visible and not fw.Visible then return end
+            self._Visible = false
+            TweenObject(fw,{Size=UDim2.new(0,0,0,0)},Motion.OverlayOut.Duration,Motion.OverlayOut.Style,Motion.OverlayOut.Direction)
+            TweenMotion(fw,{BackgroundTransparency=1},"OverlayOut")
+            task.delay(0.25,function() if not self._Visible and fw.Parent then fw.Visible=false end end)
+        end
+
         function fData:OnDestroy(cb)
             if typeof(cb) == "function" then
                 self._OnDestroyCallbacks[#self._OnDestroyCallbacks + 1] = cb
@@ -6359,25 +6383,13 @@ function MIDNIGHT:MakeWindow(config)
             fData._Scroll = nil
         end)
 
-        fwClose.MouseButton1Click:Connect(function() fData:Toggle() end)
+        fwClose.MouseButton1Click:Connect(function() fData:Hide() end)
 
         function fData:Toggle()
-            if self._Destroyed or not self._Frame then return end
-            self._Visible = not self._Visible
             if self._Visible then
-                -- BUG-7 FIX: only collapse to Size=0 when the window is actually hidden.
-                -- Resetting Size=0 on a partially-visible window causes a visual pop.
-                if not fw.Visible then
-                    fw.Size = UDim2.new(0, 0, 0, 0)
-                end
-                fw.Visible = true
-                fw.BackgroundTransparency = 1
-                TweenMotion(fw,{Size=UDim2.new(0,curFW,0,curFH)},"Panel")
-                TweenMotion(fw,{BackgroundTransparency=0},"Soft")
+                self:Hide()
             else
-                TweenObject(fw,{Size=UDim2.new(0,0,0,0)},Motion.OverlayOut.Duration,Motion.OverlayOut.Style,Motion.OverlayOut.Direction)
-                TweenMotion(fw,{BackgroundTransparency=1},"OverlayOut")
-                task.delay(0.25,function() if not self._Visible and fw.Parent then fw.Visible=false end end)
+                self:Show()
             end
         end
 
@@ -7660,8 +7672,15 @@ function MIDNIGHT:MakeWindow(config)
                 MIDNIGHT:Notify({Title="Admin Widget",Content="Admin logs window is not available",Type="warning",Duration=4})
                 return
             end
-            if not logsWindow._Visible then
-                logsWindow:Toggle()
+            if not logsWindow._Visible or not logsWindow._Frame.Visible then
+                if logsWindow.Show then
+                    logsWindow:Show()
+                elseif logsWindow.Toggle then
+                    if logsWindow._Frame and not logsWindow._Frame.Visible then
+                        logsWindow._Visible = false
+                    end
+                    logsWindow:Toggle()
+                end
             end
             task.defer(function()
                 if logsWindow._Scroll and logsWindow._Scroll.Parent then
@@ -7851,6 +7870,18 @@ function MIDNIGHT:MakeWindow(config)
 
     function wd:CreateAdminLogs(config)
         if self._AdminLogsWindow and self._AdminLogsWindow.IsAlive and self._AdminLogsWindow:IsAlive() then
+            if not self._AdminLogsWindow._Visible or not self._AdminLogsWindow._Frame.Visible then
+                if self._AdminLogsWindow.Show then
+                    pcall(function() self._AdminLogsWindow:Show() end)
+                elseif self._AdminLogsWindow.Toggle then
+                    pcall(function()
+                        if self._AdminLogsWindow._Frame and not self._AdminLogsWindow._Frame.Visible then
+                            self._AdminLogsWindow._Visible = false
+                        end
+                        self._AdminLogsWindow:Toggle()
+                    end)
+                end
+            end
             return self._AdminLogsWindow
         end
 
@@ -7921,8 +7952,8 @@ function MIDNIGHT:MakeWindow(config)
         local function addLog(tag, text, tagColor, textColor, skipAutoOpen)
             if not canUseWindow() then return end
             -- Авто-открытие при первом логе
-            if autoOpenLogs and not skipAutoOpen and not aw._Visible then
-                aw:Toggle()
+            if autoOpenLogs and not skipAutoOpen and (not aw._Visible or not aw._Frame.Visible) then
+                aw:Show()
             end
             logOrder = logOrder + 1
             local time = os.date("%H:%M:%S")
@@ -8050,7 +8081,7 @@ function MIDNIGHT:MakeWindow(config)
                 })
                 -- Открыть окно автоматически
                 trackWidget(player, rankName, "Joined the server", nil, {Focus=true, Reveal=true})
-                if autoOpenLogs and not aw._Visible then aw:Toggle() end
+                if autoOpenLogs and (not aw._Visible or not aw._Frame.Visible) then aw:Show() end
                 watchChat(player)
                 watchTeam(player)
                 watchSpawn(player)
@@ -8287,8 +8318,15 @@ function MIDNIGHT:MakeWindow(config)
             Duration = 6,
         })
 
-        if config.AutoOpenLogs == true and logsWindow and not logsWindow._Visible then
-            logsWindow:Toggle()
+        if config.AutoOpenLogs == true and logsWindow and (not logsWindow._Visible or not logsWindow._Frame.Visible) then
+            if logsWindow.Show then
+                logsWindow:Show()
+            elseif logsWindow.Toggle then
+                if logsWindow._Frame and not logsWindow._Frame.Visible then
+                    logsWindow._Visible = false
+                end
+                logsWindow:Toggle()
+            end
         end
 
         queue(1.5, function()
@@ -8350,9 +8388,7 @@ function MIDNIGHT:MakeWindow(config)
         local aw = self:MakeFloatingWindow({Name="Admin Logs [TEST]", Size={300,380}, Resizable=true})
         if not aw then return nil end
 
-        aw._Visible = true
-        aw._Frame.Visible = true
-        aw._Frame.BackgroundTransparency = 0
+        aw:Show()
 
         local function addLog(tag, text, tagColor, textColor)
             local time = os.date("%H:%M:%S")
@@ -8665,6 +8701,18 @@ function MIDNIGHT:MakeWindow(config)
 
     function wd:CreateChatLogger()
         if self._ChatLoggerWindow and self._ChatLoggerWindow.IsAlive and self._ChatLoggerWindow:IsAlive() then
+            if not self._ChatLoggerWindow._Visible or not self._ChatLoggerWindow._Frame.Visible then
+                if self._ChatLoggerWindow.Show then
+                    pcall(function() self._ChatLoggerWindow:Show() end)
+                elseif self._ChatLoggerWindow.Toggle then
+                    pcall(function()
+                        if self._ChatLoggerWindow._Frame and not self._ChatLoggerWindow._Frame.Visible then
+                            self._ChatLoggerWindow._Visible = false
+                        end
+                        self._ChatLoggerWindow:Toggle()
+                    end)
+                end
+            end
             return self._ChatLoggerWindow
         end
 
