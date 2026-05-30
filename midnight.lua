@@ -991,7 +991,10 @@ local function _PlayLoadingIntroImpl(self, config)
     local outTime = math.max(0.15, tonumber(config.OutTime) or 0.2)
 
     local overlay = Create("Frame", {
-        Name = "LoadingOverlay_" .. tostring(HttpService:GenerateGUID(false)):gsub("%-", ""),
+        Name = ("LoadingOverlay_%d_%d"):format(
+            math.floor(os.clock() * 1000000),
+            math.random(100000, 999999)
+        ),
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.OverlayBg,
         BackgroundTransparency = 1,
