@@ -371,6 +371,8 @@ local Motion = {
     Panel = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
     OverlayIn = {Duration = 0.24, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
     OverlayOut = {Duration = 0.18, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
+    Intro = {Duration = 0.28, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    Loading = {Duration = 0.85, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
 }
 
 local CurrentDensityMode = "Compact"
@@ -824,6 +826,349 @@ end
 local function TweenMotion(inst, props, motion)
     local spec = Motion[motion] or Motion.Micro
     return TweenObject(inst, props, spec.Duration, spec.Style, spec.Direction)
+end
+
+local function _CollectRevealTargets(root, opts)
+    local targets = {}
+    local function add(inst)
+        if not inst then return end
+        if opts and opts.Ignore and opts.Ignore(inst) then return end
+        if inst ~= root and inst:IsA("GuiObject") and inst.Visible == false then
+            return
+        end
+
+        local props = {}
+        if inst:IsA("GuiObject") then
+            if inst.BackgroundTransparency < 1 then
+                props.BackgroundTransparency = inst.BackgroundTransparency
+            end
+        end
+        if inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+            props.TextTransparency = inst.TextTransparency
+        elseif inst:IsA("ImageLabel") or inst:IsA("ImageButton") then
+            props.ImageTransparency = inst.ImageTransparency
+        end
+        if inst:IsA("UIStroke") then
+            props.Transparency = inst.Transparency
+        end
+
+        if next(props) then
+            targets[#targets + 1] = { Inst = inst, Props = props }
+        end
+    end
+
+    add(root)
+    for _, inst in ipairs(root:GetDescendants()) do
+        add(inst)
+    end
+    return targets
+end
+
+local function _HideRevealTargets(targets)
+    for _, entry in ipairs(targets) do
+        local inst = entry.Inst
+        if inst and inst.Parent then
+            if entry.Props.BackgroundTransparency ~= nil then
+                inst.BackgroundTransparency = 1
+            end
+            if entry.Props.TextTransparency ~= nil then
+                inst.TextTransparency = 1
+            end
+            if entry.Props.ImageTransparency ~= nil then
+                inst.ImageTransparency = 1
+            end
+            if entry.Props.Transparency ~= nil then
+                inst.Transparency = 1
+            end
+        end
+    end
+end
+
+local function AnimateReveal(root, opts)
+    if not root or not root.Parent then
+        return nil
+    end
+
+    opts = opts or {}
+    local targets = _CollectRevealTargets(root, opts)
+    _HideRevealTargets(targets)
+
+    local scale = opts.ScaleObject or root:FindFirstChildWhichIsA("UIScale")
+    local createdScale = false
+    if scale == nil and opts.UseScale ~= false then
+        scale = Create("UIScale", {
+            Scale = opts.StartScale or 0.96,
+            Parent = root,
+        })
+        createdScale = true
+    elseif scale then
+        scale.Scale = opts.StartScale or 0.96
+    end
+
+    local duration = opts.Duration or Motion.Intro.Duration
+    local style = opts.Style or Motion.Intro.Style
+    local direction = opts.Direction or Motion.Intro.Direction
+    local stagger = opts.Stagger or 0
+
+    if scale then
+        TweenObject(scale, {
+            Scale = 1,
+        }, opts.ScaleDuration or duration + 0.04, opts.ScaleStyle or Enum.EasingStyle.Back, opts.ScaleDirection or Enum.EasingDirection.Out)
+    end
+
+    for index, entry in ipairs(targets) do
+        local inst = entry.Inst
+        local delayTime = stagger * (index - 1)
+        task.delay(delayTime, function()
+            if inst and inst.Parent and root and root.Parent then
+                TweenObject(inst, entry.Props, duration, style, direction)
+            end
+        end)
+    end
+
+    if createdScale then
+        return function()
+            if scale and scale.Parent then
+                pcall(function() scale:Destroy() end)
+            end
+        end
+    end
+end
+
+local function StartSpinnerLoop(spinner, duration)
+    if not spinner then
+        return function() end
+    end
+
+    local active = true
+    local spinDuration = math.max(0.5, duration or 0.85)
+
+    task.spawn(function()
+        while active and spinner and spinner.Parent do
+            spinner.Rotation = 0
+            local tween = TweenObject(spinner, {
+                Rotation = 360,
+            }, spinDuration, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+            if tween then
+                pcall(function()
+                    tween.Completed:Wait()
+                end)
+            else
+                task.wait(spinDuration)
+            end
+        end
+    end)
+
+    return function()
+        active = false
+    end
+end
+
+function MIDNIGHT:_PlayLoadingIntro(config)
+    config = config or {}
+    local parent = config.Parent or self._ScreenGui
+    if not parent then
+        return 0
+    end
+
+    if self._LoadingOverlayFrame and self._LoadingOverlayFrame.Parent then
+        pcall(function()
+            self._LoadingOverlayFrame:Destroy()
+        end)
+    end
+    if self._LoadingOverlayStop then
+        pcall(self._LoadingOverlayStop)
+        self._LoadingOverlayStop = nil
+    end
+
+    local titleText = tostring(config.Title or "MIDNIGHT")
+    local subtitleText = tostring(config.Subtitle or "Preparing interface...")
+    local doneText = tostring(config.DoneText or "Ready")
+    local holdTime = math.max(0.45, tonumber(config.HoldTime) or 0.75)
+    local outTime = math.max(0.15, tonumber(config.OutTime) or 0.2)
+
+    local overlay = Create("Frame", {
+        Name = _RandomGuiName(),
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.OverlayBg,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP,
+        Parent = parent,
+    })
+    self._LoadingOverlayFrame = overlay
+
+    local scrim = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.OverlayBg,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP,
+        Parent = overlay,
+    })
+
+    local card = Create("Frame", {
+        Size = UDim2.new(0, 250, 0, 132),
+        Position = UDim2.new(0.5, -125, 0.5, -66),
+        BackgroundColor3 = Theme.UtilityBg,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 1,
+        Parent = overlay,
+    })
+    ApplyCorner(card, 14)
+    local cardStroke = ApplyStroke(card, Theme.BorderSoft, 1, 1)
+    local cardScale = Create("UIScale", {Scale = 0.92, Parent = card})
+    local topLine = CreateAccentLine(card, 14, Theme.Accent)
+    if topLine then
+        topLine.BackgroundTransparency = 1
+    end
+
+    local spinnerHolder = Create("Frame", {
+        Size = UDim2.new(0, 48, 0, 48),
+        Position = UDim2.new(0.5, -24, 0, 18),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+    local spinner = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = spinnerHolder,
+    })
+
+    for index = 1, 8 do
+        local angle = math.rad((index - 1) * 45)
+        local radius = 15
+        local dot = Create("Frame", {
+            Size = UDim2.new(0, 6, 0, 6),
+            Position = UDim2.new(0.5, math.cos(angle) * radius - 3, 0.5, math.sin(angle) * radius - 3),
+            BackgroundColor3 = Theme.Accent,
+            BackgroundTransparency = 0.14 + (index - 1) * 0.08,
+            BorderSizePixel = 0,
+            ZIndex = ZIndex.TOP + 3,
+            Parent = spinner,
+        })
+        ApplyCorner(dot, 3)
+    end
+
+    local spinnerStop = StartSpinnerLoop(spinner, Motion.Loading.Duration)
+
+    local readyBubble = Create("Frame", {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, -17, 0, 20),
+        BackgroundColor3 = Theme.Success,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Visible = false,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+    ApplyCorner(readyBubble, 16)
+    local readyScale = Create("UIScale", {Scale = 0.15, Parent = readyBubble})
+    local readyText = Create("TextLabel", {
+        Text = "✓",
+        Font = FontBold,
+        TextSize = 19,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextTransparency = 1,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = ZIndex.TOP + 3,
+        Parent = readyBubble,
+    })
+
+    local titleLabel = Create("TextLabel", {
+        Text = titleText,
+        Font = FontBold,
+        TextSize = 13,
+        TextColor3 = Theme.TextPrimary,
+        TextTransparency = 1,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Size = UDim2.new(1, -28, 0, 16),
+        Position = UDim2.new(0, 14, 0, 78),
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+
+    local subtitleLabel = Create("TextLabel", {
+        Text = subtitleText,
+        Font = FontRegular,
+        TextSize = 10,
+        TextColor3 = Theme.TextSecondary,
+        TextTransparency = 1,
+        BackgroundTransparency = 1,
+        TextWrapped = false,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Size = UDim2.new(1, -24, 0, 16),
+        Position = UDim2.new(0, 12, 0, 98),
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+
+    TweenObject(scrim, {BackgroundTransparency = 0.42}, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenObject(card, {BackgroundTransparency = 0}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(cardStroke, {Transparency = 0.16}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(cardScale, {Scale = 1}, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    TweenObject(topLine, {BackgroundTransparency = 0.72}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(titleLabel, {TextTransparency = 0}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(subtitleLabel, {TextTransparency = 0}, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+    local finished = false
+    local function finishIntro()
+        if finished then
+            return
+        end
+        finished = true
+        if spinnerStop then
+            spinnerStop()
+        end
+        if spinnerHolder and spinnerHolder.Parent then
+            TweenObject(spinnerHolder, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        end
+        if readyBubble and readyBubble.Parent then
+            readyBubble.Visible = true
+            TweenObject(readyBubble, {BackgroundTransparency = 0.04}, 0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            TweenObject(readyScale, {Scale = 1}, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            TweenObject(readyText, {TextTransparency = 0}, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            TweenObject(titleLabel, {TextColor3 = Theme.Success}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            TweenObject(subtitleLabel, {TextColor3 = Theme.TextSecondary}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end
+        task.delay(outTime, function()
+            if not overlay or not overlay.Parent then
+                return
+            end
+            TweenObject(scrim, {BackgroundTransparency = 1}, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(card, {BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(cardStroke, {Transparency = 1}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(cardScale, {Scale = 0.97}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(titleLabel, {TextTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(subtitleLabel, {TextTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(readyBubble, {BackgroundTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(readyText, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            task.delay(0.22, function()
+                if overlay and overlay.Parent then
+                    pcall(function()
+                        overlay:Destroy()
+                    end)
+                end
+                if self._LoadingOverlayFrame == overlay then
+                    self._LoadingOverlayFrame = nil
+                end
+                if self._LoadingOverlayStop == finishIntro then
+                    self._LoadingOverlayStop = nil
+                end
+            end)
+        end)
+    end
+
+    self._LoadingOverlayStop = finishIntro
+    task.delay(holdTime, finishIntro)
+    return holdTime + outTime + 0.18
 end
 
 local function StylePanelShell(frame, radius, strokeColor, strokeTransparency)
@@ -1444,6 +1789,9 @@ local MIDNIGHT = {
     _MenuKeyStr = "RShift",
     _MenuOpen   = false,
     _MenuToggleConn = nil,
+    _LoadingIntroPlayed = false,
+    _LoadingOverlayFrame = nil,
+    _LoadingOverlayStop = nil,
     _DensityMode = "Compact",
     _StylePreset = "Midnight",
 
@@ -1800,6 +2148,14 @@ function MIDNIGHT:Reset()
         SafeCancelThread(self._TargetHUDHideThread)
         self._TargetHUDHideThread = nil
     end
+    if self._LoadingOverlayStop then
+        pcall(self._LoadingOverlayStop)
+        self._LoadingOverlayStop = nil
+    end
+    if self._LoadingOverlayFrame then
+        pcall(function() self._LoadingOverlayFrame:Destroy() end)
+        self._LoadingOverlayFrame = nil
+    end
     for _, th in ipairs(self._MenuCloseThreads or {}) do
         SafeCancelThread(th)
     end
@@ -1841,6 +2197,7 @@ function MIDNIGHT:Reset()
     self._SidebarFooters = {}
     self._ThemeCallbacks = {}
     self._WatermarkSizeUpdate = nil
+    self._LoadingIntroPlayed = false
     self._lagspikeBlinkStop = nil
     self._MenuToggleConn = nil
     self._ActiveDropdownCloseConn = nil
@@ -2516,12 +2873,24 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                     SafeCancelThread(th)
                 end
                 self._MenuCloseThreads = {}
+                if self._LoadingOverlayStop then
+                    pcall(self._LoadingOverlayStop)
+                    self._LoadingOverlayStop = nil
+                end
+                if self._LoadingOverlayFrame then
+                    pcall(function() self._LoadingOverlayFrame:Destroy() end)
+                    self._LoadingOverlayFrame = nil
+                end
             end
             for _, w in ipairs(self._Windows) do
                 if w._Frame then
                     if self._MenuOpen then
                         w._Frame.Visible = true
                         w._Frame.BackgroundTransparency = 1
+                        local scale = w._Frame:FindFirstChildWhichIsA("UIScale")
+                        if scale then
+                            scale.Scale = 0.96
+                        end
                         -- BUG-E FIX: respect minimized state — don't force full height if window was minimized
                         local openW, openH = CompactStyle.WindowWidth, (w._IsMinimized and CompactStyle.CollapsedWindowHeight or CompactStyle.WindowHeight)
                         if w._GetCurrentFrameSize then
@@ -2530,7 +2899,14 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         w._Frame.Size = UDim2.new(0, openW, 0, openH)
                         -- Smooth fade in
                         TweenObject(w._Frame, {BackgroundTransparency=0}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        if scale then
+                            TweenObject(scale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                        end
                     else
+                        local scale = w._Frame:FindFirstChildWhichIsA("UIScale")
+                        if scale then
+                            TweenObject(scale, {Scale = 0.97}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        end
                         TweenObject(w._Frame, {BackgroundTransparency=1}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                         local th = task.delay(0.25, function() if not self._MenuOpen then w._Frame.Visible=false end end)
                         table.insert(self._MenuCloseThreads, th)
@@ -2649,26 +3025,28 @@ function MIDNIGHT:CreateWatermark(config)
         task.defer(function()
             if not wmFrame or not wmFrame.Parent then return end
             local tw = 18
-            local lastVisible = 0
-            local children = content:GetChildren()
-            -- first pass: collect visible widths
-            local widths = {}
-            for _, child in ipairs(children) do
-                if (child:IsA("TextLabel") or child:IsA("ImageLabel")) and child.Visible then
-                    local cw = child:IsA("TextLabel") and child.TextBounds.X or child.AbsoluteSize.X
-                    if cw > 0 then
-                        widths[#widths+1] = cw
-                        lastVisible = #widths
+            local layout = content:FindFirstChildOfClass("UIListLayout")
+            if layout and layout.AbsoluteContentSize.X > 0 then
+                tw = tw + math.ceil(layout.AbsoluteContentSize.X)
+            else
+                local lastVisible = 0
+                local children = content:GetChildren()
+                local widths = {}
+                for _, child in ipairs(children) do
+                    if (child:IsA("TextLabel") or child:IsA("ImageLabel")) and child.Visible then
+                        local cw = child:IsA("TextLabel") and child.TextBounds.X or child.AbsoluteSize.X
+                        if cw > 0 then
+                            widths[#widths+1] = cw
+                            lastVisible = #widths
+                        end
                     end
                 end
+                for i, cw in ipairs(widths) do
+                    tw = tw + cw
+                    if i < lastVisible then tw = tw + 7 end
+                end
             end
-            -- second pass: sum with gap only between elements, not after last
-            for i, cw in ipairs(widths) do
-                tw = tw + cw
-                if i < lastVisible then tw = tw + 7 end
-            end
-            -- Clamp minimum size so watermark doesn't collapse to zero
-            if tw < 60 then tw = 60 end
+            if tw < 72 then tw = 72 end
             wmFrame.Size = UDim2.new(0, tw, 0, 30)
             task.defer(positionWM)
         end)
@@ -2699,6 +3077,11 @@ function MIDNIGHT:CreateWatermark(config)
     positionWM()
     -- Apply any pre-set custom watermark text immediately
     self:_UpdateWatermark()
+    AnimateReveal(wmFrame, {
+        Duration = 0.24,
+        Stagger = 0.018,
+        StartScale = 0.94,
+    })
     return wmFrame
 end
 
@@ -4184,6 +4567,11 @@ function MIDNIGHT:CreateKeybindList(config)
 
     self._RefreshKeybindList = refresh
     refresh()
+    AnimateReveal(kf, {
+        Duration = 0.22,
+        Stagger = 0.015,
+        StartScale = 0.94,
+    })
     return kf
 end
 
@@ -4290,15 +4678,13 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.WINDOW-1,Parent=wf,
     })
     ApplyStroke(wf,Theme.BorderSoft,1,0.16)
-
+    local wfScale = Create("UIScale", {Scale = 0.94, Parent = wf})
+    local openPosition = UDim2.new(0.5, -winW/2, 0.5, -winH/2)
+    wf.Visible = false
     wf.BackgroundTransparency = 1
-    wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2+12)
-    self._MenuOpen = true
+    wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2 + 12)
 
-    TweenObject(wf, {
-        BackgroundTransparency = 0,
-        Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2),
-    }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    self._MenuOpen = true
 
     local windowPulseToken = 0
     local function QueueWindowBorderPulse()
@@ -4316,7 +4702,36 @@ function MIDNIGHT:MakeWindow(config)
             end
         end)
     end
-    QueueWindowBorderPulse()
+
+    local function animateWindowOpen()
+        if not wf or not wf.Parent or not self._MenuOpen then
+            return
+        end
+        wf.Visible = true
+        wf.BackgroundTransparency = 1
+        wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2 + 12)
+        wfScale.Scale = 0.94
+        TweenObject(wf, {
+            BackgroundTransparency = 0,
+            Position = openPosition,
+        }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(wfScale, {Scale = 1}, 0.34, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        QueueWindowBorderPulse()
+    end
+
+    local introDelay = 0
+    if not self._LoadingIntroPlayed then
+        self._LoadingIntroPlayed = true
+        introDelay = self:_PlayLoadingIntro({
+            Parent = self._ScreenGui,
+            Title = windowName,
+            Subtitle = "Loading interface...",
+            DoneText = "Ready",
+        })
+        task.delay(introDelay, animateWindowOpen)
+    else
+        animateWindowOpen()
+    end
 
     -- TITLE BAR
     local tb = Create("Frame",{
@@ -4363,6 +4778,14 @@ function MIDNIGHT:MakeWindow(config)
             SafeCancelThread(th)
         end
         self._MenuCloseThreads = {}
+        if self._LoadingOverlayStop then
+            pcall(self._LoadingOverlayStop)
+            self._LoadingOverlayStop = nil
+        end
+        if self._LoadingOverlayFrame then
+            pcall(function() self._LoadingOverlayFrame:Destroy() end)
+            self._LoadingOverlayFrame = nil
+        end
         for _, w in ipairs(self._Windows) do
             if w._Frame then
                 TweenObject(w._Frame,{BackgroundTransparency=1},0.2)
@@ -8799,6 +9222,14 @@ function MIDNIGHT:Destroy()
     if self._TargetHUDHideThread then
         SafeCancelThread(self._TargetHUDHideThread)
         self._TargetHUDHideThread = nil
+    end
+    if self._LoadingOverlayStop then
+        pcall(self._LoadingOverlayStop)
+        self._LoadingOverlayStop = nil
+    end
+    if self._LoadingOverlayFrame then
+        pcall(function() self._LoadingOverlayFrame:Destroy() end)
+        self._LoadingOverlayFrame = nil
     end
     for _, th in ipairs(self._MenuCloseThreads or {}) do
         SafeCancelThread(th)
