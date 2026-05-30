@@ -967,7 +967,7 @@ local function StartSpinnerLoop(spinner, duration)
     end
 end
 
-function MIDNIGHT:_PlayLoadingIntro(config)
+local function _PlayLoadingIntroImpl(self, config)
     config = config or {}
     local parent = config.Parent or self._ScreenGui
     if not parent then
@@ -1836,6 +1836,10 @@ local MIDNIGHT = {
     _ConfigKey              = nil,   -- current config save key
     _ConfigWidgets          = {},    -- {id -> {get=fn, set=fn, type=str}}
 }
+
+function MIDNIGHT:_PlayLoadingIntro(config)
+    return _PlayLoadingIntroImpl(self, config)
+end
 
 --// Helper: register a connection for cleanup
 RegConn = function(conn)
