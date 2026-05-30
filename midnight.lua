@@ -1043,7 +1043,8 @@ local function _PlayLoadingIntroImpl(self, config)
 
     local spinnerHolder = Create("Frame", {
         Size = UDim2.new(0, 76, 0, 76),
-        Position = UDim2.new(0.5, -38, 0, 12),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 13),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = ZIndex.TOP + 2,
@@ -1070,24 +1071,26 @@ local function _PlayLoadingIntroImpl(self, config)
 
     for index = 1, 12 do
         local angle = math.rad((index - 1) * 30)
-        local radius = 24
+        local radius = 22
+        local dotTransparency = index == 1 and 0.04 or 0.2
         local dot = Create("Frame", {
-            Size = UDim2.new(0, 8, 0, 8),
-            Position = UDim2.new(0.5, math.cos(angle) * radius - 4, 0.5, math.sin(angle) * radius - 4),
+            Size = UDim2.new(0, 7, 0, 7),
+            Position = UDim2.new(0.5, math.cos(angle) * radius - 3.5, 0.5, math.sin(angle) * radius - 3.5),
             BackgroundColor3 = Theme.Accent,
-            BackgroundTransparency = 0.08 + (index - 1) * 0.05,
+            BackgroundTransparency = dotTransparency,
             BorderSizePixel = 0,
             ZIndex = ZIndex.TOP + 3,
             Parent = spinner,
         })
-        ApplyCorner(dot, 4)
+        ApplyCorner(dot, 3)
     end
 
     local spinnerStop = StartSpinnerLoop(spinner, Motion.Loading.Duration)
 
     local readyBubble = Create("Frame", {
         Size = UDim2.new(0, 76, 0, 76),
-        Position = UDim2.new(0.5, -38, 0, 12),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 13),
         BackgroundColor3 = Theme.Success,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
