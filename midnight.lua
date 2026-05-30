@@ -890,6 +890,9 @@ local function AnimateReveal(root, opts)
     end
 
     opts = opts or {}
+    if root:IsA("GuiObject") then
+        root.Visible = true
+    end
     local targets = _CollectRevealTargets(root, opts)
     _HideRevealTargets(targets)
 
@@ -4719,16 +4722,15 @@ function MIDNIGHT:MakeWindow(config)
         QueueWindowBorderPulse()
     end
 
-    local introDelay = 0
     if not self._LoadingIntroPlayed then
         self._LoadingIntroPlayed = true
-        introDelay = self:_PlayLoadingIntro({
+        self:_PlayLoadingIntro({
             Parent = self._ScreenGui,
             Title = windowName,
             Subtitle = "Loading interface...",
             DoneText = "Ready",
         })
-        task.delay(introDelay, animateWindowOpen)
+        animateWindowOpen()
     else
         animateWindowOpen()
     end
