@@ -1,34 +1,34 @@
 --[[
-    MIDNIGHT UI Library v6.4.0 → v7.1.0
+    MIDNIGHT UI Library v6.4.0 в†’ v7.1.0
 
     v7.1 Changelog:
-    - FEAT: Config system — MIDNIGHT:SetupConfig(key) / SaveConfig() / LoadConfig() / ResetConfig()
+    - FEAT: Config system вЂ” MIDNIGHT:SetupConfig(key) / SaveConfig() / LoadConfig() / ResetConfig()
     - FEAT: Per-widget Flag= parameter for Toggle, Slider, Dropdown, InlineDropdown, TextBox, ColorPicker, Keybind, Table
     - FEAT: MakeWindow now accepts Width=, Height=, Resizable=, MinWidth=, MinHeight= config fields
-    - FEAT: wd:SetSize(w, h) — programmatic animated window resize
+    - FEAT: wd:SetSize(w, h) вЂ” programmatic animated window resize
     - FEAT: Resizable windows get a bottom-right grip handle (3 diagonal stripes)
-    - FEAT: td:AddTable(config) — DataGrid widget with sortable columns, search, alternating rows, auto-width columns
+    - FEAT: td:AddTable(config) вЂ” DataGrid widget with sortable columns, search, alternating rows, auto-width columns
     - FEAT: AddTable supports :SetRows(), :AddRow(), :RemoveRow(), :GetRows(), :Clear(), :SetColumnWidth()
     - FEAT: AddTable has Searchable= option for live text filter
     - FEAT: Config serializer handles toggle/slider/dropdown/multiselect/textbox/color/keybind types
     - FEAT: Config falls back to ScreenGui attribute storage when writefile/readfile unavailable
     - FIX:  Intro animation Position now computed from actual winW/winH
-    - FIX:  Minimize restores to actual winW/winH instead of hardcoded 600×440
+    - FIX:  Minimize restores to actual winW/winH instead of hardcoded 600Г—440
 
     v7.0 Changelog:
     - FEAT: AddDropdown now supports Multi=true for multiselect mode
     - FEAT: AddInlineDropdown now supports Multi=true for multiselect mode
     - FEAT: Multiselect shows checkboxes per option, Apply button to confirm, live label "Item1 +N"
-    - ANIM: Intro animation on MakeWindow — slide-up + fade-in (Back easing) + border accent pulse
+    - ANIM: Intro animation on MakeWindow вЂ” slide-up + fade-in (Back easing) + border accent pulse
     - ANIM: Menu open/close uses Quint easing (smoother than Quad)
     - ANIM: Tab switch detects direction (left/right) and slides content accordingly
     - ANIM: Tab indicator: shrinks to 0 then springs out with Back easing on activation
-    - ANIM: Toggle knob squash/stretch — knob compresses horizontally during slide, springs back
+    - ANIM: Toggle knob squash/stretch вЂ” knob compresses horizontally during slide, springs back
     - ANIM: Slider knob scales up (18px) on grab, springs back to 14px on release
     - ANIM: Dropdown open: Back easing instead of Quad, slight fade-in
     - ANIM: Dropdown close: fade + collapse simultaneously
-    - ANIM: Dropdown options have ripple flash on click (AccentDark → normal)
-    - ANIM: InlineDropdown chevron rotates 180° on expand (Back easing), has separator fade
+    - ANIM: Dropdown options have ripple flash on click (AccentDark в†’ normal)
+    - ANIM: InlineDropdown chevron rotates 180В° on expand (Back easing), has separator fade
     - ANIM: Button hover: accent left stripe appears + text color shifts to TextAccent
     - ANIM: Button click: AccentDark flash + border pulse, recovers with Quint
     - ANIM: Notification dismiss: slide-out + fade simultaneously (Quint In)
@@ -37,36 +37,36 @@
     For Roblox Executors
 
     v6.9 Changelog:
-    - FIX: _MenuOpen now starts as false — menu opens on first keypress (was requiring two presses)
-    - FIX: _MenuOpen in Reset() was incorrectly set to true — now false (menu starts closed after reset)
-    - FIX: _MenuOpen syncs with MakeWindow — set to true after creation since window IS visible
-    - FIX: KeyCodeToName gsub order — ^Left/^Right now runs before Return→Enter, preventing "LEnter"
+    - FIX: _MenuOpen now starts as false вЂ” menu opens on first keypress (was requiring two presses)
+    - FIX: _MenuOpen in Reset() was incorrectly set to true вЂ” now false (menu starts closed after reset)
+    - FIX: _MenuOpen syncs with MakeWindow вЂ” set to true after creation since window IS visible
+    - FIX: KeyCodeToName gsub order вЂ” ^Left/^Right now runs before Returnв†’Enter, preventing "LEnter"
     - FIX: CreateWatermark now calls _UpdateWatermark() at end, so SetWatermarkText called before CreateWatermark works immediately
     - FIX: KeybindSettings key listener (conn2) now disconnected when panel closes without key selection
     - FIX: task.cancel now checks typeof(th)=="thread" before calling (executor compat)
     - FIX: Close button also uses typeof thread check for task.cancel
-    - FIX: Menu open animation no longer resets Size to 0 — just fade in with BackgroundTransparency (prevents ClipsDescendants clipping content)
+    - FIX: Menu open animation no longer resets Size to 0 вЂ” just fade in with BackgroundTransparency (prevents ClipsDescendants clipping content)
     - FIX: MakeWindow creation animation simplified to fade-in only (no Size=0 reset that clips all child content)
-    - FIX: Menu close animation also uses fade-out only — no Size tween to 0 (prevents stuck 0x0 size on next open)
-    - FIX: Window frame (wf) and TitleBar (tb) now have Active=true — Frames receive input, child buttons work
-    - FIX: TitleBar ClipsDescendants=false — drag input works properly on empty title bar areas
+    - FIX: Menu close animation also uses fade-out only вЂ” no Size tween to 0 (prevents stuck 0x0 size on next open)
+    - FIX: Window frame (wf) and TitleBar (tb) now have Active=true вЂ” Frames receive input, child buttons work
+    - FIX: TitleBar ClipsDescendants=false вЂ” drag input works properly on empty title bar areas
     - FIX: Close button handler now cancels pending close threads before resetting _MenuCloseThreads (prevents orphaned threads)
     - FIX: MakeWindow sets BackgroundTransparency=0 explicitly before tween (executor safety net for unreliable TweenService)
 
     v6.8 Changelog:
-    - FIX: _global_wait nil check in delay fallback — no crash if global wait unavailable
+    - FIX: _global_wait nil check in delay fallback вЂ” no crash if global wait unavailable
     - FIX: ThemeCallbacks cbIdx replaced with reference-based removal (prevents wrong callback deletion)
     - FIX: _RepositionNotifications passes real notification index instead of hardcoded 1
     - FIX: AddToggle OnModeChange now updates local bindMode variable
-    - FIX: Menu double-tap race condition — pending close-delay threads are cancelled on reopen
+    - FIX: Menu double-tap race condition вЂ” pending close-delay threads are cancelled on reopen
     - FIX: Close button also tracks close-delay threads for proper cancellation
 
     v6.7 Changelog:
-    - FIX: task.wait fallback — local `task` was nil during table init, causing no-op wait
-    - FIX: AddInlineColorPicker — `data` declared after preset closures, caused nil error on preset click
-    - FIX: _ShowKeybindSettings ThemeCallbacks accumulated on every open — now tracked and removed on close
+    - FIX: task.wait fallback вЂ” local `task` was nil during table init, causing no-op wait
+    - FIX: AddInlineColorPicker вЂ” `data` declared after preset closures, caused nil error on preset click
+    - FIX: _ShowKeybindSettings ThemeCallbacks accumulated on every open вЂ” now tracked and removed on close
     - FIX: AddKeybind modeLbl.Text not updating when mode changes externally (kd._Mode)
-    - FIX: Notify dismiss could fire twice (timer + close button) — added dismissed guard flag
+    - FIX: Notify dismiss could fire twice (timer + close button) вЂ” added dismissed guard flag
     - FIX: MakeDraggable handle.InputBegan/InputChanged now registered via RegConn for cleanup
     - FIX: Slider callback no longer fires on Set() when value hasn't changed
 
@@ -91,46 +91,46 @@
     v6.4 Changelog:
     - CRITICAL: Added MIDNIGHT:Destroy() with full connection cleanup
     - CRITICAL: All InputBegan connections stored in _Connections table, disconnected on Destroy()
-    - CRITICAL: Removed pcall(Instance.new, ...) — errors are visible now
+    - CRITICAL: Removed pcall(Instance.new, ...) вЂ” errors are visible now
     - ARCH: ZIndex constants table (ZIndex = { WINDOW, POPUP, OVERLAY, ... })
-    - ARCH: Added MIDNIGHT:Reset() — full state reset without recreating GUI
+    - ARCH: Added MIDNIGHT:Reset() вЂ” full state reset without recreating GUI
     - ARCH: Added MIDNIGHT.Version = "6.4.0"
-    - WIDGETS: AddTextBox — new widget
-    - WIDGETS: AddButton — proper standalone widget
-    - WIDGETS: AddDropdown inline (no popup) — for simple cases
+    - WIDGETS: AddTextBox вЂ” new widget
+    - WIDGETS: AddButton вЂ” proper standalone widget
+    - WIDGETS: AddDropdown inline (no popup) вЂ” for simple cases
     - WIDGETS: AddColorPicker inline in tab
-    - WIDGETS: AddSeparator — visual separator with gradient fade
-    - UX: Icon cache — icons loaded once, reused
-    - UX: tab:SetVisible(bool) — hide/show tabs dynamically
-    - UX: MIDNIGHT:SetWatermarkText(text) — custom watermark text
-    - UX: Notifications — close (✕) button on each notification
+    - WIDGETS: AddSeparator вЂ” visual separator with gradient fade
+    - UX: Icon cache вЂ” icons loaded once, reused
+    - UX: tab:SetVisible(bool) вЂ” hide/show tabs dynamically
+    - UX: MIDNIGHT:SetWatermarkText(text) вЂ” custom watermark text
+    - UX: Notifications вЂ” close (вњ•) button on each notification
     - MISC: ParseKeyCode / KeyCodeToName moved to top-level module (KeyUtils)
     - MISC: MIDNIGHT.Version for version checking
-    - SLIDER: Manual value input on label click → TextBox
-    - UI: Gradient accent line (darker edges → bright center)
+    - SLIDER: Manual value input on label click в†’ TextBox
+    - UI: Gradient accent line (darker edges в†’ bright center)
     - UI: Hover left border (2px) on items
-    - UI: Active tab — UIStroke glow
+    - UI: Active tab вЂ” UIStroke glow
     - UI: Scrollbar auto-hide (appears on scroll, fades after 1.5s)
     - UI: Toggle flash animation on knob
     - UI: Slider knob tooltip on drag
-    - UI: Notification icon scale 0→1 with Back easing
+    - UI: Notification icon scale 0в†’1 with Back easing
     - UI: Separator with gradient fade
     - TYPO: TextSecondary labels 12px (was 11px)
     - TYPO: Slider value right-aligned, fixed width
     - TYPO: Section name letter-spacing (spaces between chars)
-    - TYPO: Keybind badge — InputBg bg, rounded corners
-    - ANIM: Window open — BackgroundTransparency 1→0 simultaneously
+    - TYPO: Keybind badge вЂ” InputBg bg, rounded corners
+    - ANIM: Window open вЂ” BackgroundTransparency 1в†’0 simultaneously
     - ANIM: Popup close 0.1s (was 0.15s)
-    - ANIM: Tab switch — slide content
+    - ANIM: Tab switch вЂ” slide content
     - ANIM: Watermark lagspike blink tween
     - STRUCT: Sidebar tab grouping separator if tabs > 6
     - STRUCT: Sidebar footer: version + ping/fps
     - STRUCT: Empty tab placeholder text "No items"
 ]]
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// SERVICES
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Players          = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
@@ -151,9 +151,9 @@ local task = task or {
     wait   = _global_wait or function(t) return 0 end,
 }
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// Z-INDEX CONSTANTS
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local ZIndex = {
     WINDOW   = 10,
     CONTENT  = 15,
@@ -165,9 +165,9 @@ local ZIndex = {
     TOP      = 200,
 }
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// THEME
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
     WindowBg       = Color3.fromRGB(15, 17, 20),
     SidebarBg      = Color3.fromRGB(16, 18, 21),
@@ -371,8 +371,8 @@ local Motion = {
     Panel = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
     OverlayIn = {Duration = 0.24, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
     OverlayOut = {Duration = 0.18, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
-    Intro = {Duration = 0.28, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
-    Loading = {Duration = 0.85, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    Intro = {Duration = 0.34, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    Loading = {Duration = 1.35, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
 }
 
 local CurrentDensityMode = "Compact"
@@ -386,9 +386,9 @@ end
 
 ApplyDensityTokens(CurrentDensityMode)
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// KEY UTILS MODULE
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local KeyUtils = {}
 
 local _KeyMap = {
@@ -436,9 +436,9 @@ end
 local ParseKeyCode  = KeyUtils.ParseKeyCode
 local KeyCodeToName = KeyUtils.KeyCodeToName
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// UTILITY FUNCTIONS
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 -- Set to true during development to surface property errors in Create()
 local DEBUG_MODE = false
@@ -607,7 +607,7 @@ local function TweenObject(inst, props, duration, style, dir)
     return nil
 end
 
--- Gradient accent line (dark edges → bright center)
+-- Gradient accent line (dark edges в†’ bright center)
 local function CreateAccentLine(parent, radius, color)
     if not parent then return nil end
     local inset = math.min(radius or 6, 6)
@@ -808,8 +808,8 @@ end
 
 local function AccentTint(color, factor)
     -- BUG-F FIX: pure multiplication (r * 0.15 = 20) produces near-black because the colors
-    -- are already dark (R=139, G=92, B=246 → tint bg R=20). Instead, blend between
-    -- WindowBg and the color — this gives a subtle but still colored background.
+    -- are already dark (R=139, G=92, B=246 в†’ tint bg R=20). Instead, blend between
+    -- WindowBg and the color вЂ” this gives a subtle but still colored background.
     factor = factor or 0.15
     local r, g, b = ColorToRGB(color)
     local bg = Theme and Theme.WindowBg or Color3.fromRGB(18,18,23)
@@ -938,6 +938,12 @@ local function AnimateReveal(root, opts)
     end
 end
 
+local function ShiftUDim2(pos, dx, dy)
+    dx = dx or 0
+    dy = dy or 0
+    return UDim2.new(pos.X.Scale, pos.X.Offset + dx, pos.Y.Scale, pos.Y.Offset + dy)
+end
+
 local function StartSpinnerLoop(spinner, duration)
     if not spinner then
         return function() end
@@ -987,8 +993,8 @@ local function _PlayLoadingIntroImpl(self, config)
     local titleText = tostring(config.Title or "MIDNIGHT")
     local subtitleText = tostring(config.Subtitle or "Preparing interface...")
     local doneText = tostring(config.DoneText or "Ready")
-    local holdTime = math.max(0.45, tonumber(config.HoldTime) or 0.75)
-    local outTime = math.max(0.15, tonumber(config.OutTime) or 0.2)
+    local holdTime = math.max(1.45, tonumber(config.HoldTime) or 1.55)
+    local outTime = math.max(0.3, tonumber(config.OutTime) or 0.34)
 
     local overlay = Create("Frame", {
         Name = ("LoadingOverlay_%d_%d"):format(
@@ -1014,8 +1020,8 @@ local function _PlayLoadingIntroImpl(self, config)
     })
 
     local card = Create("Frame", {
-        Size = UDim2.new(0, 250, 0, 132),
-        Position = UDim2.new(0.5, -125, 0.5, -66),
+        Size = UDim2.new(0, 340, 0, 192),
+        Position = UDim2.new(0.5, -170, 0.5, -96),
         BackgroundColor3 = Theme.UtilityBg,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -1024,20 +1030,31 @@ local function _PlayLoadingIntroImpl(self, config)
     })
     ApplyCorner(card, 14)
     local cardStroke = ApplyStroke(card, Theme.BorderSoft, 1, 1)
-    local cardScale = Create("UIScale", {Scale = 0.92, Parent = card})
+    local cardScale = Create("UIScale", {Scale = 0.8, Parent = card})
     local topLine = CreateAccentLine(card, 14, Theme.Accent)
     if topLine then
         topLine.BackgroundTransparency = 1
     end
 
     local spinnerHolder = Create("Frame", {
-        Size = UDim2.new(0, 48, 0, 48),
-        Position = UDim2.new(0.5, -24, 0, 18),
+        Size = UDim2.new(0, 76, 0, 76),
+        Position = UDim2.new(0.5, -38, 0, 14),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
+    local spinnerHalo = Create("Frame", {
+        Size = UDim2.new(0, 62, 0, 62),
+        Position = UDim2.new(0.5, -31, 0.5, -31),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 0.96,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 1,
+        Parent = spinnerHolder,
+    })
+    ApplyCorner(spinnerHalo, 29)
+    local spinnerHaloScale = Create("UIScale", {Scale = 0.78, Parent = spinnerHalo})
     local spinner = Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
@@ -1046,26 +1063,26 @@ local function _PlayLoadingIntroImpl(self, config)
         Parent = spinnerHolder,
     })
 
-    for index = 1, 8 do
-        local angle = math.rad((index - 1) * 45)
-        local radius = 15
+    for index = 1, 12 do
+        local angle = math.rad((index - 1) * 30)
+        local radius = 24
         local dot = Create("Frame", {
-            Size = UDim2.new(0, 6, 0, 6),
-            Position = UDim2.new(0.5, math.cos(angle) * radius - 3, 0.5, math.sin(angle) * radius - 3),
+            Size = UDim2.new(0, 8, 0, 8),
+            Position = UDim2.new(0.5, math.cos(angle) * radius - 4, 0.5, math.sin(angle) * radius - 4),
             BackgroundColor3 = Theme.Accent,
-            BackgroundTransparency = 0.14 + (index - 1) * 0.08,
+            BackgroundTransparency = 0.08 + (index - 1) * 0.05,
             BorderSizePixel = 0,
             ZIndex = ZIndex.TOP + 3,
             Parent = spinner,
         })
-        ApplyCorner(dot, 3)
+        ApplyCorner(dot, 4)
     end
 
     local spinnerStop = StartSpinnerLoop(spinner, Motion.Loading.Duration)
 
     local readyBubble = Create("Frame", {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, -17, 0, 20),
+        Size = UDim2.new(0, 76, 0, 76),
+        Position = UDim2.new(0.5, -38, 0, 12),
         BackgroundColor3 = Theme.Success,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -1073,16 +1090,30 @@ local function _PlayLoadingIntroImpl(self, config)
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
-    ApplyCorner(readyBubble, 16)
-    local readyScale = Create("UIScale", {Scale = 0.15, Parent = readyBubble})
+    ApplyCorner(readyBubble, 29)
+    local readyScale = Create("UIScale", {Scale = 0.16, Parent = readyBubble})
+    local readyStroke = ApplyStroke(readyBubble, Color3.fromRGB(255, 255, 255), 1, 0.72)
     local readyText = Create("TextLabel", {
         Text = "✓",
         Font = FontBold,
-        TextSize = 19,
+        TextSize = 28,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextTransparency = 1,
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 32),
+        Position = UDim2.new(0, 0, 0, 8),
+        ZIndex = ZIndex.TOP + 3,
+        Parent = readyBubble,
+    })
+    local readyHint = Create("TextLabel", {
+        Text = doneText,
+        Font = FontBold,
+        TextSize = 10,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextTransparency = 1,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -10, 0, 14),
+        Position = UDim2.new(0, 5, 0, 46),
         ZIndex = ZIndex.TOP + 3,
         Parent = readyBubble,
     })
@@ -1090,13 +1121,13 @@ local function _PlayLoadingIntroImpl(self, config)
     local titleLabel = Create("TextLabel", {
         Text = titleText,
         Font = FontBold,
-        TextSize = 13,
+        TextSize = 15,
         TextColor3 = Theme.TextPrimary,
         TextTransparency = 1,
         BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Center,
-        Size = UDim2.new(1, -28, 0, 16),
-        Position = UDim2.new(0, 14, 0, 78),
+        Size = UDim2.new(1, -34, 0, 20),
+        Position = UDim2.new(0, 17, 0, 106),
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
@@ -1104,25 +1135,62 @@ local function _PlayLoadingIntroImpl(self, config)
     local subtitleLabel = Create("TextLabel", {
         Text = subtitleText,
         Font = FontRegular,
-        TextSize = 10,
+        TextSize = 11,
         TextColor3 = Theme.TextSecondary,
         TextTransparency = 1,
         BackgroundTransparency = 1,
         TextWrapped = false,
         TextXAlignment = Enum.TextXAlignment.Center,
-        Size = UDim2.new(1, -24, 0, 16),
-        Position = UDim2.new(0, 12, 0, 98),
+        Size = UDim2.new(1, -30, 0, 16),
+        Position = UDim2.new(0, 15, 0, 129),
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
 
-    TweenObject(scrim, {BackgroundTransparency = 0.42}, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenObject(card, {BackgroundTransparency = 0}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(cardStroke, {Transparency = 0.16}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(cardScale, {Scale = 1}, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    TweenObject(topLine, {BackgroundTransparency = 0.72}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(titleLabel, {TextTransparency = 0}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(subtitleLabel, {TextTransparency = 0}, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    local progressTrack = Create("Frame", {
+        Size = UDim2.new(0, 226, 0, 4),
+        Position = UDim2.new(0.5, -113, 0, 156),
+        BackgroundColor3 = Theme.BorderSoft,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 1,
+        Parent = card,
+    })
+    ApplyCorner(progressTrack, 2)
+    local progressFill = Create("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = progressTrack,
+    })
+    ApplyCorner(progressFill, 2)
+    local sweep = Create("Frame", {
+        Size = UDim2.new(0, 54, 1, 0),
+        Position = UDim2.new(-0.18, 0, 0, 0),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 0.92,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 1,
+        Parent = card,
+    })
+    ApplyCorner(sweep, 12)
+
+    local targetCardPos = card.Position
+    card.Position = ShiftUDim2(targetCardPos, 0, 12)
+    TweenObject(scrim, {BackgroundTransparency = 0.34}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenObject(card, {BackgroundTransparency = 0, Position = targetCardPos}, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(cardStroke, {Transparency = 0.1}, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(cardScale, {Scale = 1}, 0.48, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    TweenObject(spinnerHalo, {BackgroundTransparency = 0.9}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(spinnerHaloScale, {Scale = 1.22}, 0.52, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(topLine, {BackgroundTransparency = 0.66}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(titleLabel, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(subtitleLabel, {TextTransparency = 0}, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(progressTrack, {BackgroundTransparency = 0.6}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(progressFill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0.12}, holdTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    TweenObject(sweep, {Position = UDim2.new(1.12, 0, 0, 0), BackgroundTransparency = 1}, 0.82, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
     local finished = false
     local function finishIntro()
@@ -1130,20 +1198,28 @@ local function _PlayLoadingIntroImpl(self, config)
             return
         end
         finished = true
+
         if spinnerStop then
             spinnerStop()
         end
-        if spinnerHolder and spinnerHolder.Parent then
-            TweenObject(spinnerHolder, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        if spinner then
+            spinner.Visible = false
+        end
+        if spinnerHalo and spinnerHalo.Parent then
+            TweenObject(spinnerHalo, {BackgroundTransparency = 1}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end
         if readyBubble and readyBubble.Parent then
             readyBubble.Visible = true
             TweenObject(readyBubble, {BackgroundTransparency = 0.04}, 0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-            TweenObject(readyScale, {Scale = 1}, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            TweenObject(readyScale, {Scale = 1}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            TweenObject(readyStroke, {Transparency = 0.22}, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenObject(readyText, {TextTransparency = 0}, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            TweenObject(readyHint, {TextTransparency = 0}, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenObject(titleLabel, {TextColor3 = Theme.Success}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             TweenObject(subtitleLabel, {TextColor3 = Theme.TextSecondary}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            TweenObject(progressFill, {BackgroundColor3 = Theme.Success}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         end
+        TweenObject(progressTrack, {BackgroundColor3 = Theme.Success}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         task.delay(outTime, function()
             if not overlay or not overlay.Parent then
                 return
@@ -1154,8 +1230,12 @@ local function _PlayLoadingIntroImpl(self, config)
             TweenObject(cardScale, {Scale = 0.97}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
             TweenObject(titleLabel, {TextTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             TweenObject(subtitleLabel, {TextTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(progressTrack, {BackgroundTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(progressFill, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(sweep, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             TweenObject(readyBubble, {BackgroundTransparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             TweenObject(readyText, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(readyHint, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             task.delay(0.22, function()
                 if overlay and overlay.Parent then
                     pcall(function()
@@ -1174,7 +1254,7 @@ local function _PlayLoadingIntroImpl(self, config)
 
     self._LoadingOverlayStop = finishIntro
     task.delay(holdTime, finishIntro)
-    return holdTime + outTime + 0.18
+    return holdTime + outTime + 0.22
 end
 
 local function StylePanelShell(frame, radius, strokeColor, strokeTransparency)
@@ -1263,10 +1343,10 @@ local function MeasureText(text, font, textSize, bounds)
     return Vector2.new(0, textSize or 12)
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// ICON SYSTEM WITH CACHE + LUCIDE INTEGRATION
---// ═══════════════════════════════════════════════════════════
-local IconCache     = {}  -- name → url (already resolved)
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+local IconCache     = {}  -- name в†’ url (already resolved)
 local IconOverrides = {}
 local IconBaseURL   = ""  -- Default empty: use text fallbacks. Call MIDNIGHT:SetIconRepo() with rbxassetid:// URLs or a working host
 local IconExt       = ".png"
@@ -1279,164 +1359,164 @@ local IconExt       = ".png"
 --// To use pre-uploaded LucideBlox icons (rbxassetid://), call MIDNIGHT:UseLucideBlox()
 local LucideIcons = {
     -- Navigation / UI
-    ["chevron-right"]   = "›",
-    ["chevron-down"]    = "∨",
-    ["chevron-up"]      = "∧",
-    ["chevron-left"]    = "‹",
-    ["chevrons-right"]  = "»",
-    ["chevrons-down"]   = "⇓",
-    ["arrow-right"]     = "→",
-    ["arrow-left"]      = "←",
-    ["arrow-up"]        = "↑",
-    ["arrow-down"]      = "↓",
-    ["arrow-up-right"]  = "↗",
-    ["move"]            = "✥",
-    ["expand"]          = "⤢",
-    ["shrink"]          = "⤡",
-    ["maximize"]        = "⛶",
-    ["minimize"]        = "─",
-    ["x"]               = "✕",
+    ["chevron-right"]   = "вЂє",
+    ["chevron-down"]    = "в€Ё",
+    ["chevron-up"]      = "в€§",
+    ["chevron-left"]    = "вЂ№",
+    ["chevrons-right"]  = "В»",
+    ["chevrons-down"]   = "в‡“",
+    ["arrow-right"]     = "в†’",
+    ["arrow-left"]      = "в†ђ",
+    ["arrow-up"]        = "в†‘",
+    ["arrow-down"]      = "в†“",
+    ["arrow-up-right"]  = "в†—",
+    ["move"]            = "вњҐ",
+    ["expand"]          = "в¤ў",
+    ["shrink"]          = "в¤Ў",
+    ["maximize"]        = "в›¶",
+    ["minimize"]        = "в”Ђ",
+    ["x"]               = "вњ•",
     ["plus"]            = "+",
-    ["minus"]           = "−",
-    ["more-horizontal"] = "⋯",
-    ["more-vertical"]   = "⋮",
-    ["menu"]            = "☰",
+    ["minus"]           = "в€’",
+    ["more-horizontal"] = "в‹Ї",
+    ["more-vertical"]   = "в‹®",
+    ["menu"]            = "в°",
     ["hash"]            = "#",
-    ["search"]          = "⌕",
-    ["filter"]          = "◅",
-    ["sort-asc"]        = "↑",
-    ["sort-desc"]       = "↓",
+    ["search"]          = "вЊ•",
+    ["filter"]          = "в—…",
+    ["sort-asc"]        = "в†‘",
+    ["sort-desc"]       = "в†“",
 
     -- Media / Objects
-    ["moon"]            = "☾",
-    ["sun"]             = "☀",
-    ["star"]            = "★",
-    ["heart"]           = "♥",
-    ["eye"]             = "◉",
-    ["eye-off"]         = "◈",
-    ["lock"]            = "⊘",
-    ["unlock"]          = "⊙",
-    ["key"]             = "⚷",
-    ["shield"]          = "◆",
-    ["shield-check"]    = "✓",
-    ["bell"]            = "🔔",
-    ["bookmark"]        = "🔖",
-    ["flag"]            = "⚑",
-    ["zap"]             = "⚡",
-    ["flame"]           = "🔥",
-    ["sparkles"]        = "✦",
-    ["crown"]           = "♛",
-    ["gem"]             = "◈",
-    ["trophy"]          = "🏆",
-    ["target"]          = "◎",
-    ["crosshair"]       = "⊕",
-    ["circle-dot"]      = "⊘",
-    ["scan"]            = "⌗",
-    ["focus"]           = "◎",
-    ["radar"]           = "◉",
+    ["moon"]            = "вѕ",
+    ["sun"]             = "вЂ",
+    ["star"]            = "в…",
+    ["heart"]           = "в™Ґ",
+    ["eye"]             = "в—‰",
+    ["eye-off"]         = "в—€",
+    ["lock"]            = "вЉ",
+    ["unlock"]          = "вЉ™",
+    ["key"]             = "вљ·",
+    ["shield"]          = "в—†",
+    ["shield-check"]    = "вњ“",
+    ["bell"]            = "рџ””",
+    ["bookmark"]        = "рџ”–",
+    ["flag"]            = "вљ‘",
+    ["zap"]             = "вљЎ",
+    ["flame"]           = "рџ”Ґ",
+    ["sparkles"]        = "вњ¦",
+    ["crown"]           = "в™›",
+    ["gem"]             = "в—€",
+    ["trophy"]          = "рџЏ†",
+    ["target"]          = "в—Ћ",
+    ["crosshair"]       = "вЉ•",
+    ["circle-dot"]      = "вЉ",
+    ["scan"]            = "вЊ—",
+    ["focus"]           = "в—Ћ",
+    ["radar"]           = "в—‰",
 
     -- Settings / Tools
-    ["settings"]        = "⚙",
-    ["sliders"]         = "≡",
-    ["wrench"]          = "🔧",
-    ["hammer"]          = "🔨",
-    ["tool"]            = "⚒",
-    ["cpu"]             = "▣",
-    ["gauge"]           = "⊘",
-    ["activity"]        = "⁓",
-    ["wifi"]            = "☋",
-    ["radio"]           = "◉",
+    ["settings"]        = "вљ™",
+    ["sliders"]         = "в‰Ў",
+    ["wrench"]          = "рџ”§",
+    ["hammer"]          = "рџ”Ё",
+    ["tool"]            = "вљ’",
+    ["cpu"]             = "в–Ј",
+    ["gauge"]           = "вЉ",
+    ["activity"]        = "вЃ“",
+    ["wifi"]            = "в‹",
+    ["radio"]           = "в—‰",
     ["terminal"]        = ">_",
     ["code"]            = "</>",
 
     -- Status / Feedback
-    ["check"]           = "✓",
-    ["check-circle"]    = "✓",
-    ["x-circle"]        = "✕",
+    ["check"]           = "вњ“",
+    ["check-circle"]    = "вњ“",
+    ["x-circle"]        = "вњ•",
     ["alert-circle"]    = "!",
-    ["alert-triangle"]  = "⚠",
-    ["info"]            = "ⓘ",
+    ["alert-triangle"]  = "вљ ",
+    ["info"]            = "в“",
     ["help-circle"]     = "?",
-    ["ban"]             = "⊘",
-    ["alert-octagon"]   = "⬡",
+    ["ban"]             = "вЉ",
+    ["alert-octagon"]   = "в¬Ў",
 
     -- Communication
-    ["message-circle"]  = "💬",
-    ["send"]            = "➤",
-    ["mail"]            = "✉",
-    ["volume-2"]        = "🔊",
-    ["volume-x"]        = "🔇",
-    ["mic"]             = "🎤",
-    ["mic-off"]         = "🚫",
+    ["message-circle"]  = "рџ’¬",
+    ["send"]            = "вћ¤",
+    ["mail"]            = "вњ‰",
+    ["volume-2"]        = "рџ”Љ",
+    ["volume-x"]        = "рџ”‡",
+    ["mic"]             = "рџЋ¤",
+    ["mic-off"]         = "рџљ«",
 
     -- Users / People
-    ["user"]            = "👤",
-    ["users"]           = "👥",
-    ["user-plus"]       = "+👤",
-    ["user-minus"]      = "−👤",
-    ["user-check"]      = "✓👤",
+    ["user"]            = "рџ‘¤",
+    ["users"]           = "рџ‘Ґ",
+    ["user-plus"]       = "+рџ‘¤",
+    ["user-minus"]      = "в€’рџ‘¤",
+    ["user-check"]      = "вњ“рџ‘¤",
 
     -- Map / World
-    ["map"]             = "🗺",
-    ["map-pin"]         = "📍",
-    ["globe"]           = "🌐",
-    ["compass"]         = "🧭",
-    ["navigation"]      = "➤",
+    ["map"]             = "рџ—є",
+    ["map-pin"]         = "рџ“Ќ",
+    ["globe"]           = "рџЊђ",
+    ["compass"]         = "рџ§­",
+    ["navigation"]      = "вћ¤",
 
     -- Gaming
-    ["swords"]          = "⚔",
-    ["gamepad-2"]       = "🎮",
-    ["joystick"]        = "🕹",
-    ["puzzle"]          = "🧩",
-    ["dice"]            = "🎲",
+    ["swords"]          = "вљ”",
+    ["gamepad-2"]       = "рџЋ®",
+    ["joystick"]        = "рџ•№",
+    ["puzzle"]          = "рџ§©",
+    ["dice"]            = "рџЋІ",
 
     -- Misc
-    ["palette"]         = "🎨",
-    ["paintbrush"]      = "🖌",
-    ["image"]           = "🖼",
-    ["camera"]          = "📷",
-    ["music"]           = "♫",
-    ["clock"]           = "🕐",
-    ["timer"]           = "⏱",
-    ["calendar"]        = "📅",
-    ["file-text"]       = "📄",
-    ["clipboard"]       = "📋",
-    ["download"]        = "↓",
-    ["upload"]          = "↑",
-    ["link"]            = "🔗",
-    ["external-link"]   = "↗",
-    ["copy"]            = "⧉",
-    ["trash"]           = "🗑",
-    ["refresh-cw"]      = "↻",
-    ["rotate-ccw"]      = "↺",
-    ["power"]           = "⏻",
-    ["log-out"]         = "⏻",
-    ["home"]            = "⌂",
-    ["database"]        = "⛁",
-    ["server"]          = "◫",
-    ["hard-drive"]      = "▦",
-    ["folder"]          = "📁",
-    ["package"]         = "📦",
-    ["box"]             = "☐",
-    ["layers"]          = "☰",
-    ["grid"]            = "▦",
-    ["layout"]          = "◧",
-    ["sidebar"]         = "◧",
-    ["panel-left"]      = "◧",
-    ["panel-right"]     = "◧",
+    ["palette"]         = "рџЋЁ",
+    ["paintbrush"]      = "рџ–Њ",
+    ["image"]           = "рџ–ј",
+    ["camera"]          = "рџ“·",
+    ["music"]           = "в™«",
+    ["clock"]           = "рџ•ђ",
+    ["timer"]           = "вЏ±",
+    ["calendar"]        = "рџ“…",
+    ["file-text"]       = "рџ“„",
+    ["clipboard"]       = "рџ“‹",
+    ["download"]        = "в†“",
+    ["upload"]          = "в†‘",
+    ["link"]            = "рџ”—",
+    ["external-link"]   = "в†—",
+    ["copy"]            = "в§‰",
+    ["trash"]           = "рџ—‘",
+    ["refresh-cw"]      = "в†»",
+    ["rotate-ccw"]      = "в†є",
+    ["power"]           = "вЏ»",
+    ["log-out"]         = "вЏ»",
+    ["home"]            = "вЊ‚",
+    ["database"]        = "в›Ѓ",
+    ["server"]          = "в—«",
+    ["hard-drive"]      = "в–¦",
+    ["folder"]          = "рџ“Ѓ",
+    ["package"]         = "рџ“¦",
+    ["box"]             = "вђ",
+    ["layers"]          = "в°",
+    ["grid"]            = "в–¦",
+    ["layout"]          = "в—§",
+    ["sidebar"]         = "в—§",
+    ["panel-left"]      = "в—§",
+    ["panel-right"]     = "в—§",
 
-    -- Legacy aliases (old names → Lucide names)
-    ["chevron_r"]       = "›",
-    ["chevron_d"]       = "∨",
-    ["warn"]            = "⚠",
+    -- Legacy aliases (old names в†’ Lucide names)
+    ["chevron_r"]       = "вЂє",
+    ["chevron_d"]       = "в€Ё",
+    ["warn"]            = "вљ ",
 }
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// LUCIDEBLOX ASSET MAP
 --// Pre-uploaded Lucide icons as Roblox image assets (rbxassetid://)
 --// Source: https://github.com/frappedevs/lucideblox
 --// Call MIDNIGHT:UseLucideBlox() to activate these icons automatically
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local LucideBloxAssets = {
     ["activity"]        = "rbxassetid://7733655755",
     ["alert-circle"]    = "rbxassetid://7733658271",
@@ -1710,7 +1790,7 @@ local function GetLucideFallback(iconName)
     if SafeLucideText[iconName] then return SafeLucideText[iconName] end
     -- Direct lookup
     if LucideIcons[iconName] then return LucideIcons[iconName] end
-    -- Try kebab-case conversion: "chevronRight" → "chevron-right"
+    -- Try kebab-case conversion: "chevronRight" в†’ "chevron-right"
     local kebab = iconName:gsub("([a-z])([A-Z])", function(a,b) return a.."-"..b:lower() end):lower()
     if SafeLucideText[kebab] then return SafeLucideText[kebab] end
     if LucideIcons[kebab] then return LucideIcons[kebab] end
@@ -1775,9 +1855,9 @@ local function CreateIconOrText(parent, iconName, fallbackText, size, position, 
     })
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// MIDNIGHT LIBRARY
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local MIDNIGHT = {
     Version = "7.1.0",
 
@@ -1916,9 +1996,9 @@ end
 
 _InitSliderDispatcher()
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// ICON CONFIGURATION
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:SetIconRepo(baseURL, extension)
     if type(baseURL) ~= "string" or baseURL == "" then return end
     IconBaseURL = baseURL:gsub("/+$", "")
@@ -1940,9 +2020,9 @@ function MIDNIGHT:SetIcons(iconTable)
     end
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// LUCIDE ICON CONFIGURATION
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:UseLucideIcons(assetBaseURL, extension)
     -- Set the base URL for Lucide icon images.
     -- assetBaseURL: URL where Lucide PNG icons are hosted
@@ -1963,7 +2043,7 @@ function MIDNIGHT:UseLucideIcons(assetBaseURL, extension)
 end
 
 function MIDNIGHT:GetLucideIcons()
-    -- Returns the full LucideIcons map (icon name → fallback character)
+    -- Returns the full LucideIcons map (icon name в†’ fallback character)
     -- Useful for reference or custom modifications
     return LucideIcons
 end
@@ -1987,14 +2067,14 @@ function MIDNIGHT:UseLucideBlox()
 end
 
 function MIDNIGHT:GetLucideBloxAssets()
-    -- Returns the full LucideBloxAssets map (icon name → rbxassetid:// URL)
+    -- Returns the full LucideBloxAssets map (icon name в†’ rbxassetid:// URL)
     -- Useful for reference or to selectively override specific icons
     return LucideBloxAssets
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// THEME
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:SetThemeColor(color)
     if not color then return end
     Theme.Accent       = color
@@ -2071,9 +2151,9 @@ function MIDNIGHT:SetWatermarkText(text)
     end
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// SCREENGUI
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_InitScreenGui()
     if self._ScreenGui and self._ScreenGui.Parent then return end
     self._ScreenGui = Create("ScreenGui", {
@@ -2089,11 +2169,11 @@ function MIDNIGHT:_InitScreenGui()
     end
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// FPS + PING TRACKER
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_InitFPSTracker()
-    -- Cache the Stats item once — avoids repeated indexing inside the hot path
+    -- Cache the Stats item once вЂ” avoids repeated indexing inside the hot path
     local _pingStatItem = nil
     pcall(function()
         _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
@@ -2122,9 +2202,9 @@ function MIDNIGHT:_InitFPSTracker()
     RegConn(conn)
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// SIDEBAR FOOTERS (version + fps/ping per window)
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 MIDNIGHT._SidebarFooters = {}
 
 -- #6 OPT: cache the formatted string so we only concat when values actually change
@@ -2141,9 +2221,9 @@ function MIDNIGHT:_UpdateSidebarFooters()
     end
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// RESET
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Reset()
     if self._TargetHUD and self._TargetHUD.StopTracking then
         pcall(function() self._TargetHUD:StopTracking() end)
@@ -2233,18 +2313,18 @@ function MIDNIGHT:Reset()
     _InitSliderDispatcher()
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// POPUP MANAGER
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_CloseAllPopups()
     self:_CloseDropdown()
     self:_CloseColorPicker()
     self:_CloseKeybindSettings()
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// KEYBIND SETTINGS PANEL
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_CloseKeybindSettings()
     if self._KeybindSettingsFrame then
         local f = self._KeybindSettingsFrame
@@ -2347,7 +2427,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     })
 
     local closeX = Create("TextButton", {
-        Text = "✕", Font = FontBold, TextSize = 11,
+        Text = "вњ•", Font = FontBold, TextSize = 11,
         TextColor3 = Theme.TextMuted,
         Size = UDim2.new(0,20,0,16), Position = UDim2.new(1,-22,0,1),
         BackgroundColor3 = Theme.InputBg, BorderSizePixel = 0,
@@ -2520,9 +2600,9 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     end)
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// DROPDOWN POPUP
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_CloseDropdown()
     if self._ActiveDropdown then
         local dd = self._ActiveDropdown
@@ -2558,7 +2638,7 @@ function MIDNIGHT:_OpenDropdown(config)
     local isMulti     = config.Multi or false
 
     -- For multiselect: currentSel is a map {value=true} (from AddDropdown's selSet).
-    -- BUG-C FIX: was using ipairs() which yields nothing on a map — initial checked state
+    -- BUG-C FIX: was using ipairs() which yields nothing on a map вЂ” initial checked state
     -- was always empty regardless of what the user had already selected.
     local multiSel = {}
     if isMulti and type(currentSel) == "table" then
@@ -2636,7 +2716,7 @@ function MIDNIGHT:_OpenDropdown(config)
             })
             ApplyCorner(checkBox,3); ApplyStroke(checkBox,isSel and Theme.Accent or Theme.BorderLight,1)
             if isSel then
-                Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
+                Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
                     Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkBox})
             end
             local existingMark = checkBox:FindFirstChildWhichIsA("TextLabel")
@@ -2692,7 +2772,7 @@ function MIDNIGHT:_OpenDropdown(config)
                             if ch:IsA("TextLabel") then ch:Destroy() end
                         end
                         if nowSel then
-                            Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
+                            Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
                                 Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkEl})
                         end
                     end
@@ -2758,9 +2838,9 @@ function MIDNIGHT:_OpenDropdown(config)
     end)
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// COLOR PICKER POPUP
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_CloseColorPicker()
     if self._ActiveColorPicker then
         local cp = self._ActiveColorPicker
@@ -2863,9 +2943,9 @@ function MIDNIGHT:_OpenColorPicker(config)
     end)
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// MENU TOGGLE
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
     self._MenuKey    = menuKey
     self._MenuKeyStr = menuKeyStr or KeyCodeToName(menuKey)
@@ -2901,7 +2981,7 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         if scale then
                             scale.Scale = 0.96
                         end
-                        -- BUG-E FIX: respect minimized state — don't force full height if window was minimized
+                        -- BUG-E FIX: respect minimized state вЂ” don't force full height if window was minimized
                         local openW, openH = CompactStyle.WindowWidth, (w._IsMinimized and CompactStyle.CollapsedWindowHeight or CompactStyle.WindowHeight)
                         if w._GetCurrentFrameSize then
                             openW, openH = w:_GetCurrentFrameSize()
@@ -2927,9 +3007,9 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
     end))
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// WATERMARK
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:CreateWatermark(config)
     config = config or {}
     local name = config.Name or "MIDNIGHT"
@@ -2981,7 +3061,7 @@ function MIDNIGHT:CreateWatermark(config)
     local function addSep()
         lo = lo + 1
         Create("TextLabel",{
-            Text="•",Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
+            Text="вЂў",Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
             Size=UDim2.new(0,0,0,16),AutomaticSize=Enum.AutomaticSize.X,
             BackgroundTransparency=1,LayoutOrder=lo,Parent=content,
         })
@@ -3056,7 +3136,7 @@ function MIDNIGHT:CreateWatermark(config)
                     if i < lastVisible then tw = tw + 7 end
                 end
             end
-            if tw < 72 then tw = 72 end
+            if tw < 84 then tw = 84 end
             wmFrame.Size = UDim2.new(0, tw, 0, 30)
             task.defer(positionWM)
         end)
@@ -3087,11 +3167,40 @@ function MIDNIGHT:CreateWatermark(config)
     positionWM()
     -- Apply any pre-set custom watermark text immediately
     self:_UpdateWatermark()
-    AnimateReveal(wmFrame, {
-        Duration = 0.24,
-        Stagger = 0.018,
-        StartScale = 0.94,
+    local wmTargetPos = wmFrame.Position
+    wmFrame.Position = ShiftUDim2(wmTargetPos, 0, -10)
+    local wmSweep = Create("Frame", {
+        Size = UDim2.new(0, 54, 1, 0),
+        Position = UDim2.new(-0.2, 0, 0, 0),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 0.94,
+        BorderSizePixel = 0,
+        ZIndex = wmFrame.ZIndex + 3,
+        Parent = wmFrame,
     })
+    ApplyCorner(wmSweep, 12)
+    AnimateReveal(wmFrame, {
+        Duration = 0.32,
+        Stagger = 0.02,
+        StartScale = 0.84,
+        ScaleDuration = 0.44,
+        ScaleStyle = Enum.EasingStyle.Back,
+        ScaleDirection = Enum.EasingDirection.Out,
+    })
+    TweenObject(wmFrame, {
+        Position = wmTargetPos,
+    }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(wmSweep, {
+        Position = UDim2.new(1.08, 0, 0, 0),
+        BackgroundTransparency = 1,
+    }, 0.8, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    task.delay(1, function()
+        if wmSweep and wmSweep.Parent then
+            pcall(function()
+                wmSweep:Destroy()
+            end)
+        end
+    end)
     return wmFrame
 end
 
@@ -3148,7 +3257,7 @@ function MIDNIGHT:_UpdateWatermark()
             lagL.Visible = true
             lagL.TextTransparency = 0
             needsResize = true
-            -- #2 FIX: guard against double-start — only launch blink loop if one
+            -- #2 FIX: guard against double-start вЂ” only launch blink loop if one
             -- isn't already running (self._lagspikeBlinkStop acts as the flag).
             if not self._lagspikeBlinkStop then
                 local blinking = true
@@ -3201,28 +3310,28 @@ function MIDNIGHT:_UpdateWatermark()
 
     -- #2 FIX: removed task.defer that rewrote AnchorPoint/Position every second.
     -- Position is only meaningful to update when the user calls SetWatermarkPosition()
-    -- — that function already sets it directly. Doing it here caused a redundant
+    -- вЂ” that function already sets it directly. Doing it here caused a redundant
     -- deferred property write on every FPS tick with no visual benefit.
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// TARGET HUD
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --[[
     MIDNIGHT:CreateTargetHUD(config)
-    Config: Position — "BottomLeft" (default) | "BottomRight" | "BottomCenter"
+    Config: Position вЂ” "BottomLeft" (default) | "BottomRight" | "BottomCenter"
                        "TopLeft" | "TopRight"
 
     Returns: hud object
-      hud:SetTarget(player)   — show HUD for given Player instance
-      hud:ClearTarget()       — hide HUD immediately
-      hud:SetTarget(player, autoClearSeconds)  — auto-hide after N seconds
+      hud:SetTarget(player)   вЂ” show HUD for given Player instance
+      hud:ClearTarget()       вЂ” hide HUD immediately
+      hud:SetTarget(player, autoClearSeconds)  вЂ” auto-hide after N seconds
 
     Usage example (silent-aim loop):
         local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
-        -- когда цель в FOV:
+        -- РєРѕРіРґР° С†РµР»СЊ РІ FOV:
         hud:SetTarget(targetPlayer, 2)
-        -- когда потерял цель:
+        -- РєРѕРіРґР° РїРѕС‚РµСЂСЏР» С†РµР»СЊ:
         hud:ClearTarget()
 ]]
 function MIDNIGHT:CreateTargetHUD(config)
@@ -3232,7 +3341,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     local POS   = config.Position or "BottomLeft"
     local W, H  = 264, 72
 
-    -- ── Root frame ────────────────────────────────────────────
+    -- в”Ђв”Ђ Root frame в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local hf = Create("Frame", {
         Name = _RandomGuiName(),
         Size = UDim2.new(0, W, 0, H),
@@ -3275,7 +3384,7 @@ function MIDNIGHT:CreateTargetHUD(config)
     local hudAccent = CreateAccentLine(hf, 8)
     if hudAccent then hudAccent.BackgroundTransparency = 0.84 end
 
-    -- ── Avatar frame (left column) ───────────────────────────
+    -- в”Ђв”Ђ Avatar frame (left column) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local avatarFrame = Create("Frame", {
         Size = UDim2.new(0, 50, 0, 50),
         Position = UDim2.new(0, 10, 0.5, -25),
@@ -3302,7 +3411,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         UDim2.new(0, 22, 0, 22), UDim2.new(0.5, -11, 0.5, -11),
         Theme.TextMuted, FontBold, 18)
 
-    -- ── Info column (right of avatar) ────────────────────────
+    -- в”Ђв”Ђ Info column (right of avatar) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local infoFrame = Create("Frame", {
         Size = UDim2.new(1, -72, 1, -16),
         Position = UDim2.new(0, 68, 0, 10),
@@ -3404,7 +3513,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Parent = infoFrame,
     })
 
-    -- ── Positioning helper ───────────────────────────────────
+    -- в”Ђв”Ђ Positioning helper в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local function positionHUD()
         local vs = GetViewportSize()
         local margin = 14
@@ -3424,21 +3533,21 @@ function MIDNIGHT:CreateTargetHUD(config)
             hf.AnchorPoint = Vector2.new(1, 0)
             hf.Position = UDim2.new(1, -margin, 0, margin + 34)
         elseif POS == "CenterLow" then
-            -- По центру экрана, чуть ниже середины (~62% по вертикали)
+            -- РџРѕ С†РµРЅС‚СЂСѓ СЌРєСЂР°РЅР°, С‡СѓС‚СЊ РЅРёР¶Рµ СЃРµСЂРµРґРёРЅС‹ (~62% РїРѕ РІРµСЂС‚РёРєР°Р»Рё)
             hf.AnchorPoint = Vector2.new(0.5, 0.5)
             hf.Position = UDim2.new(0.5, 0, 0.62, 0)
         end
     end
     positionHUD()
 
-    -- ── HP color helper ─────────────────────────────────────
+    -- в”Ђв”Ђ HP color helper в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local function hpColor(pct)
         if pct > 0.6 then return Theme.Success
         elseif pct > 0.3 then return Theme.Warning
         else return Theme.Error end
     end
 
-    -- ── Drag handle (тонкая полоска сверху HUD) ─────────────
+    -- в”Ђв”Ђ Drag handle (С‚РѕРЅРєР°СЏ РїРѕР»РѕСЃРєР° СЃРІРµСЂС…Сѓ HUD) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local dragHandle = Create("Frame", {
         Name = "DragHandle",
         Size = UDim2.new(1, 0, 0, 14),
@@ -3449,7 +3558,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         Parent = hf,
     })
 
-    -- Иконка grip (три точки) по центру handle
+    -- РРєРѕРЅРєР° grip (С‚СЂРё С‚РѕС‡РєРё) РїРѕ С†РµРЅС‚СЂСѓ handle
     local gripDots = Create("Frame", {
         Size = UDim2.new(0, 24, 0, 4),
         Position = UDim2.new(0.5, -12, 0.5, -2),
@@ -3476,7 +3585,7 @@ function MIDNIGHT:CreateTargetHUD(config)
         ApplyCorner(dot, 2)
     end
 
-    -- Hover: подсвечиваем dots при наведении на handle
+    -- Hover: РїРѕРґСЃРІРµС‡РёРІР°РµРј dots РїСЂРё РЅР°РІРµРґРµРЅРёРё РЅР° handle
     dragHandle.MouseEnter:Connect(function()
         for _, dot in ipairs(gripDots:GetChildren()) do
             if dot:IsA("Frame") then
@@ -3492,13 +3601,13 @@ function MIDNIGHT:CreateTargetHUD(config)
         end
     end)
 
-    -- ── Drag logic ───────────────────────────────────────────
+    -- в”Ђв”Ђ Drag logic в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local _dragging   = false
     local _dragInput  = nil
     local _dragStart  = nil
     local _startPos   = nil
     local _dragEndConn = nil
-    local _isDragged  = false  -- true после первого ручного перетаскивания
+    local _isDragged  = false  -- true РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ СЂСѓС‡РЅРѕРіРѕ РїРµСЂРµС‚Р°СЃРєРёРІР°РЅРёСЏ
 
     RegConn(dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -3510,7 +3619,7 @@ function MIDNIGHT:CreateTargetHUD(config)
             _dragging  = true
             _dragStart = input.Position
             _startPos  = hf.Position
-            -- После ручного drag — отключаем preset-позиционирование
+            -- РџРѕСЃР»Рµ СЂСѓС‡РЅРѕРіРѕ drag вЂ” РѕС‚РєР»СЋС‡Р°РµРј preset-РїРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµ
             _isDragged = true
             POS = nil
             _dragEndConn = input.Changed:Connect(function()
@@ -3535,14 +3644,14 @@ function MIDNIGHT:CreateTargetHUD(config)
     RegConn(UserInputService.InputChanged:Connect(function(input)
         if input == _dragInput and _dragging and _startPos then
             local delta = input.Position - _dragStart
-            -- Сбрасываем AnchorPoint в (0,0) чтобы offset был предсказуем
+            -- РЎР±СЂР°СЃС‹РІР°РµРј AnchorPoint РІ (0,0) С‡С‚РѕР±С‹ offset Р±С‹Р» РїСЂРµРґСЃРєР°Р·СѓРµРј
             hf.AnchorPoint = Vector2.new(0, 0)
             hf.Position = UDim2.new(0, _startPos.X.Offset + _startPos.X.Scale * hf.Parent.AbsoluteSize.X + delta.X,
                                      0, _startPos.Y.Offset + _startPos.Y.Scale * hf.Parent.AbsoluteSize.Y + delta.Y)
         end
     end))
 
-    -- ── HUD object ──────────────────────────────────────────
+    -- в”Ђв”Ђ HUD object в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     local hud = { _Frame = hf, _Visible = false, _CurrentPlayer = nil, _CurrentCharacter = nil, _CurrentHumanoid = nil }
     local function disconnectHPConn()
         if hud._HPConn then
@@ -3554,16 +3663,16 @@ function MIDNIGHT:CreateTargetHUD(config)
     hud._DisconnectHPConn = disconnectHPConn
 
     function hud:SetPosition(pos)
-        -- Если пользователь уже перетащил вручную — игнорируем
+        -- Р•СЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓР¶Рµ РїРµСЂРµС‚Р°С‰РёР» РІСЂСѓС‡РЅСѓСЋ вЂ” РёРіРЅРѕСЂРёСЂСѓРµРј
         if _isDragged then return end
         POS = pos
         positionHUD()
     end
 
     function hud:ResetPosition(pos)
-        -- Принудительный сброс даже после ручного drag
+        -- РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅС‹Р№ СЃР±СЂРѕСЃ РґР°Р¶Рµ РїРѕСЃР»Рµ СЂСѓС‡РЅРѕРіРѕ drag
         _isDragged = false
-        hf.AnchorPoint = Vector2.new(0.5, 0.5)  -- вернём нейтральный anchor
+        hf.AnchorPoint = Vector2.new(0.5, 0.5)  -- РІРµСЂРЅС‘Рј РЅРµР№С‚СЂР°Р»СЊРЅС‹Р№ anchor
         POS = pos or "CenterLow"
         positionHUD()
     end
@@ -3605,14 +3714,14 @@ function MIDNIGHT:CreateTargetHUD(config)
         self._CurrentCharacter = char
         self._Visible = true
 
-        -- ── Static info (name, team, avatar) — only update on player change ──
+        -- в”Ђв”Ђ Static info (name, team, avatar) вЂ” only update on player change в”Ђв”Ђ
         if not isSame then
-            -- ── Name ──────────────────────────────────────────
+            -- в”Ђв”Ђ Name в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             nameLabel.Text = player.DisplayName ~= player.Name
                 and (player.DisplayName .. "  @" .. player.Name)
                 or player.Name
 
-            -- ── Team ──────────────────────────────────────────
+            -- в”Ђв”Ђ Team в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local teamColor = Theme.TextMuted
             local teamName  = "No Team"
             pcall(function()
@@ -3626,7 +3735,7 @@ function MIDNIGHT:CreateTargetHUD(config)
             teamLabel.TextColor3       = teamColor
         end
 
-        -- ── HP ────────────────────────────────────────────
+        -- в”Ђв”Ђ HP в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         local function refreshHP()
             if not hf.Parent then return end
             pcall(function()
@@ -3666,7 +3775,7 @@ function MIDNIGHT:CreateTargetHUD(config)
             refreshHP()
         end
 
-        -- ── HealthChanged listener — disconnect previous, connect new ──
+        -- в”Ђв”Ђ HealthChanged listener вЂ” disconnect previous, connect new в”Ђв”Ђ
         if not isSame or charChanged then
             -- Disconnect previous HealthChanged listener to prevent accumulation
             disconnectHPConn()
@@ -3680,13 +3789,13 @@ function MIDNIGHT:CreateTargetHUD(config)
                                 refreshHP()
                             end
                         end)
-                        -- Note: NOT added to RegConn — managed manually above
+                        -- Note: NOT added to RegConn вЂ” managed manually above
                     end
                 end
             end)
         end
 
-        -- ── Avatar ────────────────────────────────────────
+        -- в”Ђв”Ђ Avatar в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         if not isSame then
             avatarImg.Image = ""
             if avatarIcon then avatarIcon.Visible = true end
@@ -3705,7 +3814,7 @@ function MIDNIGHT:CreateTargetHUD(config)
             end)
         end
 
-        -- ── Show animation ────────────────────────────────
+        -- в”Ђв”Ђ Show animation в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         if not hf.Visible then
             hf.Visible = true
             hf.BackgroundTransparency = 1
@@ -3713,7 +3822,7 @@ function MIDNIGHT:CreateTargetHUD(config)
                 Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end
 
-        -- ── Auto-hide ─────────────────────────────────────
+        -- в”Ђв”Ђ Auto-hide в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
         if autoClearSecs and autoClearSecs > 0 then
             MIDNIGHT._TargetHUDHideThread = task.delay(autoClearSecs, function()
                 MIDNIGHT._TargetHUDHideThread = nil
@@ -3883,7 +3992,7 @@ function MIDNIGHT:_LegacyNotify(config)
     })
     ApplyCorner(ab,2)
 
-    -- Icon circle — animated scale 0→1 with Back easing
+    -- Icon circle вЂ” animated scale 0в†’1 with Back easing
     local iconBg = Create("Frame",{
         Size=UDim2.new(0,0,0,0),  -- start at 0 for animation
         Position=UDim2.new(0,18,0.5,-16),
@@ -3900,7 +4009,7 @@ function MIDNIGHT:_LegacyNotify(config)
         iconEl.TextXAlignment = Enum.TextXAlignment.Center
         iconEl.TextYAlignment = Enum.TextYAlignment.Center
     end
-    -- Animate icon scale: 0 → 32 with Back easing separately
+    -- Animate icon scale: 0 в†’ 32 with Back easing separately
     task.defer(function()
         TweenObject(iconBg,{Size=UDim2.new(0,32,0,32)},0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
     end)
@@ -3923,9 +4032,9 @@ function MIDNIGHT:_LegacyNotify(config)
         BackgroundTransparency=1, ZIndex=ZIndex.NOTIFY+1, Parent=nf,
     })
 
-    -- Close button (✕)
+    -- Close button (вњ•)
     local closeNBtn = Create("TextButton",{
-        Text="✕", Font=FontBold, TextSize=10,
+        Text="вњ•", Font=FontBold, TextSize=10,
         TextColor3=Theme.TextMuted,
         Size=UDim2.new(0,20,0,20), Position=UDim2.new(1,-28,0,8),
         BackgroundColor3=Theme.InputBg, BorderSizePixel=0,
@@ -3972,7 +4081,7 @@ function MIDNIGHT:_LegacyNotify(config)
         if n._Frame and n._Frame.Parent then totalH = totalH + n._Frame.AbsoluteSize.Y + 8 end
     end
     -- BUG-G FIX: nf.AbsoluteSize.Y is 0 before the first render pass.
-    -- The notification height is fixed at 72px — use the literal value.
+    -- The notification height is fixed at 72px вЂ” use the literal value.
     local nfH = 72
     local finalPos = self:_GetNotifPos(#self._Notifications, totalH - nfH - 8)
     local slideOffset = self:_GetNotifSlideOffset(self._NotificationPosition)
@@ -4487,9 +4596,9 @@ function MIDNIGHT:Notify(config)
     return nd
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// KEYBIND LIST
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:CreateKeybindList(config)
     config = config or {}
     local title = config.Name or "Keybinds"
@@ -4578,9 +4687,9 @@ function MIDNIGHT:CreateKeybindList(config)
     self._RefreshKeybindList = refresh
     refresh()
     AnimateReveal(kf, {
-        Duration = 0.22,
-        Stagger = 0.015,
-        StartScale = 0.94,
+        Duration = 0.28,
+        Stagger = 0.02,
+        StartScale = 0.9,
     })
     return kf
 end
@@ -4637,9 +4746,9 @@ function MIDNIGHT:_AddKeybindToList(name, key, mode, callback, visible)
     return kd
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// WINDOW
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:MakeWindow(config)
     config = config or {}
     local windowName  = config.Name    or "MIDNIGHT"
@@ -4731,13 +4840,13 @@ function MIDNIGHT:MakeWindow(config)
 
     if not self._LoadingIntroPlayed then
         self._LoadingIntroPlayed = true
-        _PlayLoadingIntroImpl(self, {
+        local introDelay = _PlayLoadingIntroImpl(self, {
             Parent = self._ScreenGui,
             Title = windowName,
             Subtitle = "Loading interface...",
             DoneText = "Ready",
         })
-        animateWindowOpen()
+        task.delay(math.max(0, introDelay or 0), animateWindowOpen)
     else
         animateWindowOpen()
     end
@@ -4903,7 +5012,7 @@ function MIDNIGHT:MakeWindow(config)
         ClipsDescendants=true, Parent=body,
     })
     -- Bottom-left rounded corner: cover top-left, top-right, bottom-right with a square overlay
-    -- The window frame (wf) already has radius=10 at bottom-left — we need footer to match
+    -- The window frame (wf) already has radius=10 at bottom-left вЂ” we need footer to match
     Create("UICorner",{CornerRadius=UDim.new(0,10),Parent=sidebarFooterBg})
     -- Square off top-left, top-right, bottom-right by overlaying flush rectangles
     Create("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface1,BorderSizePixel=0,ZIndex=sidebarFooterBg.ZIndex,Parent=sidebarFooterBg})
@@ -4984,7 +5093,7 @@ function MIDNIGHT:MakeWindow(config)
 
     table.insert(self._Windows, wd)
 
-    --// ═══ MAKE TAB ═══
+    --// в•ђв•ђв•ђ MAKE TAB в•ђв•ђв•ђ
     function wd:MakeTab(tabConfig)
         tabConfig = tabConfig or {}
         local tabName = tabConfig.Name or "Tab"
@@ -5039,13 +5148,13 @@ function MIDNIGHT:MakeWindow(config)
 
         -- Scrollbar auto-hide per scrolling frame
         -- FIX #2: Register via RegConn so the CanvasPosition listener is disconnected on
-        -- MIDNIGHT:Destroy(). Previously this connection leaked forever — every tab ever
+        -- MIDNIGHT:Destroy(). Previously this connection leaked forever вЂ” every tab ever
         -- created kept a live CanvasPosition listener even after the GUI was torn down,
         -- causing memory bloat and potential nil-indexing crashes after Destroy().
         -- BUG FIX #2+#3: Scrollbar auto-hide rewrite
         -- Old code had two bugs:
         --   1. scrollFrame.ScrollBarImageTransparency = 0 AFTER TweenObject({..Transparency=1}) cancelled
-        --      the tween visually — the bar flashed instead of fading smoothly.
+        --      the tween visually вЂ” the bar flashed instead of fading smoothly.
         --   2. Direct property writes (Thickness=3) on EVERY CanvasPosition change caused micro-jank;
         --      now we guard with a `visible` flag so we only write on state transitions.
         local function setupScrollbarAutoHide(scrollFrame)
@@ -5059,14 +5168,14 @@ function MIDNIGHT:MakeWindow(config)
                 fadeToken = fadeToken + 1
                 local token = fadeToken
 
-                -- Show bar only on state transition (hidden → visible)
+                -- Show bar only on state transition (hidden в†’ visible)
                 if not sbVisible then
                     sbVisible = true
                     scrollFrame.ScrollBarThickness = 3
                     scrollFrame.ScrollBarImageTransparency = 0
                 end
 
-                -- Cancel previous hide timer — use pcall in case the thread is already dead
+                -- Cancel previous hide timer вЂ” use pcall in case the thread is already dead
                 -- BUG-D FIX: some executors return nil or userdata from task.delay, not a thread.
                 -- Unconditionally pcall-cancel and nil the ref; typeof guard would silently skip it.
                 if fadeTimer ~= nil then
@@ -5080,7 +5189,7 @@ function MIDNIGHT:MakeWindow(config)
                     if token ~= fadeToken or not scrollFrame.Parent then return end
                     -- Fade out transparency only; do NOT reset Transparency back to 0 after fade
                     -- (the old code did ScrollBarImageTransparency=0 after the tween, which
-                    --  made the bar reappear briefly — that line is intentionally absent here)
+                    --  made the bar reappear briefly вЂ” that line is intentionally absent here)
                     TweenObject(scrollFrame, {ScrollBarImageTransparency = 1}, 0.4)
                     task.delay(0.45, function()
                         if token ~= fadeToken then return end
@@ -5095,7 +5204,7 @@ function MIDNIGHT:MakeWindow(config)
             end))
         end
 
-        -- Page (tab content) — uses a ClipsDescendants frame for slide animation
+        -- Page (tab content) вЂ” uses a ClipsDescendants frame for slide animation
         local pageClip = Create("Frame",{
             Name="TabClip_"..tabName,
             Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),
@@ -5534,7 +5643,7 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,ZIndex=ZIndex.TOOLTIP+1,Parent=tooltip,
             })
 
-            -- Manual value input (click value label → TextBox)
+            -- Manual value input (click value label в†’ TextBox)
             local inputBox = Create("TextBox",{
                 Text="",PlaceholderText=vl.Text,
                 Font=FontBold,TextSize=11,TextColor3=Theme.Accent,
@@ -5578,7 +5687,7 @@ function MIDNIGHT:MakeWindow(config)
             -- FIX #1: Use the shared global slider dispatcher (_SliderSetDrag/_SliderClearDrag)
             -- instead of registering two new global UIS connections per slider instance.
             -- Previously each AddSlider() added RegConn(UIS.InputEnded) + RegConn(UIS.InputChanged),
-            -- meaning N sliders = N*2 global mouse-event listeners firing every frame —
+            -- meaning N sliders = N*2 global mouse-event listeners firing every frame вЂ”
             -- a direct FPS killer on tabs with many sliders. Now we route through the
             -- single permanent dispatcher pair registered at module load time.
             local function onGrabStart(inp)
@@ -5692,7 +5801,7 @@ function MIDNIGHT:MakeWindow(config)
                         if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(key)) end
                     end
                 end)
-                -- BUG-10 FIX: do NOT add to RegConn — conn self-disconnects when user picks a key.
+                -- BUG-10 FIX: do NOT add to RegConn вЂ” conn self-disconnects when user picks a key.
                 -- RegConn here accumulates a dead ref on every click. Lifetime is managed by
                 -- item.Destroying so the conn is cleaned up if the widget is destroyed mid-listen.
                 if item and item.Destroying then
@@ -5935,7 +6044,7 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1, Parent=hic,
             })
             local chevLabel = Create("TextLabel",{
-                Text="▼", Font=FontBold, TextSize=9, TextColor3=Theme.TextMuted,
+                Text="в–ј", Font=FontBold, TextSize=9, TextColor3=Theme.TextMuted,
                 Size=UDim2.new(1,0,1,0), TextXAlignment=Enum.TextXAlignment.Center,
                 BackgroundTransparency=1, Parent=chevFrame,
             })
@@ -6002,7 +6111,7 @@ function MIDNIGHT:MakeWindow(config)
                     })
                     ApplyCorner(cb2,3); ApplyStroke(cb2,isSel and Theme.Accent or Theme.BorderLight,1)
                     if isSel then
-                        Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=cb2})
+                        Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=cb2})
                     end
                     if isSel then
                         for _, child in ipairs(cb2:GetChildren()) do
@@ -6047,7 +6156,7 @@ function MIDNIGHT:MakeWindow(config)
                             if checkEl then
                                 TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.Surface3},0.12)
                                 for _, ch in ipairs(checkEl:GetChildren()) do if ch:IsA("TextLabel") or ch:IsA("ImageLabel") then ch:Destroy() end end
-                                if nowSel then Create("TextLabel",{Text="✓",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=checkEl}) end
+                                if nowSel then Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=checkEl}) end
                             end
                             if checkEl and nowSel then
                                 for _, ch in ipairs(checkEl:GetChildren()) do
@@ -6209,7 +6318,7 @@ function MIDNIGHT:MakeWindow(config)
             local boxStroke = ApplyStroke(box,Theme.BorderSoft,1,0.22)
             ApplyPadding(box,2,2,multiLine and 4 or 8,multiLine and 4 or 8)
 
-            -- Focus highlight — reuse stroke instead of creating new ones
+            -- Focus highlight вЂ” reuse stroke instead of creating new ones
             box.Focused:Connect(function()
                 TweenObject(boxStroke,{Color=Theme.Accent},0.15)
                 TweenObject(box,{BackgroundColor3=Theme.InputHoverBg},0.15)
@@ -6293,7 +6402,7 @@ function MIDNIGHT:MakeWindow(config)
 
             local grid=Create("Frame",{Size=UDim2.new(1,0,0,68),Position=UDim2.new(0,0,0,20),BackgroundTransparency=1,Parent=item})
             -- BUG-4 FIX: RelativeXX with X=0 makes cells zero-width (invisible/unclickable).
-            -- Use absolute pixel size: 4 columns × 30px + 3 × 4px gap = 132px — fits the item width.
+            -- Use absolute pixel size: 4 columns Г— 30px + 3 Г— 4px gap = 132px вЂ” fits the item width.
             Create("UIGridLayout",{CellSize=UDim2.new(0,28,0,20),CellPadding=UDim2.new(0,4,0,4),SortOrder=Enum.SortOrder.LayoutOrder,Parent=grid})
 
             local currentColor = def
@@ -6421,7 +6530,7 @@ function MIDNIGHT:MakeWindow(config)
                 return ws
             end
 
-            -- ── outer frame ────────────────────────────────────────────
+            -- в”Ђв”Ђ outer frame в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local totalH = 28
                 + (searchable and 34 or 0)
                 + 30
@@ -6454,7 +6563,7 @@ function MIDNIGHT:MakeWindow(config)
             local rebuild
             if searchable then
                 local sBox = Create("TextBox",{
-                    Text="", PlaceholderText="🔍  Search...",
+                    Text="", PlaceholderText="рџ”Ќ  Search...",
                     Font=Font, TextSize=CompactStyle.FieldTextSize, TextColor3=Theme.TextPrimary,
                     PlaceholderColor3=Theme.TextMuted,
                     Size=UDim2.new(1,-16,0,24),
@@ -6472,7 +6581,7 @@ function MIDNIGHT:MakeWindow(config)
                 yOff = yOff + 32
             end
 
-            -- ── header row ─────────────────────────────────────────────
+            -- в”Ђв”Ђ header row в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local headerFrame = Create("Frame",{
                 Size=UDim2.new(1,-16,0,28),
                 Position=UDim2.new(0,8,0,yOff),
@@ -6482,7 +6591,7 @@ function MIDNIGHT:MakeWindow(config)
             ApplyCorner(headerFrame,6)
             ApplyStroke(headerFrame,Theme.BorderSoft,1,0.2)
 
-            -- ── scrolling body ─────────────────────────────────────────
+            -- в”Ђв”Ђ scrolling body в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local bodyScroll = Create("ScrollingFrame",{
                 Size=UDim2.new(1,-16,0,rowH*maxVis),
                 Position=UDim2.new(0,8,0,yOff+30),
@@ -6497,7 +6606,7 @@ function MIDNIGHT:MakeWindow(config)
             ApplyStroke(bodyScroll,Theme.BorderSoft,1,0.18)
             ApplyPadding(bodyScroll,2,2,2,2)
 
-            -- ── data state ─────────────────────────────────────────────
+            -- в”Ђв”Ђ data state в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local allRows     = {}  -- master copy
             local sortCol     = nil -- 1-based or nil
             local sortAsc     = true
@@ -6532,7 +6641,7 @@ function MIDNIGHT:MakeWindow(config)
                 return disp
             end
 
-            -- ── row rendering ──────────────────────────────────────────
+            -- в”Ђв”Ђ row rendering в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local rowFrames = {}
 
             rebuild = function()  -- upvalue; referenced by search box closure above
@@ -6597,7 +6706,7 @@ function MIDNIGHT:MakeWindow(config)
                 -- Also update header sort indicators
                 for ci, lbl in ipairs(headerCells) do
                     if sortCol == ci then
-                        lbl.Text = cols[ci]..(sortAsc and " ↑" or " ↓")
+                        lbl.Text = cols[ci]..(sortAsc and " в†‘" or " в†“")
                         lbl.Text = cols[ci]..(sortAsc and " ^" or " v")
                         lbl.TextColor3 = Theme.TextAccent
                     else
@@ -6607,7 +6716,7 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            -- ── build header cells ─────────────────────────────────────
+            -- в”Ђв”Ђ build header cells в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             -- We defer actual width calc until after frame exists;
             -- use equal UDim2 fractions for header (always correct)
             local fracW = 1/ncols
@@ -6663,7 +6772,7 @@ function MIDNIGHT:MakeWindow(config)
                 task.defer(rebuild)
             end))
 
-            -- ── public API ─────────────────────────────────────────────
+            -- в”Ђв”Ђ public API в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
             local tdata = {}
 
             function tdata:SetRows(rows)
@@ -8387,7 +8496,7 @@ function MIDNIGHT:MakeWindow(config)
             ownedThreads = {}
         end)
 
-        -- Скрыт по умолчанию — откроется сам при первом событии
+        -- РЎРєСЂС‹С‚ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ вЂ” РѕС‚РєСЂРѕРµС‚СЃСЏ СЃР°Рј РїСЂРё РїРµСЂРІРѕРј СЃРѕР±С‹С‚РёРё
         aw._Visible = false
         aw._Frame.Visible = false
 
@@ -8395,14 +8504,14 @@ function MIDNIGHT:MakeWindow(config)
         local autoOpenLogs = config.AutoOpenLogs == true
         local function addLog(tag, text, tagColor, textColor, skipAutoOpen)
             if not canUseWindow() then return end
-            -- Авто-открытие при первом логе
+            -- РђРІС‚Рѕ-РѕС‚РєСЂС‹С‚РёРµ РїСЂРё РїРµСЂРІРѕРј Р»РѕРіРµ
             if autoOpenLogs and not skipAutoOpen and (not aw._Visible or not aw._Frame.Visible) then
                 aw:Show()
             end
             logOrder = logOrder + 1
             local time = os.date("%H:%M:%S")
             aw:AddRichLine("["..time.."] "..tag, text, tagColor or Theme.TextMuted, textColor or Theme.TextSecondary)
-            -- Скроллим вниз
+            -- РЎРєСЂРѕР»Р»РёРј РІРЅРёР·
             task.defer(function()
                 if aw._Scroll and aw._Scroll.Parent then
                     aw._Scroll.CanvasPosition = Vector2.new(0, aw._Scroll.AbsoluteCanvasSize.Y)
@@ -8410,7 +8519,7 @@ function MIDNIGHT:MakeWindow(config)
             end)
         end
 
-        -- Проверка является ли игрок админом
+        -- РџСЂРѕРІРµСЂРєР° СЏРІР»СЏРµС‚СЃСЏ Р»Рё РёРіСЂРѕРє Р°РґРјРёРЅРѕРј
         local rankColor
         local function trackWidget(player, rankName, actionText, commandTextValue, options)
             if not canUseWidget() or not player then return end
@@ -8441,14 +8550,14 @@ function MIDNIGHT:MakeWindow(config)
             return false
         end
 
-        -- Цвет по рангу
+        -- Р¦РІРµС‚ РїРѕ СЂР°РЅРіСѓ
         rankColor = function(player)
             local ok, rank = pcall(function() return player:GetRankInGroup(groupId) end)
             if not ok then return Theme.TextAccent end
             return rank>=200 and Theme.Error or rank>=100 and Theme.Warning or rank>=50 and Theme.Success or Theme.TextAccent
         end
 
-        -- Подписка на чат игрока
+        -- РџРѕРґРїРёСЃРєР° РЅР° С‡Р°С‚ РёРіСЂРѕРєР°
         local chatConns = {}
         local teamConns = {}
         local spawnConns = {}
@@ -8471,7 +8580,7 @@ function MIDNIGHT:MakeWindow(config)
             bindConn(conn)
         end
 
-        -- Подписка на спавн/деспавн
+        -- РџРѕРґРїРёСЃРєР° РЅР° СЃРїР°РІРЅ/РґРµСЃРїР°РІРЅ
         local function watchTeam(player)
             if teamConns[player.UserId] then return end
             local ok2, admin, rankName = pcall(isAdmin, player)
@@ -8508,7 +8617,7 @@ function MIDNIGHT:MakeWindow(config)
             bindConn(removingConn)
         end
 
-        -- Обработка входа игрока
+        -- РћР±СЂР°Р±РѕС‚РєР° РІС…РѕРґР° РёРіСЂРѕРєР°
         local function onPlayerAdded(player)
             bindThread(task.delay(2, function()
                 if not canUseWindow() then return end
@@ -8518,12 +8627,12 @@ function MIDNIGHT:MakeWindow(config)
                 local nc = rankColor(player)
                 addLog(player.DisplayName, "joined ["..tostring(rankName).."]", nc, Theme.Warning)
                 midnight:Notify({
-                    Title = "⚠ Admin Joined",
-                    Content = player.DisplayName .. " — " .. tostring(rankName),
+                    Title = "вљ  Admin Joined",
+                    Content = player.DisplayName .. " вЂ” " .. tostring(rankName),
                     Type = "warning",
                     Duration = 8,
                 })
-                -- Открыть окно автоматически
+                -- РћС‚РєСЂС‹С‚СЊ РѕРєРЅРѕ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
                 trackWidget(player, rankName, "Joined the server", nil, {Focus=true, Reveal=true})
                 if autoOpenLogs and (not aw._Visible or not aw._Frame.Visible) then aw:Show() end
                 watchChat(player)
@@ -8532,7 +8641,7 @@ function MIDNIGHT:MakeWindow(config)
             end))
         end
 
-        -- Обработка выхода
+        -- РћР±СЂР°Р±РѕС‚РєР° РІС‹С…РѕРґР°
         local function onPlayerRemoving(player)
             local ok2, admin, rankName = pcall(isAdmin, player)
             if ok2 and admin then
@@ -8563,7 +8672,7 @@ function MIDNIGHT:MakeWindow(config)
             adminCache[player.UserId .. "_rank"] = nil
         end
 
-        -- Инициализация текущих игроков
+        -- РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚РµРєСѓС‰РёС… РёРіСЂРѕРєРѕРІ
         addLog("SYSTEM", "Admin monitor started", Theme.Accent, Theme.TextSecondary, true)
         local revealedExistingAdmin = false
         for _, p in ipairs(Players:GetPlayers()) do
@@ -8828,7 +8937,7 @@ function MIDNIGHT:MakeWindow(config)
     function wd:TestAdminLogs()
         local midnight = MIDNIGHT
 
-        -- Открываем окно Admin Logs
+        -- РћС‚РєСЂС‹РІР°РµРј РѕРєРЅРѕ Admin Logs
         local aw = self:MakeFloatingWindow({Name="Admin Logs [TEST]", Size={300,380}, Resizable=true})
         if not aw then return nil end
 
@@ -8844,7 +8953,7 @@ function MIDNIGHT:MakeWindow(config)
             end)
         end
 
-        -- Фейковые данные для теста
+        -- Р¤РµР№РєРѕРІС‹Рµ РґР°РЅРЅС‹Рµ РґР»СЏ С‚РµСЃС‚Р°
         local fakeAdmins = {
             { name = "xX_ServerOwner_Xx", rank = "Owner",     rankColor = Theme.Error },
             { name = "CoolModerator99",   rank = "Moderator", rankColor = Theme.Warning },
@@ -8860,21 +8969,21 @@ function MIDNIGHT:MakeWindow(config)
 
         local admin = fakeAdmins[math.random(1, #fakeAdmins)]
 
-        -- Шаг 1: нотификация — Join
+        -- РЁР°Рі 1: РЅРѕС‚РёС„РёРєР°С†РёСЏ вЂ” Join
         midnight:Notify({
-            Title   = "⚠ Admin Joined [TEST]",
-            Content = admin.name .. " — " .. admin.rank,
+            Title   = "вљ  Admin Joined [TEST]",
+            Content = admin.name .. " вЂ” " .. admin.rank,
             Type    = "warning",
             Duration = 8,
         })
         addLog("SYSTEM", "Test sequence started", Theme.Accent, Theme.TextSecondary)
         addLog(admin.name, "joined ["..admin.rank.."]", admin.rankColor, Theme.Warning)
 
-        -- Шаг 2: Смена команды
+        -- РЁР°Рі 2: РЎРјРµРЅР° РєРѕРјР°РЅРґС‹
         task.delay(1.8, function()
             if not aw._Frame or not aw._Frame.Parent then return end
             midnight:Notify({
-                Title   = "⚠ Team Switch [TEST]",
+                Title   = "вљ  Team Switch [TEST]",
                 Content = admin.name .. " switched team",
                 Type    = "warning",
                 Duration = 5,
@@ -8882,12 +8991,12 @@ function MIDNIGHT:MakeWindow(config)
             addLog(admin.name, "switched to Spectators", admin.rankColor, Theme.Warning)
         end)
 
-        -- Шаг 3: Сообщение в чате
+        -- РЁР°Рі 3: РЎРѕРѕР±С‰РµРЅРёРµ РІ С‡Р°С‚Рµ
         task.delay(3.8, function()
             if not aw._Frame or not aw._Frame.Parent then return end
             local msg = fakeMessages[math.random(1, #fakeMessages)]
             midnight:Notify({
-                Title   = "⚠ Admin Chat [TEST]",
+                Title   = "вљ  Admin Chat [TEST]",
                 Content = admin.name .. ": " .. msg,
                 Type    = "warning",
                 Duration = 5,
@@ -8895,19 +9004,19 @@ function MIDNIGHT:MakeWindow(config)
             addLog(admin.name, msg, admin.rankColor, Theme.TextSecondary)
         end)
 
-        -- Шаг 4: Ещё одно сообщение
+        -- РЁР°Рі 4: Р•С‰С‘ РѕРґРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ
         task.delay(5.5, function()
             if not aw._Frame or not aw._Frame.Parent then return end
             addLog(admin.name, "!spectate localplayer", admin.rankColor, Theme.Warning)
             midnight:Notify({
-                Title   = "⚠ Admin Command [TEST]",
+                Title   = "вљ  Admin Command [TEST]",
                 Content = admin.name .. " used a command",
                 Type    = "warning",
                 Duration = 5,
             })
         end)
 
-        -- Шаг 5: Выход
+        -- РЁР°Рі 5: Р’С‹С…РѕРґ
         task.delay(8.0, function()
             if not aw._Frame or not aw._Frame.Parent then return end
             midnight:Notify({
@@ -8923,23 +9032,23 @@ function MIDNIGHT:MakeWindow(config)
         return aw
     end
 
-    --// ═══════════════════════════════════════════════════════════
+    --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
     --// TARGET HUD EXAMPLE BUTTON
-    --// Добавляет кнопку Toggle Target HUD в указанный таб.
-    --// При включении — запускает цикл, который каждые 0.1s находит
-    --// игрока, чья модель ближе всего к центру экрана (курсору мыши),
-    --// и показывает Target HUD для него. При выключении — очищает HUD.
+    --// Р”РѕР±Р°РІР»СЏРµС‚ РєРЅРѕРїРєСѓ Toggle Target HUD РІ СѓРєР°Р·Р°РЅРЅС‹Р№ С‚Р°Р±.
+    --// РџСЂРё РІРєР»СЋС‡РµРЅРёРё вЂ” Р·Р°РїСѓСЃРєР°РµС‚ С†РёРєР», РєРѕС‚РѕСЂС‹Р№ РєР°Р¶РґС‹Рµ 0.1s РЅР°С…РѕРґРёС‚
+    --// РёРіСЂРѕРєР°, С‡СЊСЏ РјРѕРґРµР»СЊ Р±Р»РёР¶Рµ РІСЃРµРіРѕ Рє С†РµРЅС‚СЂСѓ СЌРєСЂР°РЅР° (РєСѓСЂСЃРѕСЂСѓ РјС‹С€Рё),
+    --// Рё РїРѕРєР°Р·С‹РІР°РµС‚ Target HUD РґР»СЏ РЅРµРіРѕ. РџСЂРё РІС‹РєР»СЋС‡РµРЅРёРё вЂ” РѕС‡РёС‰Р°РµС‚ HUD.
     --//
     --// Usage:
     --//   local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
     --//   window:AddTargetHUDExample(someTab, hud)
-    --// ═══════════════════════════════════════════════════════════
+    --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
     function wd:AddTargetHUDExample(tab, hud)
         if not tab or not hud then return end
 
         tab:AddSection({ Name = "Target HUD" })
 
-        -- Dropdown: позиция HUD
+        -- Dropdown: РїРѕР·РёС†РёСЏ HUD
         local posDropdown = tab:AddInlineDropdown({
             Name = "HUD Position",
             Options = { "CenterLow", "BottomLeft", "BottomRight", "BottomCenter", "TopLeft", "TopRight" },
@@ -8948,10 +9057,10 @@ function MIDNIGHT:MakeWindow(config)
                 hud:ResetPosition(val)
             end,
         })
-        -- Callback не стреляет при создании — применяем дефолт вручную
+        -- Callback РЅРµ СЃС‚СЂРµР»СЏРµС‚ РїСЂРё СЃРѕР·РґР°РЅРёРё вЂ” РїСЂРёРјРµРЅСЏРµРј РґРµС„РѕР»С‚ РІСЂСѓС‡РЅСѓСЋ
         task.defer(function() hud:ResetPosition(posDropdown._Value or "CenterLow") end)
 
-        -- Кнопка сброса позиции (если пользователь перетащил HUD и хочет вернуть)
+        -- РљРЅРѕРїРєР° СЃР±СЂРѕСЃР° РїРѕР·РёС†РёРё (РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїРµСЂРµС‚Р°С‰РёР» HUD Рё С…РѕС‡РµС‚ РІРµСЂРЅСѓС‚СЊ)
         tab:AddButton({
             Name = "Reset HUD Position",
             Callback = function()
@@ -8960,11 +9069,11 @@ function MIDNIGHT:MakeWindow(config)
             end,
         })
 
-        local trackLoop = nil  -- Connection (RunService.Heartbeat), не поток
+        local trackLoop = nil  -- Connection (RunService.Heartbeat), РЅРµ РїРѕС‚РѕРє
 
         local function stopTracking(skipClear)
             if trackLoop then
-                -- Теперь это Connection, не thread — надёжный Disconnect на любом экзекьюторе
+                -- РўРµРїРµСЂСЊ СЌС‚Рѕ Connection, РЅРµ thread вЂ” РЅР°РґС‘Р¶РЅС‹Р№ Disconnect РЅР° Р»СЋР±РѕРј СЌРєР·РµРєСЊСЋС‚РѕСЂРµ
                 pcall(function() trackLoop:Disconnect() end)
                 trackLoop = nil
             end
@@ -8994,15 +9103,15 @@ function MIDNIGHT:MakeWindow(config)
         local function startTracking()
             stopTracking()
 
-            -- Резолвим сервисы один раз до подключения — не аллоцируем внутри хот-пата
+            -- Р РµР·РѕР»РІРёРј СЃРµСЂРІРёСЃС‹ РѕРґРёРЅ СЂР°Р· РґРѕ РїРѕРґРєР»СЋС‡РµРЅРёСЏ вЂ” РЅРµ Р°Р»Р»РѕС†РёСЂСѓРµРј РІРЅСѓС‚СЂРё С…РѕС‚-РїР°С‚Р°
             local UIS    = game:GetService("UserInputService")
             local camera = workspace.CurrentCamera
             local plrs   = game:GetService("Players")
             local lp     = plrs.LocalPlayer
 
             -- #9 FIX: per-player cache for HumanoidRootPart and Humanoid.
-            -- FindFirstChild / FindFirstChildOfClass walk the instance tree every call —
-            -- on a full server (20 players) at 10Hz that's 40–60 tree-walks per second.
+            -- FindFirstChild / FindFirstChildOfClass walk the instance tree every call вЂ”
+            -- on a full server (20 players) at 10Hz that's 40вЂ“60 tree-walks per second.
             -- We cache the results and only invalidate when the character changes.
             local charCache = {}   -- [player] = { char, root, hum }
             local charConns = {}   -- [player] = CharacterAdded connection
@@ -9065,7 +9174,7 @@ function MIDNIGHT:MakeWindow(config)
             hud._TrackJoinConn = joinConn
             hud._TrackLeaveConn = leaveConn
 
-            -- Throttle-аккумулятор: обновляем ~10 раз/сек (0.1s), не каждый фрейм
+            -- Throttle-Р°РєРєСѓРјСѓР»СЏС‚РѕСЂ: РѕР±РЅРѕРІР»СЏРµРј ~10 СЂР°Р·/СЃРµРє (0.1s), РЅРµ РєР°Р¶РґС‹Р№ С„СЂРµР№Рј
             local accum = 0
 
             trackLoop = RunService.Heartbeat:Connect(function(dt)
@@ -9081,7 +9190,7 @@ function MIDNIGHT:MakeWindow(config)
                     hud:ClearTarget()
                     return
                 end
-                local bestDistSq = math.huge  -- сравниваем квадраты, sqrt не нужен
+                local bestDistSq = math.huge  -- СЃСЂР°РІРЅРёРІР°РµРј РєРІР°РґСЂР°С‚С‹, sqrt РЅРµ РЅСѓР¶РµРЅ
 
                 for i = 1, #trackedPlayers do
                     local p = trackedPlayers[i]
@@ -9091,7 +9200,7 @@ function MIDNIGHT:MakeWindow(config)
 
                     local hum = entry.hum
                     if hum and hum.Health <= 0 then
-                        charCache[p] = nil  -- dead — invalidate so we re-check on respawn
+                        charCache[p] = nil  -- dead вЂ” invalidate so we re-check on respawn
                         continue
                     end
 
@@ -9199,7 +9308,7 @@ function MIDNIGHT:MakeWindow(config)
             end)
         end
 
-        -- Ловим чат всех включая LocalPlayer
+        -- Р›РѕРІРёРј С‡Р°С‚ РІСЃРµС… РІРєР»СЋС‡Р°СЏ LocalPlayer
         bindConn(LocalPlayer.Chatted:Connect(function(msg) onChat(LocalPlayer, msg) end))
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
@@ -9215,9 +9324,9 @@ function MIDNIGHT:MakeWindow(config)
     return wd
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// DESTROY
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Destroy()
     if self._TargetHUD and self._TargetHUD.StopTracking then
         pcall(function() self._TargetHUD:StopTracking() end)
@@ -9270,9 +9379,9 @@ function MIDNIGHT:Destroy()
     for _,k in ipairs(toNil) do self[k]=nil end
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// CONFIG SYSTEM  (v7.1)
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --[[
     API:
       MIDNIGHT:SetupConfig(key)           -- set save-file key (call once, before MakeWindow)
@@ -9456,9 +9565,9 @@ function MIDNIGHT:ResetConfig()
     return true
 end
 
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// EXPOSE KEY UTILS
---// ═══════════════════════════════════════════════════════════
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 MIDNIGHT.KeyUtils = KeyUtils
 MIDNIGHT.LucideIcons = LucideIcons
 MIDNIGHT.LucideBloxAssets = LucideBloxAssets
