@@ -1506,6 +1506,18 @@ local function SafeCancelThread(th)
     end
 end
 
+local function _RandomGuiName()
+    local raw = ""
+    pcall(function()
+        raw = HttpService:GenerateGUID(false)
+    end)
+    raw = tostring(raw):gsub("%-", "")
+    if #raw < 12 then
+        raw = tostring(math.floor((os.clock() * 1000000) % 1000000000000))
+    end
+    return raw:sub(1, 12)
+end
+
 --// FIX #2: Global slider input dispatcher
 --// Instead of one InputChanged + one InputEnded per slider (N*2 global UIS connections),
 --// we use a single shared dispatcher that routes events to the active dragging slider.
@@ -1707,7 +1719,7 @@ end
 function MIDNIGHT:_InitScreenGui()
     if self._ScreenGui and self._ScreenGui.Parent then return end
     self._ScreenGui = Create("ScreenGui", {
-        Name = "MIDNIGHT_" .. tostring(tick()):gsub("%.", ""),
+        Name = _RandomGuiName(),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn   = false,
         IgnoreGuiInset = true,
@@ -1924,7 +1936,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     if posY < 8 then posY = 8 end
 
     local bgFill = Create("Frame", {
-        Name = "KeybindSettingsBg",
+        Name = _RandomGuiName(),
         Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
         BackgroundColor3 = Theme.UtilityBg,
@@ -1937,7 +1949,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     StylePanelShell(bgFill, 8, Theme.BorderSoft, 0.18)
 
     local pf = Create("Frame", {
-        Name = "KeybindSettings",
+        Name = _RandomGuiName(),
         Size = UDim2.new(0, panelW, 0, panelHFinal),
         Position = UDim2.new(0, posX, 0, posY),
         BackgroundColor3 = Theme.UtilityBg,
@@ -2208,7 +2220,7 @@ function MIDNIGHT:_OpenDropdown(config)
     if dropdownBtn then TweenObject(dropdownBtn,{BackgroundColor3=AccentTint(Theme.Accent,0.12)},0.12) end
 
     local dd = Create("Frame", {
-        Name = "DropdownList",
+        Name = _RandomGuiName(),
         Size = UDim2.new(0,absSize.X,0,0),
         Position = UDim2.new(0,posX,0,posY),
         BackgroundColor3 = Theme.DropdownBg,
@@ -2557,7 +2569,7 @@ function MIDNIGHT:CreateWatermark(config)
     self._WatermarkSizeUpdate = nil
 
     local wmFrame = Create("Frame",{
-        Name = "Watermark", Size = UDim2.new(0,500,0,30),
+        Name = _RandomGuiName(), Size = UDim2.new(0,500,0,30),
         Position = UDim2.new(0,12,0,6),
         BackgroundColor3 = Theme.UtilityBg,
         BorderSizePixel = 0, ClipsDescendants = true,
@@ -2829,7 +2841,7 @@ function MIDNIGHT:CreateTargetHUD(config)
 
     -- ── Root frame ────────────────────────────────────────────
     local hf = Create("Frame", {
-        Name = "TargetHUD",
+        Name = _RandomGuiName(),
         Size = UDim2.new(0, W, 0, H),
         BackgroundColor3 = Theme.Surface0,
         BackgroundTransparency = 1,
@@ -3463,7 +3475,7 @@ function MIDNIGHT:_LegacyNotify(config)
     local typeColor  = typeColors[notifType] or Theme.Info
 
     local nf = Create("Frame",{
-        Name="Notification", Size=UDim2.new(0,350,0,72),
+        Name=_RandomGuiName(), Size=UDim2.new(0,350,0,72),
         Position=UDim2.new(0,-380,0,0),
         BackgroundColor3=Theme.WindowBg, BorderSizePixel=0,
         ZIndex=ZIndex.NOTIFY, Parent=self._ScreenGui,
@@ -3622,7 +3634,7 @@ function MIDNIGHT:Notify(config)
     local cardH = math.max(compactMode and 68 or 72, contentBottom + (compactMode and 16 or 18))
 
     local nf = Create("Frame",{
-        Name="Notification",
+        Name=_RandomGuiName(),
         Size=UDim2.new(0,width,0,cardH),
         Position=UDim2.new(0,-width,0,0),
         BackgroundColor3=compactMode and Theme.OverlayBg or Theme.WindowBg,
@@ -4091,7 +4103,7 @@ function MIDNIGHT:CreateKeybindList(config)
     self:_InitScreenGui()
 
     local kf = Create("Frame",{
-        Name="KeybindList", Size=UDim2.new(0,196,0,30),
+        Name=_RandomGuiName(), Size=UDim2.new(0,196,0,30),
         Position=UDim2.new(1,-204,0,38),
         BackgroundColor3=Theme.UtilityBg, BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
@@ -4258,7 +4270,7 @@ function MIDNIGHT:MakeWindow(config)
 
     -- Open animation: starts transparent
     local wf = Create("Frame",{
-        Name = "Window_"..windowName,
+        Name = _RandomGuiName(),
         Size = UDim2.new(0,winW,0,winH),
         Position = UDim2.new(0.5,-winW/2,0.5,-winH/2),
         BackgroundColor3 = Theme.WindowBg,
@@ -6275,7 +6287,7 @@ function MIDNIGHT:MakeWindow(config)
         fc = fc or {}; local nm=fc.Name or "Window"; local sz=fc.Size or {300,300}; local canResize=fc.Resizable
         local curFW, curFH = sz[1], sz[2]
         local fw=Create("Frame",{
-            Name="FW_"..nm,Size=UDim2.new(0,sz[1],0,sz[2]),
+            Name=_RandomGuiName(),Size=UDim2.new(0,sz[1],0,sz[2]),
             Position=UDim2.new(0.5,-sz[1]/2,0.5,-sz[2]/2),
             BackgroundColor3=Theme.OverlayBg,BorderSizePixel=0,ClipsDescendants=true,
             Visible=false,ZIndex=ZIndex.POPUP,Parent=MIDNIGHT._ScreenGui,
@@ -6536,7 +6548,7 @@ function MIDNIGHT:MakeWindow(config)
         local paletteW = math.max(360, math.floor(tonumber(config.Width) or 420))
         local paletteH = math.max(260, math.floor(tonumber(config.Height) or 320))
         local scrim = Create("Frame",{
-            Name="CommandPaletteScrim",
+            Name=_RandomGuiName(),
             Size=UDim2.new(1,0,1,0),
             BackgroundColor3=Theme.Shadow,
             BackgroundTransparency=1,
@@ -6546,7 +6558,7 @@ function MIDNIGHT:MakeWindow(config)
             Parent=MIDNIGHT._ScreenGui,
         })
         local pf = Create("Frame",{
-            Name="CommandPalette",
+            Name=_RandomGuiName(),
             Size=UDim2.new(0,paletteW,0,paletteH),
             Position=UDim2.new(0.5,-paletteW/2,0.5,-paletteH/2),
             BackgroundColor3=Theme.OverlayBg,
@@ -6899,7 +6911,7 @@ function MIDNIGHT:MakeWindow(config)
         local hiddenPos = UDim2.new(1, widgetW + 28, 0, marginY)
 
         local wf = Create("Frame",{
-            Name = "AdminPresenceWidget",
+            Name = _RandomGuiName(),
             Size = UDim2.new(0, widgetW, 0, widgetH),
             Position = hiddenPos,
             AnchorPoint = Vector2.new(1, 0),
