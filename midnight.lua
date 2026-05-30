@@ -489,6 +489,11 @@ local function ApplyCorner(parent, radius)
     return Create("UICorner", {CornerRadius = UDim.new(0, r), Parent = parent})
 end
 
+local function ApplyCircleCorner(parent)
+    if not parent then return nil end
+    return Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = parent})
+end
+
 local function ApplyStroke(parent, color, thickness, transparency)
     if not parent then return nil end
     return Create("UIStroke", {
@@ -954,9 +959,9 @@ local function StartSpinnerLoop(spinner, duration)
 
     task.spawn(function()
         while active and spinner and spinner.Parent do
-            spinner.Rotation = 0
+            local startRotation = spinner.Rotation
             local tween = TweenObject(spinner, {
-                Rotation = 360,
+                Rotation = startRotation + 360,
             }, spinDuration, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
             if tween then
                 pcall(function()
@@ -1038,7 +1043,7 @@ local function _PlayLoadingIntroImpl(self, config)
 
     local spinnerHolder = Create("Frame", {
         Size = UDim2.new(0, 76, 0, 76),
-        Position = UDim2.new(0.5, -38, 0, 14),
+        Position = UDim2.new(0.5, -38, 0, 12),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = ZIndex.TOP + 2,
@@ -1053,7 +1058,7 @@ local function _PlayLoadingIntroImpl(self, config)
         ZIndex = ZIndex.TOP + 1,
         Parent = spinnerHolder,
     })
-    ApplyCorner(spinnerHalo, 29)
+    ApplyCircleCorner(spinnerHalo)
     local spinnerHaloScale = Create("UIScale", {Scale = 0.78, Parent = spinnerHalo})
     local spinner = Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
@@ -1090,7 +1095,7 @@ local function _PlayLoadingIntroImpl(self, config)
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
-    ApplyCorner(readyBubble, 29)
+    ApplyCircleCorner(readyBubble)
     local readyScale = Create("UIScale", {Scale = 0.16, Parent = readyBubble})
     local readyStroke = ApplyStroke(readyBubble, Color3.fromRGB(255, 255, 255), 1, 0.72)
     local readyText = Create("TextLabel", {
@@ -1098,6 +1103,8 @@ local function _PlayLoadingIntroImpl(self, config)
         Font = FontBold,
         TextSize = 28,
         TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
         TextTransparency = 1,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 32),
@@ -1110,6 +1117,8 @@ local function _PlayLoadingIntroImpl(self, config)
         Font = FontBold,
         TextSize = 10,
         TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
         TextTransparency = 1,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -10, 0, 14),
@@ -1186,11 +1195,27 @@ local function _PlayLoadingIntroImpl(self, config)
     TweenObject(spinnerHalo, {BackgroundTransparency = 0.9}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     TweenObject(spinnerHaloScale, {Scale = 1.22}, 0.52, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     TweenObject(topLine, {BackgroundTransparency = 0.66}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(titleLabel, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(subtitleLabel, {TextTransparency = 0}, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(progressTrack, {BackgroundTransparency = 0.6}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(progressFill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0.12}, holdTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-    TweenObject(sweep, {Position = UDim2.new(1.12, 0, 0, 0), BackgroundTransparency = 1}, 0.82, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    task.delay(0.05, function()
+        if titleLabel and titleLabel.Parent then
+            TweenObject(titleLabel, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end
+    end)
+    task.delay(0.09, function()
+        if subtitleLabel and subtitleLabel.Parent then
+            TweenObject(subtitleLabel, {TextTransparency = 0}, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end
+    end)
+    task.delay(0.12, function()
+        if progressTrack and progressTrack.Parent then
+            TweenObject(progressTrack, {BackgroundTransparency = 0.6}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end
+        if progressFill and progressFill.Parent then
+            TweenObject(progressFill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0.12}, holdTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+        end
+        if sweep and sweep.Parent then
+            TweenObject(sweep, {Position = UDim2.new(1.12, 0, 0, 0), BackgroundTransparency = 1}, 0.82, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end
+    end)
 
     local finished = false
     local function finishIntro()
