@@ -1142,9 +1142,9 @@ local function _PlayLoadingIntroImpl(self, config)
         }
     end
 
-    local spinnerStop = StartSpinnerLoop(spinner, Motion.Loading.Duration)
-    local pulseStop = StartScalePulseLoop(spinnerHaloScale, 0.98, 1.08, 0.72)
     local checkText = (utf8 and utf8.char and utf8.char(0x2713)) or "OK"
+    local spinnerStop = StartSpinnerLoop(spinner, Motion.Loading.Duration)
+    local pulseStop = StartScalePulseLoop(spinnerHaloScale, 0.99, 1.035, 0.9)
 
     local readyBubble = Create("Frame", {
         Size = UDim2.new(0, 76, 0, 76),
@@ -1161,7 +1161,7 @@ local function _PlayLoadingIntroImpl(self, config)
     local readyScale = Create("UIScale", {Scale = 0.42, Parent = readyBubble})
     local readyStroke = ApplyStroke(readyBubble, Color3.fromRGB(255, 255, 255), 1, 0.72)
     local readyText = Create("TextLabel", {
-        Text = "✓",
+        Text = checkText,
         Font = FontBold,
         TextSize = 30,
         TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -1170,11 +1170,10 @@ local function _PlayLoadingIntroImpl(self, config)
         TextTransparency = 1,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, -4),
+        Position = UDim2.new(0, 0, 0, 0),
         ZIndex = ZIndex.TOP + 3,
         Parent = readyBubble,
     })
-    readyText.Text = checkText
     local readyHint = Create("TextLabel", {
         Text = doneText,
         Font = FontBold,
@@ -3176,11 +3175,13 @@ function MIDNIGHT:CreateWatermark(config)
     })
 
     local lo = 0
+    local sepText = (utf8 and utf8.char and utf8.char(0x2022)) or "|"
     local function addSep()
         lo = lo + 1
         Create("TextLabel",{
-            Text="вЂў",Font=FontRegular,TextSize=8,TextColor3=Theme.TextMuted,
+            Text=sepText,Font=FontRegular,TextSize=9,TextColor3=Theme.TextMuted,
             Size=UDim2.new(0,0,0,16),AutomaticSize=Enum.AutomaticSize.X,
+            TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,LayoutOrder=lo,Parent=content,
         })
     end
@@ -3190,6 +3191,7 @@ function MIDNIGHT:CreateWatermark(config)
             Name=n, Text=text, Font=font or FontRegular, TextSize=size or CompactStyle.UtilityTextSize,
             TextColor3=color or Theme.TextSecondary,
             Size=UDim2.new(0,0,0,16), AutomaticSize=Enum.AutomaticSize.X,
+            TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1, LayoutOrder=lo, Visible=visible~=false,
             Parent=content,
         })
@@ -3368,7 +3370,7 @@ function MIDNIGHT:_UpdateWatermark()
     local cusL  = self._WatermarkLabels.cus
 
     if fpsL  then fpsL.Text  = self._FPS.." fps";  fpsL.TextColor3  = self._Lagspike and Theme.Error or Theme.TextSecondary end
-    if pingL then pingL.Text = self._Ping.."ms";   pingL.TextColor3 = self._Ping>150 and Theme.Warning or Theme.TextSecondary end
+    if pingL then pingL.Text = self._Ping.." ms";  pingL.TextColor3 = self._Ping>150 and Theme.Warning or Theme.TextSecondary end
 
     if lagL then
         if self._Lagspike and not lagL.Visible then
@@ -4723,30 +4725,30 @@ function MIDNIGHT:CreateKeybindList(config)
     self:_InitScreenGui()
 
     local kf = Create("Frame",{
-        Name=_RandomGuiName(), Size=UDim2.new(0,196,0,30),
-        Position=UDim2.new(1,-204,0,38),
+        Name=_RandomGuiName(), Size=UDim2.new(0,216,0,32),
+        Position=UDim2.new(1,-224,0,38),
         BackgroundColor3=Theme.UtilityBg, BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
     StyleUtilityOverlay(kf, Theme.Accent)
 
-    local tb2 = StyleQuietHeader(kf, 28, ZIndex.WINDOW + 1)
-    local tc2 = Create("Frame",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,8,0,0),BackgroundTransparency=1,Parent=tb2})
-    local icon = CreateIconOrText(tc2,"key",nil,UDim2.new(0,12,0,12),UDim2.new(0,0,0.5,-6),Theme.UtilityAccent,FontBold,10)
+    local tb2 = StyleQuietHeader(kf, 30, ZIndex.WINDOW + 1)
+    local tc2 = Create("Frame",{Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,9,0,0),BackgroundTransparency=1,Parent=tb2})
+    local icon = CreateIconOrText(tc2,"key",nil,UDim2.new(0,13,0,13),UDim2.new(0,0,0.5,-6.5),Theme.UtilityAccent,FontBold,10)
     if icon and icon:IsA("TextLabel") then
         icon.TextXAlignment = Enum.TextXAlignment.Center
         icon.TextYAlignment = Enum.TextYAlignment.Center
     end
     Create("TextLabel",{
         Text=title,Font=FontBold,TextSize=CompactStyle.UtilityTextSize,
-        TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,18,0,0),
+        TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-22,1,0),Position=UDim2.new(0,21,0,0),
         TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
         BackgroundTransparency=1,Parent=tc2
     })
 
-    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-30),Position=UDim2.new(0,0,0,30),BackgroundTransparency=1,Parent=kf})
-    Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=lc2})
-    ApplyPadding(lc2,4,4,6,6)
+    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-32),Position=UDim2.new(0,0,0,32),BackgroundTransparency=1,Parent=kf})
+    Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,3),Parent=lc2})
+    ApplyPadding(lc2,5,5,7,7)
 
     self._KeybindListFrame   = kf
     self._KeybindListContent = lc2
@@ -4763,43 +4765,43 @@ function MIDNIGHT:CreateKeybindList(config)
                 count = count + 1
                 local isActive = kb._Active
                 local row = Create("Frame",{
-                    Size=UDim2.new(1,0,0,22),
+                    Size=UDim2.new(1,0,0,26),
                     BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.12) or Theme.Surface2,
-                    BackgroundTransparency = isActive and 0.02 or 0.08,
+                    BackgroundTransparency = isActive and 0.02 or 0.12,
                     BorderSizePixel=0, LayoutOrder=count, Parent=lc2,
                 })
-                ApplyCorner(row,5)
-                ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.42)
-                if isActive then
-                    Create("Frame",{Size=UDim2.new(0,2,0.66,0),Position=UDim2.new(0,0,0.17,0),BackgroundColor3=Theme.UtilityAccent,BorderSizePixel=0,Parent=row})
-                end
+                ApplyCorner(row,6)
+                ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.48)
+                local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.58,0),Position=UDim2.new(0,0,0.21,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
+                ApplyCorner(activeBar,2)
                 Create("TextLabel",{
                     Text=kb._Name, Font=FontRegular, TextSize=CompactStyle.UtilityTextSize,
                     TextColor3=isActive and Theme.TextPrimary or Theme.TextSecondary,
-                    TextXAlignment=Enum.TextXAlignment.Left,
-                    Size=UDim2.new(0.58,0,1,0), Position=UDim2.new(0,isActive and 8 or 6,0,0),
+                    TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
+                    Size=UDim2.new(1,-84,1,0), Position=UDim2.new(0,10,0,0),
                     BackgroundTransparency=1, Parent=row,
                 })
                 local badge = Create("Frame",{
-                    Size=UDim2.new(0,0,0,16),
+                    Size=UDim2.new(0,0,0,18),
                     AutomaticSize=Enum.AutomaticSize.X,
-                    Position=UDim2.new(1,-5,0.5,-8),
-                    AnchorPoint=Vector2.new(1,0),
+                    Position=UDim2.new(1,-6,0.5,0),
+                    AnchorPoint=Vector2.new(1,0.5),
                     BackgroundColor3=isActive and AccentTint(Theme.Accent,0.16) or Theme.InputBg,
                     BorderSizePixel=0, Parent=row,
                 })
-                ApplyCorner(badge,4)
+                ApplyCorner(badge,5)
                 ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.28 or 0.48)
-                ApplyPadding(badge,0,0,4,4)
+                ApplyPadding(badge,0,0,5,5)
                 Create("TextLabel",{
                     Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=CompactStyle.UtilityMetaSize,
                     TextColor3=isActive and Theme.TextAccent or Theme.TextMuted,
                     Size=UDim2.new(0,0,1,0), AutomaticSize=Enum.AutomaticSize.X,
+                    TextYAlignment=Enum.TextYAlignment.Center,
                     BackgroundTransparency=1, Parent=badge,
                 })
             end
         end
-        kf.Size = UDim2.new(0,196,0,30+count*24+10)
+        kf.Size = UDim2.new(0,216,0,32+count*29+12)
     end
 
     self._RefreshKeybindList = refresh
@@ -7562,8 +7564,8 @@ function MIDNIGHT:MakeWindow(config)
         config = config or {}
         MIDNIGHT:_InitScreenGui()
 
-        local widgetW = math.max(348, math.floor(tonumber(config.Width) or 368))
-        local widgetH = math.max(352, math.floor(tonumber(config.Height) or 356))
+        local widgetW = math.max(368, math.floor(tonumber(config.Width) or 384))
+        local widgetH = math.max(364, math.floor(tonumber(config.Height) or 372))
         local marginX = math.floor(tonumber(config.MarginX) or 18)
         local marginY = math.floor(tonumber(config.MarginY) or 76)
         local shownPos = UDim2.new(1, -marginX, 0, marginY)
@@ -7582,7 +7584,7 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex = ZIndex.OVERLAY + 20,
             Parent = MIDNIGHT._ScreenGui,
         })
-        ApplyCorner(wf, 8)
+        ApplyCorner(wf, 10)
         local wfStroke = ApplyStroke(wf, Theme.Border, 1, 1)
         local wfScale = Create("UIScale",{Scale=0.97,Parent=wf})
 
@@ -7607,17 +7609,17 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=wf.ZIndex,
             Parent=wf,
         })
-        ApplyCorner(tint, 8)
+        ApplyCorner(tint, 10)
 
         local header = Create("Frame",{
-            Size=UDim2.new(1,0,0,32),
+            Size=UDim2.new(1,0,0,36),
             BackgroundColor3=Theme.TitleBarBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+1,
             Parent=wf,
         })
-        ApplyCorner(header, 8)
+        ApplyCorner(header, 10)
         Create("Frame",{
             Size=UDim2.new(1,0,0,8),
             Position=UDim2.new(0,0,1,-8),
@@ -7638,21 +7640,30 @@ function MIDNIGHT:MakeWindow(config)
         local headerTitle = Create("TextLabel",{
             Text="Admin Presence",
             Font=FontBold,
-            TextSize=12,
+            TextSize=13,
             TextColor3=Theme.TextPrimary,
             TextTransparency=1,
-            Size=UDim2.new(1,-44,1,0),
-            Position=UDim2.new(0,12,0,0),
+            Size=UDim2.new(1,-58,1,0),
+            Position=UDim2.new(0,34,0,0),
             TextXAlignment=Enum.TextXAlignment.Left,
+            TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=header,
         })
+        local headerIcon = CreateIconOrText(header,"shield",nil,UDim2.new(0,14,0,14),UDim2.new(0,13,0.5,-7),Theme.UtilityAccent,FontBold,12)
+        if headerIcon and headerIcon:IsA("TextLabel") then
+            headerIcon.TextXAlignment = Enum.TextXAlignment.Center
+            headerIcon.TextYAlignment = Enum.TextYAlignment.Center
+            headerIcon.TextTransparency = 1
+        elseif headerIcon and headerIcon:IsA("ImageLabel") then
+            headerIcon.ImageTransparency = 1
+        end
 
         local closeBtn = Create("TextButton",{
             Text="",
             Size=UDim2.new(0,20,0,16),
-            Position=UDim2.new(1,-24,0,8),
+            Position=UDim2.new(1,-26,0.5,-8),
             BackgroundColor3=Theme.InputBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -7672,16 +7683,28 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local body = Create("Frame",{
-            Size=UDim2.new(1,-16,1,-48),
-            Position=UDim2.new(0,8,0,36),
+            Size=UDim2.new(1,-20,1,-54),
+            Position=UDim2.new(0,10,0,42),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+1,
             Parent=wf,
         })
 
-        local avatarWrap = Create("Frame",{
-            Size=UDim2.new(0,56,0,56),
+        local heroCard = Create("Frame",{
+            Size=UDim2.new(1,0,0,78),
             Position=UDim2.new(0,0,0,0),
+            BackgroundColor3=Theme.ItemBg,
+            BackgroundTransparency=0.06,
+            BorderSizePixel=0,
+            ZIndex=wf.ZIndex+1,
+            Parent=body,
+        })
+        ApplyCorner(heroCard,8)
+        local heroStroke = ApplyStroke(heroCard, Theme.BorderSoft, 1, 0.36)
+
+        local avatarWrap = Create("Frame",{
+            Size=UDim2.new(0,58,0,58),
+            Position=UDim2.new(0,8,0,10),
             BackgroundColor3=Theme.InputBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
@@ -7701,8 +7724,8 @@ function MIDNIGHT:MakeWindow(config)
         local avatarFallback = CreateIconOrText(avatarWrap,"shield",nil,UDim2.new(0,22,0,22),UDim2.new(0.5,-11,0.5,-11),Theme.TextMuted,FontBold,16)
 
         local countBadge = Create("Frame",{
-            Size=UDim2.new(0,44,0,18),
-            Position=UDim2.new(1,-44,0,0),
+            Size=UDim2.new(0,48,0,18),
+            Position=UDim2.new(1,-56,0,10),
             BackgroundColor3=Theme.InputBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
@@ -7716,6 +7739,7 @@ function MIDNIGHT:MakeWindow(config)
             TextSize=9,
             TextColor3=Theme.TextMuted,
             Size=UDim2.new(1,0,1,0),
+            TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+3,
             Parent=countBadge,
@@ -7729,8 +7753,8 @@ function MIDNIGHT:MakeWindow(config)
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-112,0,18),
-            Position=UDim2.new(0,66,0,0),
+            Size=UDim2.new(1,-142,0,18),
+            Position=UDim2.new(0,76,0,10),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
@@ -7741,8 +7765,9 @@ function MIDNIGHT:MakeWindow(config)
             TextSize=11,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-112,0,13),
-            Position=UDim2.new(0,66,0,20),
+            TextYAlignment=Enum.TextYAlignment.Center,
+            Size=UDim2.new(1,-142,0,13),
+            Position=UDim2.new(0,76,0,31),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
@@ -7753,8 +7778,9 @@ function MIDNIGHT:MakeWindow(config)
             TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-112,0,12),
-            Position=UDim2.new(0,66,0,35),
+            TextYAlignment=Enum.TextYAlignment.Center,
+            Size=UDim2.new(1,-142,0,12),
+            Position=UDim2.new(0,76,0,47),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=body,
@@ -7763,7 +7789,7 @@ function MIDNIGHT:MakeWindow(config)
         local roleBadge = Create("Frame",{
             Size=UDim2.new(0,0,0,18),
             AutomaticSize=Enum.AutomaticSize.X,
-            Position=UDim2.new(0,66,0,50),
+            Position=UDim2.new(0,76,0,58),
             BackgroundColor3=AccentTint(Theme.Accent,0.14),
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
@@ -7779,6 +7805,7 @@ function MIDNIGHT:MakeWindow(config)
             TextColor3=Theme.TextAccent,
             Size=UDim2.new(0,0,1,0),
             AutomaticSize=Enum.AutomaticSize.X,
+            TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+3,
             Parent=roleBadge,
@@ -7787,7 +7814,8 @@ function MIDNIGHT:MakeWindow(config)
         local stateBadge = Create("Frame",{
             Size=UDim2.new(0,0,0,18),
             AutomaticSize=Enum.AutomaticSize.X,
-            Position=UDim2.new(1,-82,0,50),
+            AnchorPoint=Vector2.new(1,0),
+            Position=UDim2.new(1,-8,0,58),
             BackgroundColor3=AccentTint(Theme.Success,0.12),
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+2,
@@ -7803,29 +7831,30 @@ function MIDNIGHT:MakeWindow(config)
             TextColor3=Theme.Success,
             Size=UDim2.new(0,0,1,0),
             AutomaticSize=Enum.AutomaticSize.X,
+            TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+3,
             Parent=stateBadge,
         })
 
         local statusCard = Create("Frame",{
-            Size=UDim2.new(1,0,0,60),
-            Position=UDim2.new(0,0,0,80),
+            Size=UDim2.new(1,0,0,62),
+            Position=UDim2.new(0,0,0,88),
             BackgroundColor3=Theme.ItemBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
-        ApplyCorner(statusCard,7)
-        local statusStroke = ApplyStroke(statusCard, Theme.Border, 1, 1)
+        ApplyCorner(statusCard,8)
+        local statusStroke = ApplyStroke(statusCard, Theme.Border, 1, 0.42)
         local statusHead = Create("TextLabel",{
             Text="LAST ACTION",
             Font=FontBold,
             TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-14,0,12),
-            Position=UDim2.new(0,7,0,7),
+            Size=UDim2.new(1,-16,0,12),
+            Position=UDim2.new(0,8,0,8),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=statusCard,
@@ -7838,31 +7867,31 @@ function MIDNIGHT:MakeWindow(config)
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-14,0,34),
-            Position=UDim2.new(0,7,0,21),
+            Size=UDim2.new(1,-16,0,34),
+            Position=UDim2.new(0,8,0,24),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=statusCard,
         })
 
         local commandCard = Create("Frame",{
-            Size=UDim2.new(1,0,0,56),
-            Position=UDim2.new(0,0,0,148),
+            Size=UDim2.new(1,0,0,58),
+            Position=UDim2.new(0,0,0,158),
             BackgroundColor3=Theme.ItemBg,
             BorderSizePixel=0,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
-        ApplyCorner(commandCard,7)
-        local commandStroke = ApplyStroke(commandCard, Theme.Border, 1, 1)
+        ApplyCorner(commandCard,8)
+        local commandStroke = ApplyStroke(commandCard, Theme.Border, 1, 0.42)
         local commandHead = Create("TextLabel",{
             Text="LAST COMMAND",
             Font=FontBold,
             TextSize=9,
             TextColor3=Theme.TextMuted,
             TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(1,-14,0,12),
-            Position=UDim2.new(0,7,0,7),
+            Size=UDim2.new(1,-16,0,12),
+            Position=UDim2.new(0,8,0,8),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=commandCard,
@@ -7875,8 +7904,8 @@ function MIDNIGHT:MakeWindow(config)
             TextWrapped=true,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextYAlignment=Enum.TextYAlignment.Top,
-            Size=UDim2.new(1,-14,0,30),
-            Position=UDim2.new(0,7,0,21),
+            Size=UDim2.new(1,-16,0,30),
+            Position=UDim2.new(0,8,0,24),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+2,
             Parent=commandCard,
@@ -7884,7 +7913,7 @@ function MIDNIGHT:MakeWindow(config)
 
         local confirmBar = Create("Frame",{
             Size=UDim2.new(1,0,0,30),
-            Position=UDim2.new(0,0,0,212),
+            Position=UDim2.new(0,0,0,224),
             BackgroundColor3=Theme.InputBg,
             BackgroundTransparency=1,
             BorderSizePixel=0,
@@ -7943,13 +7972,13 @@ function MIDNIGHT:MakeWindow(config)
 
         local buttonGrid = Create("Frame",{
             Size=UDim2.new(1,0,0,56),
-            Position=UDim2.new(0,0,0,250),
+            Position=UDim2.new(0,0,0,262),
             BackgroundTransparency=1,
             ZIndex=wf.ZIndex+1,
             Parent=body,
         })
         Create("UIGridLayout",{
-            CellSize=UDim2.new(0,math.floor((widgetW-24)/3),0,26),
+            CellSize=UDim2.new(0,math.floor((widgetW-36)/3),0,26),
             CellPadding=UDim2.new(0,4,0,4),
             FillDirectionMaxCells=3,
             SortOrder=Enum.SortOrder.LayoutOrder,
@@ -8120,6 +8149,10 @@ function MIDNIGHT:MakeWindow(config)
                 TweenObject(header,{BackgroundTransparency=0},0.18)
                 TweenObject(headerDivider,{BackgroundTransparency=0},0.18)
                 TweenObject(headerTitle,{TextTransparency=0},0.16)
+                if headerIcon then
+                    if headerIcon:IsA("TextLabel") then TweenObject(headerIcon,{TextTransparency=0},0.16)
+                    elseif headerIcon:IsA("ImageLabel") then TweenObject(headerIcon,{ImageTransparency=0},0.16) end
+                end
                 if shadow then TweenObject(shadow,{ImageTransparency=0.8},0.22) end
                 if tint then TweenObject(tint,{BackgroundTransparency=0.52},0.2) end
                 if closeStroke then TweenObject(closeStroke,{Transparency=0.4},0.16) end
@@ -8134,6 +8167,10 @@ function MIDNIGHT:MakeWindow(config)
                 TweenObject(header,{BackgroundTransparency=1},0.16)
                 TweenObject(headerDivider,{BackgroundTransparency=1},0.16)
                 TweenObject(headerTitle,{TextTransparency=1},0.14)
+                if headerIcon then
+                    if headerIcon:IsA("TextLabel") then TweenObject(headerIcon,{TextTransparency=1},0.14)
+                    elseif headerIcon:IsA("ImageLabel") then TweenObject(headerIcon,{ImageTransparency=1},0.14) end
+                end
                 if shadow then TweenObject(shadow,{ImageTransparency=1},0.16) end
                 if tint then TweenObject(tint,{BackgroundTransparency=1},0.16) end
                 if closeStroke then TweenObject(closeStroke,{Transparency=1},0.14) end
