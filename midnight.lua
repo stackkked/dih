@@ -4725,30 +4725,30 @@ function MIDNIGHT:CreateKeybindList(config)
     self:_InitScreenGui()
 
     local kf = Create("Frame",{
-        Name=_RandomGuiName(), Size=UDim2.new(0,216,0,32),
-        Position=UDim2.new(1,-224,0,38),
+        Name=_RandomGuiName(), Size=UDim2.new(0,196,0,30),
+        Position=UDim2.new(1,-204,0,38),
         BackgroundColor3=Theme.UtilityBg, BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
     StyleUtilityOverlay(kf, Theme.Accent)
 
-    local tb2 = StyleQuietHeader(kf, 30, ZIndex.WINDOW + 1)
-    local tc2 = Create("Frame",{Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,9,0,0),BackgroundTransparency=1,Parent=tb2})
-    local icon = CreateIconOrText(tc2,"key",nil,UDim2.new(0,13,0,13),UDim2.new(0,0,0.5,-6.5),Theme.UtilityAccent,FontBold,10)
+    local tb2 = StyleQuietHeader(kf, 28, ZIndex.WINDOW + 1)
+    local tc2 = Create("Frame",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,8,0,0),BackgroundTransparency=1,Parent=tb2})
+    local icon = CreateIconOrText(tc2,"key",nil,UDim2.new(0,12,0,12),UDim2.new(0,0,0.5,-6),Theme.UtilityAccent,FontBold,9)
     if icon and icon:IsA("TextLabel") then
         icon.TextXAlignment = Enum.TextXAlignment.Center
         icon.TextYAlignment = Enum.TextYAlignment.Center
     end
     Create("TextLabel",{
-        Text=title,Font=FontBold,TextSize=CompactStyle.UtilityTextSize,
-        TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-22,1,0),Position=UDim2.new(0,21,0,0),
+        Text=title,Font=FontBold,TextSize=CompactStyle.UtilityTextSize - 1,
+        TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-20,1,0),Position=UDim2.new(0,18,0,0),
         TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
         BackgroundTransparency=1,Parent=tc2
     })
 
-    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-32),Position=UDim2.new(0,0,0,32),BackgroundTransparency=1,Parent=kf})
-    Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,3),Parent=lc2})
-    ApplyPadding(lc2,5,5,7,7)
+    local lc2 = Create("Frame",{Size=UDim2.new(1,0,1,-30),Position=UDim2.new(0,0,0,30),BackgroundTransparency=1,Parent=kf})
+    Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=lc2})
+    ApplyPadding(lc2,4,4,6,6)
 
     self._KeybindListFrame   = kf
     self._KeybindListContent = lc2
@@ -4765,35 +4765,35 @@ function MIDNIGHT:CreateKeybindList(config)
                 count = count + 1
                 local isActive = kb._Active
                 local row = Create("Frame",{
-                    Size=UDim2.new(1,0,0,26),
+                    Size=UDim2.new(1,0,0,23),
                     BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.12) or Theme.Surface2,
                     BackgroundTransparency = isActive and 0.02 or 0.12,
                     BorderSizePixel=0, LayoutOrder=count, Parent=lc2,
                 })
                 ApplyCorner(row,6)
                 ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.48)
-                local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.58,0),Position=UDim2.new(0,0,0.21,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
+                local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.62,0),Position=UDim2.new(0,0,0.19,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
                 ApplyCorner(activeBar,2)
                 Create("TextLabel",{
-                    Text=kb._Name, Font=FontRegular, TextSize=CompactStyle.UtilityTextSize,
+                    Text=kb._Name, Font=FontRegular, TextSize=CompactStyle.UtilityTextSize - 1,
                     TextColor3=isActive and Theme.TextPrimary or Theme.TextSecondary,
                     TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
-                    Size=UDim2.new(1,-84,1,0), Position=UDim2.new(0,10,0,0),
+                    Size=UDim2.new(1,-74,1,0), Position=UDim2.new(0,8,0,0),
                     BackgroundTransparency=1, Parent=row,
                 })
                 local badge = Create("Frame",{
-                    Size=UDim2.new(0,0,0,18),
+                    Size=UDim2.new(0,0,0,16),
                     AutomaticSize=Enum.AutomaticSize.X,
-                    Position=UDim2.new(1,-6,0.5,0),
+                    Position=UDim2.new(1,-5,0.5,0),
                     AnchorPoint=Vector2.new(1,0.5),
                     BackgroundColor3=isActive and AccentTint(Theme.Accent,0.16) or Theme.InputBg,
                     BorderSizePixel=0, Parent=row,
                 })
                 ApplyCorner(badge,5)
                 ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.28 or 0.48)
-                ApplyPadding(badge,0,0,5,5)
+                ApplyPadding(badge,0,0,4,4)
                 Create("TextLabel",{
-                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=CompactStyle.UtilityMetaSize,
+                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=CompactStyle.UtilityMetaSize - 1,
                     TextColor3=isActive and Theme.TextAccent or Theme.TextMuted,
                     Size=UDim2.new(0,0,1,0), AutomaticSize=Enum.AutomaticSize.X,
                     TextYAlignment=Enum.TextYAlignment.Center,
@@ -4801,7 +4801,7 @@ function MIDNIGHT:CreateKeybindList(config)
                 })
             end
         end
-        kf.Size = UDim2.new(0,216,0,32+count*29+12)
+        kf.Size = UDim2.new(0,196,0,30+count*26+10)
     end
 
     self._RefreshKeybindList = refresh
