@@ -2035,6 +2035,7 @@ local MIDNIGHT = {
     -- Config system
     _ConfigKey              = nil,   -- current config save key
     _ConfigWidgets          = {},    -- {id -> {get=fn, set=fn, type=str}}
+    _ConfigUiBuilding       = false,  -- suppress auto-config flags while building config UI
 }
 
 function MIDNIGHT:_PlayLoadingIntro(config)
@@ -5219,6 +5220,43 @@ function MIDNIGHT:MakeWindow(config)
         tabConfig = tabConfig or {}
         local tabName = tabConfig.Name or "Tab"
         local tabIcon = tabConfig.Icon or ""
+        local cfgAutoCounts = {}
+
+        local function autoCfgFlag(kind, widgetName, explicit)
+            if explicit and explicit ~= "" then
+                return explicit
+            end
+            if not MIDNIGHT._ConfigKey or self._ConfigUiBuilding then
+                return nil
+            end
+
+            local function cleanPart(value, fallback)
+                value = tostring(value or fallback or "")
+                value = value:gsub("[%z\1-\31]", "")
+                value = value:gsub("[\\/:*?\"<>|]", "_")
+                value = value:gsub("%s+", "_")
+                value = value:gsub("_+", "_")
+                value = value:gsub("^_+", ""):gsub("_+$", "")
+                if value == "" then
+                    return fallback or "Widget"
+                end
+                return value
+            end
+
+            local base = table.concat({
+                cleanPart(self._WindowName or "MIDNIGHT", "MIDNIGHT"),
+                cleanPart(tabName, "Tab"),
+                cleanPart(kind or "widget", "widget"),
+                cleanPart(widgetName or "Widget", "Widget"),
+            }, "_")
+
+            local count = (cfgAutoCounts[base] or 0) + 1
+            cfgAutoCounts[base] = count
+            if count > 1 then
+                return base .. "_" .. count
+            end
+            return base
+        end
 
         self._TabCount = self._TabCount + 1
 
@@ -5533,7 +5571,7 @@ function MIDNIGHT:MakeWindow(config)
             local bindKey = ParseKeyCode(tc.Key or "Unknown")
             local bindMode = tc.Mode   or "Press"
             local isMenuKey = tc.IsMenuKey or false
-            local cfgFlag  = tc.Flag
+            local cfgFlag  = autoCfgFlag("toggle", nm, tc.Flag)
 
             local item = Create("Frame",{
                 Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,
@@ -5699,7 +5737,7 @@ function MIDNIGHT:MakeWindow(config)
             local step = sc.Step         or 1
             local dec  = sc.DecimalPlaces or (pct and 1 or 0)
             local cb   = sc.Callback
-            local cfgFlag = sc.Flag
+            local cfgFlag = autoCfgFlag("slider", nm, sc.Flag)
 
             if mx < mn then mn, mx = mx, mn end
             if mx == mn then mx = mn + 1 end
@@ -5875,7 +5913,7 @@ function MIDNIGHT:MakeWindow(config)
             kc = kc or {}
             local nm = kc.Name or "Keybind"; local key = ParseKeyCode(kc.Key or "Unknown")
             local mode = kc.Mode or "Press"; local cb = kc.Callback; local isMenuKey = kc.IsMenuKey or false
-            local cfgFlag = kc.Flag
+            local cfgFlag = autoCfgFlag("keybind", nm, kc.Flag)
 
             local item = Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,Active=true,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
@@ -6004,7 +6042,7 @@ function MIDNIGHT:MakeWindow(config)
             local def   = dc.Default or opts[1]
             local cb    = dc.Callback
             local multi = dc.Multi or false  -- NEW: multiselect mode
-            local cfgFlag = dc.Flag
+            local cfgFlag = autoCfgFlag("dropdown", nm, dc.Flag)
 
             -- Height: single=34, multi can show tags so also 34 base
             local item=Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
@@ -6124,7 +6162,7 @@ function MIDNIGHT:MakeWindow(config)
             local def   = dc.Default or opts[1]
             local cb    = dc.Callback
             local multi = dc.Multi or false  -- NEW: multiselect mode
-            local cfgFlag = dc.Flag
+            local cfgFlag = autoCfgFlag("dropdown", nm, dc.Flag)
 
             local sel    = multi and {} or def
             local selSet = {}  -- for multi
@@ -6394,7 +6432,7 @@ function MIDNIGHT:MakeWindow(config)
             local def = tbc.Default     or ""
             local cb  = tbc.Callback
             local multiLine = tbc.MultiLine or false
-            local cfgFlag = tbc.Flag
+            local cfgFlag = autoCfgFlag("textbox", nm, tbc.Flag)
 
             local h = multiLine and math.max(48, CompactStyle.TallRowHeight + 2) or CompactStyle.RowHeight
             local item=Create("Frame",{Size=UDim2.new(1,0,0,h),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
@@ -6469,7 +6507,7 @@ function MIDNIGHT:MakeWindow(config)
 
         --// ADDCOLORPICKER (popup)
         function td:AddColorPicker(cc)
-            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Theme.Accent; local cb=cc.Callback; local cfgFlag=cc.Flag
+            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Theme.Accent; local cb=cc.Callback; local cfgFlag=autoCfgFlag("color", nm, cc.Flag)
             local item=Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.RowHeight),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,0,0,10,10)
             ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
@@ -6504,7 +6542,7 @@ function MIDNIGHT:MakeWindow(config)
 
         --// ADDINLINECOLORPICKER (inline in tab, no popup)
         function td:AddInlineColorPicker(cc)
-            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Theme.Accent; local cb=cc.Callback; local cfgFlag=cc.Flag
+            cc = cc or {}; local nm=cc.Name or "Color"; local def=cc.Default or Theme.Accent; local cb=cc.Callback; local cfgFlag=autoCfgFlag("color", nm, cc.Flag)
 
             local presets = {
                 Color3.fromRGB(239,68,68),  Color3.fromRGB(245,158,11), Color3.fromRGB(234,179,8),
@@ -6633,7 +6671,7 @@ function MIDNIGHT:MakeWindow(config)
             local rowH      = tc.RowHeight  or 24
             local maxVis    = tc.MaxVisible or 8
             local searchable= tc.Searchable or false
-            local flag      = tc.Flag
+            local flag      = autoCfgFlag("table", nm, tc.Flag)
 
             local ncols = #cols
             local colWidths = {}  -- px overrides; nil = equal distribution
@@ -9508,6 +9546,9 @@ function MIDNIGHT:MakeWindow(config)
             MIDNIGHT:SetupConfig("default")
         end
 
+        local prevCfgUiBuilding = self._ConfigUiBuilding
+        self._ConfigUiBuilding = true
+
         local tab = self:MakeTab({
             Name = config.Name or "Configs",
             Icon = config.Icon or "folder",
@@ -9686,13 +9727,9 @@ function MIDNIGHT:MakeWindow(config)
             setStatus("no saved configs")
         end
 
-        return tab
-    end
+        self._ConfigUiBuilding = prevCfgUiBuilding
 
-    if MIDNIGHT._ConfigKey then
-        pcall(function()
-            wd:CreateConfigManager()
-        end)
+        return tab
     end
 
     return wd
