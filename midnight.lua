@@ -4885,6 +4885,7 @@ function MIDNIGHT:MakeWindow(config)
     local minWinW     = config.MinWidth  or 400
     local minWinH     = config.MinHeight or 200
     local wd
+    self._WindowName = self._WindowName or windowName
 
     self:_InitScreenGui()
     if not self._Initialized then
@@ -7558,6 +7559,11 @@ function MIDNIGHT:MakeWindow(config)
             if config and config.LogsWindow then
                 self._AdminPresenceWidget:SetLogsWindow(config.LogsWindow)
             end
+            if (not self._AdminPresenceWidget._Visible or not self._AdminPresenceWidget._Frame.Visible) and self._AdminPresenceWidget.Show then
+                pcall(function()
+                    self._AdminPresenceWidget:Show()
+                end)
+            end
             return self._AdminPresenceWidget
         end
 
@@ -8590,6 +8596,18 @@ function MIDNIGHT:MakeWindow(config)
                     end)
                 end
             end
+            if self._AdminPresenceWidget and self._AdminPresenceWidget.IsAlive and self._AdminPresenceWidget:IsAlive() then
+                if self._AdminPresenceWidget.SetLogsWindow then
+                    pcall(function()
+                        self._AdminPresenceWidget:SetLogsWindow(self._AdminLogsWindow)
+                    end)
+                end
+                if (not self._AdminPresenceWidget._Visible or not self._AdminPresenceWidget._Frame.Visible) and self._AdminPresenceWidget.Show then
+                    pcall(function()
+                        self._AdminPresenceWidget:Show()
+                    end)
+                end
+            end
             return self._AdminLogsWindow
         end
 
@@ -9476,6 +9494,207 @@ function MIDNIGHT:MakeWindow(config)
         return cw
     end
 
+    function wd:CreateConfigManager(config)
+        config = config or {}
+        if self._ConfigManagerTab and self._ConfigManagerTab._Page and self._ConfigManagerTab._Page.Parent then
+            local ui = self._ConfigManagerUI
+            if ui and ui.Refresh then
+                pcall(ui.Refresh)
+            end
+            return self._ConfigManagerTab
+        end
+
+        if not MIDNIGHT._ConfigKey then
+            MIDNIGHT:SetupConfig("default")
+        end
+
+        local tab = self:MakeTab({
+            Name = config.Name or "Configs",
+            Icon = config.Icon or "folder",
+        })
+        self._ConfigManagerTab = tab
+
+        local storagePath = _CfgRootPath(MIDNIGHT)
+        tab:AddSection({Name = "Config Manager"})
+        local pathLabel = tab:AddLabel({Name = "Storage: " .. storagePath})
+        local statusLabel = tab:AddLabel({Name = "Status: idle"})
+        tab:AddSeparator()
+
+        local nameBox = tab:AddTextBox({
+            Name = "Config Name",
+            Placeholder = "Enter config name",
+            Default = MIDNIGHT._ConfigKey or "",
+        })
+        local savedDropdown = tab:AddDropdown({
+            Name = "Saved Configs",
+            Options = {},
+            Default = nil,
+            Callback = function(value)
+                if type(value) == "string" and value ~= "" then
+                    nameBox:Set(value)
+                end
+            end,
+        })
+
+        local function setStatus(message)
+            if statusLabel and statusLabel.Set then
+                statusLabel:Set("Status: " .. tostring(message or "idle"))
+            end
+        end
+
+        local function resolveConfigName(preferSelected)
+            local typed = nameBox and nameBox.Get and _CfgSanitizeName(nameBox:Get(), "") or ""
+            if typed ~= "" then
+                return typed
+            end
+            if preferSelected and savedDropdown and type(savedDropdown._Value) == "string" then
+                local selected = _CfgSanitizeName(savedDropdown._Value, "")
+                if selected ~= "" then
+                    return selected
+                end
+            end
+            return _CfgSanitizeName(MIDNIGHT._ConfigKey or "default", "default")
+        end
+
+        local function refreshList(selectName)
+            local names = _CfgListNames(MIDNIGHT)
+            if #names == 0 then
+                savedDropdown:SetOptions({})
+                savedDropdown:Set(nil)
+                if nameBox and nameBox.Set then
+                    nameBox:Set("")
+                end
+                return names
+            end
+            savedDropdown:SetOptions(names)
+            local target = _CfgSanitizeName(selectName or (nameBox and nameBox.Get and nameBox:Get()) or "", "")
+            if target ~= "" and table.find(names, target) then
+                savedDropdown:Set(target)
+                if nameBox and nameBox.Set then
+                    nameBox:Set(target)
+                end
+            else
+                savedDropdown:Set(names[1])
+                if nameBox and nameBox.Set then
+                    nameBox:Set(names[1])
+                end
+            end
+            return names
+        end
+
+        local function saveConfig(overwrite)
+            local requested = resolveConfigName(false)
+            if requested == "" then
+                setStatus("enter a name first")
+                return
+            end
+            local ok, actualName = MIDNIGHT:SaveConfig(requested, overwrite)
+            if ok then
+                actualName = actualName or requested
+                if nameBox and nameBox.Set then
+                    nameBox:Set(actualName)
+                end
+                refreshList(actualName)
+                setStatus((overwrite and "rewrote " or "saved ") .. actualName)
+            else
+                setStatus("save failed")
+            end
+        end
+
+        local function loadConfig()
+            local targetName = resolveConfigName(true)
+            if targetName == "" then
+                setStatus("choose a config")
+                return
+            end
+            local ok = MIDNIGHT:LoadConfig(targetName)
+            if ok then
+                if nameBox and nameBox.Set then
+                    nameBox:Set(targetName)
+                end
+                refreshList(targetName)
+                setStatus("loaded " .. targetName)
+            else
+                setStatus("load failed")
+            end
+        end
+
+        local function deleteConfig()
+            local targetName = resolveConfigName(true)
+            if targetName == "" then
+                setStatus("choose a config")
+                return
+            end
+            local ok = MIDNIGHT:ResetConfig(targetName)
+            if ok then
+                setStatus("deleted " .. targetName)
+                local names = refreshList("")
+                if #names == 0 and nameBox and nameBox.Set then
+                    nameBox:Set("")
+                end
+            else
+                setStatus("delete failed")
+            end
+        end
+
+        self._ConfigManagerUI = {
+            Path = pathLabel,
+            Status = statusLabel,
+            NameBox = nameBox,
+            Dropdown = savedDropdown,
+            Refresh = function()
+                refreshList(resolveConfigName(true))
+            end,
+        }
+
+        tab:AddButton({
+            Name = "Refresh Configs",
+            Callback = function()
+                local names = refreshList(resolveConfigName(true))
+                setStatus(#names > 0 and ("found " .. tostring(#names) .. " configs") or "no saved configs")
+            end,
+        })
+        tab:AddButton({
+            Name = "Save New Config",
+            Callback = function()
+                saveConfig(false)
+            end,
+        })
+        tab:AddButton({
+            Name = "Rewrite Config",
+            Callback = function()
+                saveConfig(true)
+            end,
+        })
+        tab:AddButton({
+            Name = "Load Config",
+            Callback = function()
+                loadConfig()
+            end,
+        })
+        tab:AddButton({
+            Name = "Delete Config",
+            Callback = function()
+                deleteConfig()
+            end,
+        })
+
+        local storedNames = refreshList(resolveConfigName(true))
+        if #storedNames > 0 then
+            setStatus("ready")
+        else
+            setStatus("no saved configs")
+        end
+
+        return tab
+    end
+
+    if MIDNIGHT._ConfigKey then
+        pcall(function()
+            wd:CreateConfigManager()
+        end)
+    end
+
     return wd
 end
 
@@ -9537,20 +9756,121 @@ end
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// CONFIG SYSTEM  (v7.1)
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
---[[
+--[[ 
     API:
-      MIDNIGHT:SetupConfig(key)           -- set save-file key (call once, before MakeWindow)
-      MIDNIGHT:SaveConfig()               -- write current widget values to file
-      MIDNIGHT:LoadConfig()               -- read file and push values back to widgets
-      MIDNIGHT:ResetConfig()              -- delete saved file
+      MIDNIGHT:SetupConfig(key)           -- set default config name (call once, before MakeWindow)
+      MIDNIGHT:SaveConfig(name, overwrite) -- write current widget values to disk
+      MIDNIGHT:LoadConfig(name)           -- read file and push values back to widgets
+      MIDNIGHT:ResetConfig(name)          -- delete saved file
 
     Each widget that participates in config must pass a Flag = "unique_string" in its
     config table. Supported widget types: Toggle, Slider, Dropdown, InlineDropdown,
     TextBox, ColorPicker, InlineColorPicker, Keybind, Table.
 
+    Files are stored in:
+      workspace/MidnightLib/<hub name>/configs/<config name>.txt
+
     Internal registration:
       MIDNIGHT:_RegCfgWidget(flag, getter, setter, wtype)
 ]]
+
+local function _CfgSanitizeName(value, fallback)
+    local name = tostring(value or fallback or "")
+    name = name:gsub("[%z\1-\31]", "")
+    name = name:gsub("[\\/:*?\"<>|]", "_")
+    name = name:gsub("%s+", " ")
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then
+        return fallback or "default"
+    end
+    return name
+end
+
+local function _CfgGetHubName(midnight)
+    return _CfgSanitizeName(midnight and midnight._WindowName or "MIDNIGHT", "MIDNIGHT")
+end
+
+local function _CfgRootPath(midnight)
+    return "workspace/MidnightLib/" .. _CfgGetHubName(midnight) .. "/configs"
+end
+
+local function _CfgEnsureRootPath(midnight)
+    local root = _CfgRootPath(midnight)
+    if type(makefolder) == "function" then
+        local current = ""
+        for segment in root:gmatch("[^/]+") do
+            current = current == "" and segment or (current .. "/" .. segment)
+            pcall(function()
+                makefolder(current)
+            end)
+        end
+    end
+    return root
+end
+
+local function _CfgAttrKey(midnight, name)
+    return "_cfg_" .. _CfgGetHubName(midnight) .. "_" .. _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
+end
+
+local function _CfgFilePath(midnight, name)
+    local cfgName = _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
+    return _CfgEnsureRootPath(midnight) .. "/" .. cfgName .. ".txt", cfgName
+end
+
+local function _CfgLegacyPath(midnight, name)
+    local cfgName = _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
+    return "midnight_cfg_" .. cfgName .. ".txt", cfgName
+end
+
+local function _CfgFileExists(path)
+    if type(readfile) ~= "function" then
+        return false
+    end
+    local ok = pcall(function()
+        readfile(path)
+    end)
+    return ok
+end
+
+local function _CfgUniqueFilePath(midnight, name)
+    local root = _CfgEnsureRootPath(midnight)
+    local baseName = _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
+    local candidate = root .. "/" .. baseName .. ".txt"
+    if not _CfgFileExists(candidate) then
+        return candidate, baseName
+    end
+    local index = 2
+    while true do
+        local suffixed = baseName .. "_" .. index
+        candidate = root .. "/" .. suffixed .. ".txt"
+        if not _CfgFileExists(candidate) then
+            return candidate, suffixed
+        end
+        index = index + 1
+    end
+end
+
+local function _CfgListNames(midnight)
+    local root = _CfgEnsureRootPath(midnight)
+    local names = {}
+    if type(listfiles) == "function" then
+        local ok, files = pcall(function()
+            return listfiles(root)
+        end)
+        if ok and type(files) == "table" then
+            for _, path in ipairs(files) do
+                local stem = tostring(path):match("([^/\\]+)%.txt$")
+                if stem and stem ~= "" then
+                    names[#names + 1] = stem
+                end
+            end
+        end
+    end
+    table.sort(names, function(a, b)
+        return tostring(a):lower() < tostring(b):lower()
+    end)
+    return names
+end
 
 function MIDNIGHT:SetupConfig(key)
     assert(type(key) == "string" and #key > 0, "SetupConfig: key must be a non-empty string")
@@ -9643,13 +9963,23 @@ local function _cfgDeserialize(raw, wtype)
     return raw
 end
 
-function MIDNIGHT:SaveConfig()
+function MIDNIGHT:SaveConfig(name, overwrite)
     if not self._ConfigKey then
         warn("MIDNIGHT:SaveConfig() called without SetupConfig(key)")
         return false
     end
+    if type(name) == "boolean" and overwrite == nil then
+        overwrite = name
+        name = nil
+    end
+    local targetPath, actualName
+    if overwrite == false then
+        targetPath, actualName = _CfgUniqueFilePath(self, name)
+    else
+        targetPath, actualName = _CfgFilePath(self, name)
+    end
     local lines = {}
-    for flag, w in pairs(self._ConfigWidgets) do
+    for flag, w in pairs(self._ConfigWidgets or {}) do
         local ok, val = pcall(w.get)
         if ok and val ~= nil then
             local raw = _cfgSerialize(val, w.wtype)
@@ -9658,14 +9988,13 @@ function MIDNIGHT:SaveConfig()
         end
     end
     local content = table.concat(lines, "\n")
-    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
     local ok, err = pcall(function()
         if writefile then
-            writefile(fname, content)
+            writefile(targetPath, content)
         else
             -- Fallback: store in hidden attribute on ScreenGui (session-only)
             if self._ScreenGui then
-                self._ScreenGui:SetAttribute("_cfg_"..self._ConfigKey, content)
+                self._ScreenGui:SetAttribute(_CfgAttrKey(self, actualName), content)
             end
         end
     end)
@@ -9673,26 +10002,34 @@ function MIDNIGHT:SaveConfig()
         warn("MIDNIGHT:SaveConfig() write error: "..tostring(err))
         return false
     end
-    return true
+    return true, actualName, targetPath
 end
 
-function MIDNIGHT:LoadConfig()
+function MIDNIGHT:LoadConfig(name)
     if not self._ConfigKey then
         warn("MIDNIGHT:LoadConfig() called without SetupConfig(key)")
         return false
     end
-    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
+    local fname, actualName = _CfgFilePath(self, name)
+    local legacyName = _CfgLegacyPath(self, actualName)
     local content = nil
     pcall(function()
         if readfile then
             content = readfile(fname)
+            if (not content or content == "") and legacyName then
+                local legacyContent = readfile(legacyName)
+                if legacyContent and legacyContent ~= "" then
+                    content = legacyContent
+                end
+            end
         elseif self._ScreenGui then
-            content = self._ScreenGui:GetAttribute("_cfg_"..self._ConfigKey)
+            content = self._ScreenGui:GetAttribute(_CfgAttrKey(self, actualName))
         end
     end)
     if not content or content == "" then return false end
 
     -- Parse key=value lines (value may contain '=')
+    self._ConfigWidgets = self._ConfigWidgets or {}
     for line in (content.."\n"):gmatch("([^\n]*)\n") do
         if line ~= "" then
             local flag, raw = line:match("^([^=]+)=(.*)")
@@ -9705,16 +10042,21 @@ function MIDNIGHT:LoadConfig()
             end
         end
     end
-    return true
+    return true, actualName
 end
 
-function MIDNIGHT:ResetConfig()
+function MIDNIGHT:ResetConfig(name)
     if not self._ConfigKey then return false end
-    local fname = "midnight_cfg_"..self._ConfigKey..".txt"
+    local fname, actualName = _CfgFilePath(self, name)
+    local legacyName = _CfgLegacyPath(self, actualName)
     pcall(function()
         if delfile then delfile(fname)
-        elseif self._ScreenGui then
-            self._ScreenGui:SetAttribute("_cfg_"..self._ConfigKey, nil)
+            pcall(function()
+                delfile(legacyName)
+            end)
+        end
+        if self._ScreenGui then
+            self._ScreenGui:SetAttribute(_CfgAttrKey(self, actualName), nil)
         end
     end)
     return true
