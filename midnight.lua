@@ -4725,6 +4725,14 @@ function MIDNIGHT:CreateKeybindList(config)
     local title = config.Name or "Keybinds"
     self:_InitScreenGui()
 
+    if self._KeybindListFrame and self._KeybindListFrame.Parent then
+        self._KeybindListFrame.Visible = true
+        if self._RefreshKeybindList then
+            pcall(self._RefreshKeybindList)
+        end
+        return self._KeybindListFrame
+    end
+
     local kf = Create("Frame",{
         Name=_RandomGuiName(), Size=UDim2.new(0,196,0,30),
         Position=UDim2.new(1,-204,0,38),
@@ -4801,6 +4809,31 @@ function MIDNIGHT:CreateKeybindList(config)
                     BackgroundTransparency=1, Parent=badge,
                 })
             end
+        end
+        if count == 0 then
+            local emptyRow = Create("Frame",{
+                Size = UDim2.new(1, 0, 0, 24),
+                BackgroundColor3 = Theme.Surface2,
+                BackgroundTransparency = 0.12,
+                BorderSizePixel = 0,
+                LayoutOrder = 1,
+                Parent = lc2,
+            })
+            ApplyCorner(emptyRow, 6)
+            ApplyStroke(emptyRow, Theme.BorderSoft, 1, 0.48)
+            Create("TextLabel",{
+                Text = "No keybinds registered",
+                Font = FontRegular,
+                TextSize = CompactStyle.UtilityMetaSize - 1,
+                TextColor3 = Theme.TextMuted,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                TextYAlignment = Enum.TextYAlignment.Center,
+                Size = UDim2.new(1, -12, 1, 0),
+                Position = UDim2.new(0, 6, 0, 0),
+                BackgroundTransparency = 1,
+                Parent = emptyRow,
+            })
+            count = 1
         end
         kf.Size = UDim2.new(0,196,0,30+count*26+10)
     end
@@ -9555,7 +9588,41 @@ function MIDNIGHT:MakeWindow(config)
         })
         self._ConfigManagerTab = tab
 
-        local storagePath = _CfgRootPath(MIDNIGHT)
+        local cfgRootPath = MIDNIGHT._CfgRootPath
+        if type(cfgRootPath) ~= "function" then
+            cfgRootPath = function(midnight)
+                local hubName = tostring(midnight and midnight._WindowName or "MIDNIGHT")
+                hubName = hubName:gsub("[%z\1-\31]", "")
+                hubName = hubName:gsub("[\\/:*?\"<>|]", "_")
+                hubName = hubName:gsub("%s+", "_")
+                hubName = hubName:gsub("_+", "_")
+                hubName = hubName:gsub("^_+", ""):gsub("_+$", "")
+                if hubName == "" then hubName = "MIDNIGHT" end
+                return "workspace/MidnightLib/" .. hubName .. "/configs"
+            end
+        end
+        local cfgSanitize = MIDNIGHT._CfgSanitizeName
+        if type(cfgSanitize) ~= "function" then
+            cfgSanitize = function(value, fallback)
+                local name = tostring(value or fallback or "")
+                name = name:gsub("[%z\1-\31]", "")
+                name = name:gsub("[\\/:*?\"<>|]", "_")
+                name = name:gsub("%s+", " ")
+                name = name:gsub("^%s+", ""):gsub("%s+$", "")
+                if name == "" then
+                    return fallback or "default"
+                end
+                return name
+            end
+        end
+        local cfgListNames = MIDNIGHT._CfgListNames
+        if type(cfgListNames) ~= "function" then
+            cfgListNames = function()
+                return {}
+            end
+        end
+
+        local storagePath = cfgRootPath(MIDNIGHT)
         tab:AddSection({Name = "Config Manager"})
         local pathLabel = tab:AddLabel({Name = "Storage: " .. storagePath})
         local statusLabel = tab:AddLabel({Name = "Status: idle"})
@@ -9584,21 +9651,21 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local function resolveConfigName(preferSelected)
-            local typed = nameBox and nameBox.Get and _CfgSanitizeName(nameBox:Get(), "") or ""
+            local typed = nameBox and nameBox.Get and cfgSanitize(nameBox:Get(), "") or ""
             if typed ~= "" then
                 return typed
             end
             if preferSelected and savedDropdown and type(savedDropdown._Value) == "string" then
-                local selected = _CfgSanitizeName(savedDropdown._Value, "")
+                local selected = cfgSanitize(savedDropdown._Value, "")
                 if selected ~= "" then
                     return selected
                 end
             end
-            return _CfgSanitizeName(MIDNIGHT._ConfigKey or "default", "default")
+            return cfgSanitize(MIDNIGHT._ConfigKey or "default", "default")
         end
 
         local function refreshList(selectName)
-            local names = _CfgListNames(MIDNIGHT)
+            local names = cfgListNames(MIDNIGHT)
             if #names == 0 then
                 savedDropdown:SetOptions({})
                 savedDropdown:Set(nil)
@@ -9608,7 +9675,7 @@ function MIDNIGHT:MakeWindow(config)
                 return names
             end
             savedDropdown:SetOptions(names)
-            local target = _CfgSanitizeName(selectName or (nameBox and nameBox.Get and nameBox:Get()) or "", "")
+            local target = cfgSanitize(selectName or (nameBox and nameBox.Get and nameBox:Get()) or "", "")
             if target ~= "" and table.find(names, target) then
                 savedDropdown:Set(target)
                 if nameBox and nameBox.Set then
@@ -9908,6 +9975,17 @@ local function _CfgListNames(midnight)
     end)
     return names
 end
+
+MIDNIGHT._CfgSanitizeName = _CfgSanitizeName
+MIDNIGHT._CfgGetHubName = _CfgGetHubName
+MIDNIGHT._CfgRootPath = _CfgRootPath
+MIDNIGHT._CfgEnsureRootPath = _CfgEnsureRootPath
+MIDNIGHT._CfgAttrKey = _CfgAttrKey
+MIDNIGHT._CfgFilePath = _CfgFilePath
+MIDNIGHT._CfgLegacyPath = _CfgLegacyPath
+MIDNIGHT._CfgFileExists = _CfgFileExists
+MIDNIGHT._CfgUniqueFilePath = _CfgUniqueFilePath
+MIDNIGHT._CfgListNames = _CfgListNames
 
 function MIDNIGHT:SetupConfig(key)
     assert(type(key) == "string" and #key > 0, "SetupConfig: key must be a non-empty string")
