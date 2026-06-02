@@ -9633,13 +9633,14 @@ function MIDNIGHT:MakeWindow(config)
             Placeholder = "Enter config name",
             Default = MIDNIGHT._ConfigKey or "",
         })
+        local selectedConfigName = nil
         local savedDropdown = tab:AddDropdown({
             Name = "Saved Configs",
             Options = {},
             Default = nil,
             Callback = function(value)
                 if type(value) == "string" and value ~= "" then
-                    nameBox:Set(value)
+                    selectedConfigName = value
                 end
             end,
         })
@@ -9650,18 +9651,20 @@ function MIDNIGHT:MakeWindow(config)
             end
         end
 
-        local function resolveConfigName(preferSelected)
+        local function resolveSaveConfigName()
             local typed = nameBox and nameBox.Get and cfgSanitize(nameBox:Get(), "") or ""
             if typed ~= "" then
                 return typed
             end
-            if preferSelected and savedDropdown and type(savedDropdown._Value) == "string" then
-                local selected = cfgSanitize(savedDropdown._Value, "")
-                if selected ~= "" then
-                    return selected
-                end
-            end
             return cfgSanitize(MIDNIGHT._ConfigKey or "default", "default")
+        end
+
+        local function resolveSelectedConfigName()
+            local selected = cfgSanitize(selectedConfigName or (savedDropdown and savedDropdown._Value) or "", "")
+            if selected ~= "" then
+                return selected
+            end
+            return ""
         end
 
         local function refreshList(selectName)
@@ -9669,31 +9672,25 @@ function MIDNIGHT:MakeWindow(config)
             if #names == 0 then
                 savedDropdown:SetOptions({})
                 savedDropdown:Set(nil)
-                if nameBox and nameBox.Set then
-                    nameBox:Set("")
-                end
+                selectedConfigName = nil
                 return names
             end
             savedDropdown:SetOptions(names)
-            local target = cfgSanitize(selectName or (nameBox and nameBox.Get and nameBox:Get()) or "", "")
+            local target = cfgSanitize(selectName or selectedConfigName or (savedDropdown and savedDropdown._Value) or "", "")
             if target ~= "" and table.find(names, target) then
                 savedDropdown:Set(target)
-                if nameBox and nameBox.Set then
-                    nameBox:Set(target)
-                end
+                selectedConfigName = target
             else
                 savedDropdown:Set(names[1])
-                if nameBox and nameBox.Set then
-                    nameBox:Set(names[1])
-                end
+                selectedConfigName = names[1]
             end
             return names
         end
 
         local function saveConfig(overwrite)
-            local requested = resolveConfigName(false)
+            local requested = overwrite and resolveSelectedConfigName() or resolveSaveConfigName()
             if requested == "" then
-                setStatus("enter a name first")
+                setStatus(overwrite and "choose a config" or "enter a name first")
                 return
             end
             local ok, actualName = MIDNIGHT:SaveConfig(requested, overwrite)
@@ -9710,16 +9707,13 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local function loadConfig()
-            local targetName = resolveConfigName(true)
+            local targetName = resolveSelectedConfigName()
             if targetName == "" then
                 setStatus("choose a config")
                 return
             end
             local ok = MIDNIGHT:LoadConfig(targetName)
             if ok then
-                if nameBox and nameBox.Set then
-                    nameBox:Set(targetName)
-                end
                 refreshList(targetName)
                 setStatus("loaded " .. targetName)
             else
@@ -9728,7 +9722,7 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local function deleteConfig()
-            local targetName = resolveConfigName(true)
+            local targetName = resolveSelectedConfigName()
             if targetName == "" then
                 setStatus("choose a config")
                 return
@@ -9737,8 +9731,8 @@ function MIDNIGHT:MakeWindow(config)
             if ok then
                 setStatus("deleted " .. targetName)
                 local names = refreshList("")
-                if #names == 0 and nameBox and nameBox.Set then
-                    nameBox:Set("")
+                if #names == 0 then
+                    selectedConfigName = nil
                 end
             else
                 setStatus("delete failed")
@@ -9751,14 +9745,14 @@ function MIDNIGHT:MakeWindow(config)
             NameBox = nameBox,
             Dropdown = savedDropdown,
             Refresh = function()
-                refreshList(resolveConfigName(true))
+                refreshList(resolveSelectedConfigName())
             end,
         }
 
         tab:AddButton({
             Name = "Refresh Configs",
             Callback = function()
-                local names = refreshList(resolveConfigName(true))
+                local names = refreshList(resolveSelectedConfigName())
                 setStatus(#names > 0 and ("found " .. tostring(#names) .. " configs") or "no saved configs")
             end,
         })
@@ -9787,7 +9781,7 @@ function MIDNIGHT:MakeWindow(config)
             end,
         })
 
-        local storedNames = refreshList(resolveConfigName(true))
+        local storedNames = refreshList(resolveSelectedConfigName())
         if #storedNames > 0 then
             setStatus("ready")
         else
