@@ -2876,7 +2876,7 @@ function MIDNIGHT:_OpenDropdown(config)
         -- Click with ripple effect
         btn.MouseButton1Click:Connect(function()
             TweenObject(ob,{BackgroundColor3=AccentTint(Theme.Accent,0.16)},0.05)
-            task.delay(0.06,function()
+            task.defer(function()
                 if isMulti then
                     multiSel[opt] = not multiSel[opt]
                     local nowSel = multiSel[opt]
@@ -7051,6 +7051,7 @@ function MIDNIGHT:MakeWindow(config)
             _OnDestroyCallbacks={},
         }
         local destroyCallbacksRun = false
+        local visibilityToken = 0
         local function runDestroyCallbacks()
             if destroyCallbacksRun then return end
             destroyCallbacksRun = true
@@ -7066,23 +7067,34 @@ function MIDNIGHT:MakeWindow(config)
 
         function fData:Show()
             if self._Destroyed or not self._Frame then return end
+            visibilityToken = visibilityToken + 1
             self._Visible = true
-            if not fw.Visible then
+            if not fw.Visible or (fw.Size.X.Offset == 0 and fw.Size.Y.Offset == 0) then
                 fw.Size = UDim2.new(0, 0, 0, 0)
             end
             fw.Visible = true
             fw.BackgroundTransparency = 1
             TweenMotion(fw,{Size=UDim2.new(0,curFW,0,curFH)},"Panel")
             TweenMotion(fw,{BackgroundTransparency=0},"Soft")
+            task.defer(function()
+                if self._Destroyed or self._Frame ~= fw then return end
+                fw.Visible = true
+            end)
         end
 
         function fData:Hide()
             if self._Destroyed or not self._Frame then return end
             if not self._Visible and not fw.Visible then return end
+            visibilityToken = visibilityToken + 1
+            local token = visibilityToken
             self._Visible = false
             TweenObject(fw,{Size=UDim2.new(0,0,0,0)},Motion.OverlayOut.Duration,Motion.OverlayOut.Style,Motion.OverlayOut.Direction)
             TweenMotion(fw,{BackgroundTransparency=1},"OverlayOut")
-            task.delay(0.25,function() if not self._Visible and fw.Parent then fw.Visible=false end end)
+            task.delay(0.25,function()
+                if self._Destroyed or self._Frame ~= fw then return end
+                if token ~= visibilityToken then return end
+                if not self._Visible and fw.Parent then fw.Visible=false end
+            end)
         end
 
         function fData:OnDestroy(cb)
@@ -7633,6 +7645,12 @@ function MIDNIGHT:MakeWindow(config)
             if (not self._AdminPresenceWidget._Visible or not self._AdminPresenceWidget._Frame.Visible) and self._AdminPresenceWidget.Show then
                 pcall(function()
                     self._AdminPresenceWidget:Show()
+                end)
+                task.defer(function()
+                    if self._AdminPresenceWidget and self._AdminPresenceWidget.IsAlive and self._AdminPresenceWidget:IsAlive() and self._AdminPresenceWidget._Frame and not self._AdminPresenceWidget._Frame.Visible then
+                        self._AdminPresenceWidget._Visible = true
+                        self._AdminPresenceWidget._Frame.Visible = true
+                    end
                 end)
             end
             return self._AdminPresenceWidget
@@ -8666,6 +8684,12 @@ function MIDNIGHT:MakeWindow(config)
                         self._AdminLogsWindow:Toggle()
                     end)
                 end
+                task.defer(function()
+                    if self._AdminLogsWindow and self._AdminLogsWindow.IsAlive and self._AdminLogsWindow:IsAlive() and self._AdminLogsWindow._Frame and not self._AdminLogsWindow._Frame.Visible then
+                        self._AdminLogsWindow._Visible = true
+                        self._AdminLogsWindow._Frame.Visible = true
+                    end
+                end)
             end
             if self._AdminPresenceWidget and self._AdminPresenceWidget.IsAlive and self._AdminPresenceWidget:IsAlive() then
                 if self._AdminPresenceWidget.SetLogsWindow then
@@ -9509,6 +9533,12 @@ function MIDNIGHT:MakeWindow(config)
                         self._ChatLoggerWindow:Toggle()
                     end)
                 end
+                task.defer(function()
+                    if self._ChatLoggerWindow and self._ChatLoggerWindow.IsAlive and self._ChatLoggerWindow:IsAlive() and self._ChatLoggerWindow._Frame and not self._ChatLoggerWindow._Frame.Visible then
+                        self._ChatLoggerWindow._Visible = true
+                        self._ChatLoggerWindow._Frame.Visible = true
+                    end
+                end)
             end
             return self._ChatLoggerWindow
         end
