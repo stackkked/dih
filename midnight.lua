@@ -6479,6 +6479,7 @@ function MIDNIGHT:MakeWindow(config)
             local def = tbc.Default     or ""
             local cb  = tbc.Callback
             local multiLine = tbc.MultiLine or false
+            local submitOnEnter = tbc.SubmitOnEnter or false
             local cfgFlag = autoCfgFlag("textbox", nm, tbc.Flag)
 
             local h = multiLine and math.max(48, CompactStyle.TallRowHeight + 2) or CompactStyle.RowHeight
@@ -6529,10 +6530,12 @@ function MIDNIGHT:MakeWindow(config)
                 TweenObject(boxStroke,{Color=Theme.Accent},0.15)
                 TweenObject(box,{BackgroundColor3=Theme.InputHoverBg},0.15)
             end)
-            box.FocusLost:Connect(function()
+            box.FocusLost:Connect(function(enterPressed)
                 TweenObject(boxStroke,{Color=Theme.Border},0.15)
                 TweenObject(box,{BackgroundColor3=Theme.InputBg},0.15)
-                if cb then cb(box.Text) end
+                if cb and (not submitOnEnter or enterPressed) then
+                    cb(box.Text, enterPressed)
+                end
             end)
 
             local tdata = {_Box=box, Set=function(_,t) box.Text=t end, Get=function() return box.Text end}
@@ -9543,6 +9546,143 @@ function MIDNIGHT:MakeWindow(config)
 
     end
 
+    function wd:AddFeedbackSection(tab, feedback)
+        if not tab then return nil end
+        feedback = feedback or {}
+
+        local sectionName = feedback.SectionName or "Feedback"
+        local headerText = feedback.Title or "Issues & Suggestions"
+        local bodyText = feedback.Text or "Leave your feedback about the script. What should we add / fix ?"
+        local placeholder = feedback.Placeholder or "Type feedback and press Enter..."
+        local inputName = feedback.InputName or "Feedback"
+        local webhook = tostring(feedback.Webhook or "")
+        local successText = feedback.SuccessText or "We got your FeedBack!"
+        local topic = feedback.Topic or headerText
+
+        tab:AddSection({ Name = sectionName })
+        tab:AddLabel({ Name = headerText })
+        tab:AddLabel({ Name = bodyText })
+
+        local statusWidget
+        local feedbackBox
+        local sending = false
+
+        local function hideStatus()
+            if not statusWidget or not statusWidget._Label then
+                return
+            end
+            statusWidget._Label.Visible = false
+        end
+
+        local function showStatus(text)
+            if not statusWidget or not statusWidget._Label then
+                return
+            end
+            statusWidget._Label.Text = text
+            statusWidget._Label.TextColor3 = Color3.fromRGB(74, 222, 128)
+            statusWidget._Label.TextTransparency = 0
+            statusWidget._Label.Visible = true
+
+            task.delay(2, function()
+                if statusWidget and statusWidget._Label and statusWidget._Label.Text == text then
+                    hideStatus()
+                end
+            end)
+        end
+
+        local function sendFeedback(rawText)
+            if sending then
+                return
+            end
+
+            local text = tostring(rawText or ""):gsub("^%s+", ""):gsub("%s+$", "")
+            if text == "" then
+                return
+            end
+            if #text > 1400 then
+                text = text:sub(1, 1399) .. "…"
+            end
+
+            if webhook == "" then
+                MIDNIGHT:Notify({
+                    Title = "Feedback",
+                    Content = "Webhook is missing.",
+                    Type = "error",
+                    Duration = 3,
+                })
+                return
+            end
+
+            local localPlayer = Players.LocalPlayer
+            local displayName = localPlayer and localPlayer.DisplayName or "Unknown"
+            local username = localPlayer and localPlayer.Name or "Unknown"
+            local userId = localPlayer and localPlayer.UserId or 0
+
+            sending = true
+            local ok = false
+            local err = nil
+            local payload = {
+                username = "Midnight Feedback",
+                content = string.format(
+                    "**%s**\n%s | %s\n`%d`\n%s",
+                    topic,
+                    displayName,
+                    username,
+                    userId,
+                    text
+                ),
+                allowed_mentions = { parse = {} },
+            }
+
+            ok, err = MIDNIGHT:_PostWebhook(webhook, payload)
+
+            if ok then
+                if feedbackBox and feedbackBox._Box then
+                    feedbackBox._Box.Text = ""
+                end
+                showStatus(successText)
+            else
+                MIDNIGHT:Notify({
+                    Title = "Feedback",
+                    Content = "Failed to send feedback.",
+                    Type = "error",
+                    Duration = 4,
+                })
+                warn("[Feedback] webhook send failed:", err)
+            end
+
+            task.delay(0.5, function()
+                sending = false
+            end)
+        end
+
+        feedbackBox = tab:AddTextBox({
+            Name = inputName,
+            Placeholder = placeholder,
+            Default = "",
+            MultiLine = false,
+            SubmitOnEnter = true,
+            Callback = function(text)
+                sendFeedback(text)
+            end,
+        })
+
+        statusWidget = tab:AddLabel({ Name = " " })
+        if statusWidget and statusWidget._Label then
+            statusWidget._Label.Visible = false
+            statusWidget._Label.Text = ""
+        end
+
+        return {
+            _Input = feedbackBox,
+            _Status = statusWidget,
+            Send = sendFeedback,
+            SetWebhook = function(_, newWebhook)
+                webhook = tostring(newWebhook or "")
+            end,
+        }
+    end
+
     function wd:CreateChatLogger()
         if self._ChatLoggerWindow and self._ChatLoggerWindow.IsAlive and self._ChatLoggerWindow:IsAlive() then
             if not self._ChatLoggerWindow._Visible or not self._ChatLoggerWindow._Frame.Visible then
@@ -10033,6 +10173,53 @@ MIDNIGHT._CfgLegacyPath = _CfgLegacyPath
 MIDNIGHT._CfgFileExists = _CfgFileExists
 MIDNIGHT._CfgUniqueFilePath = _CfgUniqueFilePath
 MIDNIGHT._CfgListNames = _CfgListNames
+
+function MIDNIGHT:_PostWebhook(url, payload)
+    if type(url) ~= "string" or url == "" then
+        return false, "missing webhook url"
+    end
+
+    local body = payload
+    if type(body) == "table" then
+        local ok, encoded = pcall(function()
+            return HttpService:JSONEncode(body)
+        end)
+        if not ok then
+            return false, encoded
+        end
+        body = encoded
+    elseif type(body) ~= "string" then
+        body = tostring(body or "")
+    end
+
+    local headers = {
+        ["Content-Type"] = "application/json",
+        ["Accept"] = "application/json",
+    }
+
+    local executorRequest =
+        (type(request) == "function" and request)
+        or (type(http_request) == "function" and http_request)
+        or (type(syn) == "table" and type(syn.request) == "function" and syn.request)
+        or (type(http) == "table" and type(http.request) == "function" and http.request)
+
+    if executorRequest then
+        local ok, res = pcall(function()
+            return executorRequest({
+                Url = url,
+                Method = "POST",
+                Headers = headers,
+                Body = body,
+            })
+        end)
+        return ok, res
+    end
+
+    local ok, res = pcall(function()
+        return HttpService:PostAsync(url, body, Enum.HttpContentType.ApplicationJson, false)
+    end)
+    return ok, res
+end
 
 function MIDNIGHT:SetupConfig(key)
     assert(type(key) == "string" and #key > 0, "SetupConfig: key must be a non-empty string")
