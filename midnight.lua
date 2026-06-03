@@ -2004,6 +2004,7 @@ local MIDNIGHT = {
     _WatermarkConfig = {},
     _WatermarkPosition = "TopLeft",
     _WatermarkCustomText = nil,
+    _WatermarkTimeLabel = nil,
 
     _KeybindListFrame   = nil,
     _KeybindListContent = nil,
@@ -2291,7 +2292,11 @@ end
 --// FPS + PING TRACKER
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:_InitFPSTracker()
-    -- Cache the Stats item once вЂ” avoids repeated indexing inside the hot path
+    if self._FPSConn and self._FPSConn.Connected then
+        return
+    end
+
+    -- Cache the Stats item once – avoids repeated indexing inside the hot path
     local _pingStatItem = nil
     pcall(function()
         _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
@@ -2315,9 +2320,24 @@ function MIDNIGHT:_InitFPSTracker()
             end
             self:_UpdateWatermark()
             self:_UpdateSidebarFooters()
+            local timeLabel = self._WatermarkTimeLabel
+            if timeLabel and timeLabel.Parent then
+                timeLabel.Text = os.date("%H:%M:%S")
+            end
         end
     end)
+    self._FPSConn = conn
     RegConn(conn)
+end
+
+function MIDNIGHT:_EnsureFPSTracker()
+    if self._FPSConn and self._FPSConn.Connected then
+        return
+    end
+    if not self._WatermarkFrame and #self._SidebarFooters == 0 then
+        return
+    end
+    self:_InitFPSTracker()
 end
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
@@ -2352,6 +2372,7 @@ function MIDNIGHT:Reset()
         self._lagspikeBlinkStop()
         self._lagspikeBlinkStop = nil
     end
+    self._FPSConn = nil
     if self._TargetHUDHideThread then
         SafeCancelThread(self._TargetHUDHideThread)
         self._TargetHUDHideThread = nil
@@ -2400,6 +2421,8 @@ function MIDNIGHT:Reset()
     self._Initialized = false; self._MenuOpen = false
     self._WatermarkFrame = nil; self._WatermarkLabels = nil; self._KeybindListFrame = nil
     self._KeybindListContent = nil; self._RefreshKeybindList = nil
+    self._WatermarkTimeLabel = nil
+    self._FPSConn = nil
     self._ActiveDropdown = nil; self._ActiveColorPicker = nil
     self._KeybindSettingsFrame = nil; self._KeybindSettingsBg = nil
     self._SidebarFooters = {}
@@ -3150,6 +3173,7 @@ function MIDNIGHT:CreateWatermark(config)
         self._WatermarkFrame = nil
     end
     self._WatermarkLabels = nil
+    self._WatermarkTimeLabel = nil
     self._WatermarkSizeUpdate = nil
 
     local wmFrame = Create("Frame",{
@@ -3264,21 +3288,12 @@ function MIDNIGHT:CreateWatermark(config)
     end
 
     -- Initialize FPS tracker early so watermark gets updated even before MakeWindow
+    self._WatermarkTimeLabel = content:FindFirstChild("TimeLabel")
+
     if not self._Initialized then
-        self:_InitFPSTracker()
+        self:_EnsureFPSTracker()
         self._Initialized = true
     end
-
-    -- Update time label once per second via loop instead of every Heartbeat frame
-    local timeLabel = content:FindFirstChild("TimeLabel")
-    task.spawn(function()
-        while self._WatermarkFrame == wmFrame and wmFrame.Parent do
-            if timeLabel and timeLabel.Parent then
-                timeLabel.Text = os.date("%H:%M:%S")
-            end
-            task.wait(1)
-        end
-    end)
 
     -- Calculate size after render so TextBounds are ready
     self._WatermarkSizeUpdate = updateSize
@@ -3382,17 +3397,15 @@ function MIDNIGHT:_UpdateWatermark()
             -- isn't already running (self._lagspikeBlinkStop acts as the flag).
             if not self._lagspikeBlinkStop then
                 local blinking = true
-                local function doBlink()
-                    if not blinking or not lagL.Visible or not lagL.Parent then return end
-                    TweenObject(lagL,{TextTransparency=1},0.35)
-                    task.delay(0.4, function()
-                        if not blinking or not lagL.Visible or not lagL.Parent then return end
-                        TweenObject(lagL,{TextTransparency=0},0.35)
-                        task.delay(0.4, doBlink)
-                    end)
-                end
-                doBlink()
                 self._lagspikeBlinkStop = function() blinking = false end
+                task.spawn(function()
+                    local fadeOut = true
+                    while blinking and lagL.Visible and lagL.Parent and self._Lagspike do
+                        TweenObject(lagL, { TextTransparency = fadeOut and 1 or 0 }, 0.35)
+                        task.wait(0.4)
+                        fadeOut = not fadeOut
+                    end
+                end)
             end
         elseif not self._Lagspike and lagL.Visible then
             needsResize = true
@@ -4923,7 +4936,7 @@ function MIDNIGHT:MakeWindow(config)
 
     self:_InitScreenGui()
     if not self._Initialized then
-        self:_InitFPSTracker()
+        self:_EnsureFPSTracker()
         self._Initialized = true
     end
     if not self._MenuToggleConn then
@@ -5183,6 +5196,7 @@ function MIDNIGHT:MakeWindow(config)
         BackgroundTransparency=1,Parent=sidebarFooterBg,
     })
     table.insert(self._SidebarFooters, footerLabel)
+    self:_EnsureFPSTracker()
 
     -- CONTENT AREA
     local contentFrame = Create("Frame",{
@@ -9337,28 +9351,37 @@ function MIDNIGHT:MakeWindow(config)
             end,
         })
 
-        local trackLoop = nil  -- Connection (RunService.Heartbeat), РЅРµ РїРѕС‚РѕРє
+        local trackLoop = nil
+        local trackLoopActive = false
 
         local function stopTracking(skipClear)
+            trackLoopActive = false
+
             if trackLoop then
-                -- РўРµРїРµСЂСЊ СЌС‚Рѕ Connection, РЅРµ thread вЂ” РЅР°РґС‘Р¶РЅС‹Р№ Disconnect РЅР° Р»СЋР±РѕРј СЌРєР·РµРєСЊСЋС‚РѕСЂРµ
-                pcall(function() trackLoop:Disconnect() end)
+                pcall(function()
+                    task.cancel(trackLoop)
+                end)
                 trackLoop = nil
             end
+
             if hud._TrackJoinConn then
                 pcall(function() hud._TrackJoinConn:Disconnect() end)
                 hud._TrackJoinConn = nil
             end
+
             if hud._TrackLeaveConn then
                 pcall(function() hud._TrackLeaveConn:Disconnect() end)
                 hud._TrackLeaveConn = nil
             end
+
             for p, conn in pairs(hud._TrackCharConns or {}) do
                 if conn then pcall(function() conn:Disconnect() end) end
                 hud._TrackCharConns[p] = nil
             end
+
             hud._TrackCharConns = {}
             hud._TrackCharCache = {}
+
             if not skipClear then
                 hud:ClearTarget()
             end
@@ -9370,20 +9393,17 @@ function MIDNIGHT:MakeWindow(config)
 
         local function startTracking()
             stopTracking()
+            trackLoopActive = true
 
-            -- Р РµР·РѕР»РІРёРј СЃРµСЂРІРёСЃС‹ РѕРґРёРЅ СЂР°Р· РґРѕ РїРѕРґРєР»СЋС‡РµРЅРёСЏ вЂ” РЅРµ Р°Р»Р»РѕС†РёСЂСѓРµРј РІРЅСѓС‚СЂРё С…РѕС‚-РїР°С‚Р°
-            local UIS    = game:GetService("UserInputService")
+            local UIS = game:GetService("UserInputService")
             local camera = workspace.CurrentCamera
-            local plrs   = game:GetService("Players")
-            local lp     = plrs.LocalPlayer
+            local plrs = game:GetService("Players")
+            local lp = plrs.LocalPlayer
 
-            -- #9 FIX: per-player cache for HumanoidRootPart and Humanoid.
-            -- FindFirstChild / FindFirstChildOfClass walk the instance tree every call вЂ”
-            -- on a full server (20 players) at 10Hz that's 40вЂ“60 tree-walks per second.
-            -- We cache the results and only invalidate when the character changes.
-            local charCache = {}   -- [player] = { char, root, hum }
-            local charConns = {}   -- [player] = CharacterAdded connection
+            local charCache = {}
+            local charConns = {}
             local trackedPlayers = {}
+
             hud._TrackCharCache = charCache
             hud._TrackCharConns = charConns
 
@@ -9391,12 +9411,14 @@ function MIDNIGHT:MakeWindow(config)
                 if charConns[p] then pcall(function() charConns[p]:Disconnect() end) end
                 charCache[p] = nil
                 charConns[p] = p.CharacterAdded:Connect(function()
-                    charCache[p] = nil  -- invalidate on respawn
+                    charCache[p] = nil
                 end)
             end
 
             local function addTrackedPlayer(p)
-                if p == lp then return end
+                if p == lp then
+                    return
+                end
                 trackedPlayers[#trackedPlayers + 1] = p
                 cachePlayer(p)
             end
@@ -9413,88 +9435,88 @@ function MIDNIGHT:MakeWindow(config)
                 charConns[p] = nil
             end
 
-            local function getCache(p)
-                if charCache[p] then return charCache[p] end
-                local char = p.Character
-                if not char then return nil end
-                local root = char:FindFirstChild("HumanoidRootPart")
-                          or char:FindFirstChildWhichIsA("BasePart")
-                local hum  = char:FindFirstChildOfClass("Humanoid")
-                if not root then return nil end
-                local entry = { char = char, root = root, hum = hum }
-                charCache[p] = entry
-                return entry
-            end
-
-            -- Seed cache for players already in game
             for _, p in ipairs(plrs:GetPlayers()) do
                 addTrackedPlayer(p)
             end
 
-            -- Track new joiners
-            local joinConn = plrs.PlayerAdded:Connect(function(p)
+            hud._TrackJoinConn = plrs.PlayerAdded:Connect(function(p)
                 addTrackedPlayer(p)
             end)
-            -- Clean up when players leave
-            local leaveConn = plrs.PlayerRemoving:Connect(function(p)
+
+            hud._TrackLeaveConn = plrs.PlayerRemoving:Connect(function(p)
                 removeTrackedPlayer(p)
             end)
-            hud._TrackJoinConn = joinConn
-            hud._TrackLeaveConn = leaveConn
 
-            -- Throttle-Р°РєРєСѓРјСѓР»СЏС‚РѕСЂ: РѕР±РЅРѕРІР»СЏРµРј ~10 СЂР°Р·/СЃРµРє (0.1s), РЅРµ РєР°Р¶РґС‹Р№ С„СЂРµР№Рј
-            local accum = 0
+            trackLoop = task.spawn(function()
+                while trackLoopActive and not hud._Destroyed do
+                    task.wait(0.1)
+                    if not trackLoopActive or hud._Destroyed then
+                        break
+                    end
 
-            trackLoop = RunService.Heartbeat:Connect(function(dt)
-                accum = accum + dt
-                if accum < 0.1 then return end
-                accum = 0
-
-                local mousePos   = UIS:GetMouseLocation()
-                local mX, mY     = mousePos.X, mousePos.Y
-                local bestPlayer = nil
-                local cam = workspace.CurrentCamera or camera
-                if not cam then
-                    hud:ClearTarget()
-                    return
-                end
-                local bestDistSq = math.huge  -- СЃСЂР°РІРЅРёРІР°РµРј РєРІР°РґСЂР°С‚С‹, sqrt РЅРµ РЅСѓР¶РµРЅ
-
-                for i = 1, #trackedPlayers do
-                    local p = trackedPlayers[i]
-
-                    local entry = getCache(p)
-                    if not entry then continue end
-
-                    local hum = entry.hum
-                    if hum and hum.Health <= 0 then
-                        charCache[p] = nil  -- dead вЂ” invalidate so we re-check on respawn
+                    local cam = workspace.CurrentCamera or camera
+                    if not cam then
+                        hud:ClearTarget()
                         continue
                     end
 
-                    if not entry.root or not entry.root.Parent then
-                        charCache[p] = nil
-                        continue
-                    end
-                    local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
-                    if not onScreen then continue end
+                    local mousePos = UIS:GetMouseLocation()
+                    local mX, mY = mousePos.X, mousePos.Y
+                    local bestPlayer = nil
+                    local bestDistSq = math.huge
 
-                    local dx, dy = sp.X - mX, sp.Y - mY
-                    local dSq = dx*dx + dy*dy
-                    if dSq < bestDistSq then
-                        bestDistSq = dSq
-                        bestPlayer = p
-                    end
-                end
+                    for i = 1, #trackedPlayers do
+                        local p = trackedPlayers[i]
+                        local entry = charCache[p]
+                        if not entry then
+                            local char = p.Character
+                            if not char then
+                                continue
+                            end
 
-                if bestPlayer then
-                    if hud._CurrentPlayer ~= bestPlayer
-                    or hud._CurrentCharacter ~= bestPlayer.Character
-                    or not hud._Visible then
-                        hud:SetTarget(bestPlayer)
+                            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+                            local hum = char:FindFirstChildOfClass("Humanoid")
+                            if not root then
+                                continue
+                            end
+
+                            entry = { char = char, root = root, hum = hum }
+                            charCache[p] = entry
+                        end
+
+                        local hum = entry.hum
+                        if hum and hum.Health <= 0 then
+                            charCache[p] = nil
+                            continue
+                        end
+
+                        if not entry.root or not entry.root.Parent then
+                            charCache[p] = nil
+                            continue
+                        end
+
+                        local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
+                        if not onScreen then
+                            continue
+                        end
+
+                        local dx, dy = sp.X - mX, sp.Y - mY
+                        local dSq = dx * dx + dy * dy
+                        if dSq < bestDistSq then
+                            bestDistSq = dSq
+                            bestPlayer = p
+                        end
                     end
-                else
-                    hud:ClearTarget()
+
+                    if bestPlayer then
+                        if hud._CurrentPlayer ~= bestPlayer
+                            or hud._CurrentCharacter ~= bestPlayer.Character
+                            or not hud._Visible then
+                            hud:SetTarget(bestPlayer)
+                        end
+                    else
+                        hud:ClearTarget()
+                    end
                 end
             end)
         end
@@ -9518,6 +9540,7 @@ function MIDNIGHT:MakeWindow(config)
         })
 
         return toggle
+
     end
 
     function wd:CreateChatLogger()
