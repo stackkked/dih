@@ -5598,11 +5598,23 @@ function MIDNIGHT:MakeWindow(config)
         --// ADDLABEL
         function td:AddLabel(lc)
             lc = lc or {}; local nm = lc.Name or "Label"
-            local lf = Create("Frame",{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,LayoutOrder=nextOrder(),Parent=page})
+            local wrap = lc.Wrap or false
+            local height = lc.Height or 22
+            local lf = Create("Frame",{
+                Size=wrap and UDim2.new(1,0,0,0) or UDim2.new(1,0,0,height),
+                BackgroundTransparency=1,
+                LayoutOrder=nextOrder(),
+                AutomaticSize=wrap and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
+                Parent=page,
+            })
             local lbl = Create("TextLabel",{
                 Text=nm,Font=Font,TextSize=CompactStyle.BodyTextSize,TextColor3=Theme.TextSecondary,
-                TextXAlignment=Enum.TextXAlignment.Left,
-                Size=UDim2.new(1,-8,1,0),Position=UDim2.new(0,4,0,0),
+                TextXAlignment=lc.TextXAlignment or Enum.TextXAlignment.Left,
+                TextYAlignment=wrap and Enum.TextYAlignment.Top or lc.TextYAlignment or Enum.TextYAlignment.Center,
+                TextWrapped=wrap or lc.TextWrapped or false,
+                Size=wrap and UDim2.new(1,-8,0,0) or UDim2.new(1,-8,1,0),
+                Position=UDim2.new(0,4,0,0),
+                AutomaticSize=wrap and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
                 BackgroundTransparency=1,Parent=lf,
             })
             return {_Label=lbl, Set=function(_,t) lbl.Text=t end}
@@ -6480,9 +6492,34 @@ function MIDNIGHT:MakeWindow(config)
             local cb  = tbc.Callback
             local multiLine = tbc.MultiLine or false
             local submitOnEnter = tbc.SubmitOnEnter or false
+            local invokeOnFocusLost = tbc.InvokeCallbackOnFocusLost
+            if invokeOnFocusLost == nil then
+                invokeOnFocusLost = true
+            end
             local cfgFlag = autoCfgFlag("textbox", nm, tbc.Flag)
 
-            local h = multiLine and math.max(48, CompactStyle.TallRowHeight + 2) or CompactStyle.RowHeight
+            local function resolveHeight(defaultHeight)
+                local requested = defaultHeight
+                if type(tbc.Height) == "number" then
+                    requested = tbc.Height
+                end
+                local sizeValue = tbc.Size
+                if typeof(sizeValue) == "UDim2" then
+                    requested = math.max(requested, sizeValue.Y.Offset > 0 and sizeValue.Y.Offset or requested)
+                elseif type(sizeValue) == "number" then
+                    requested = math.max(requested, sizeValue)
+                elseif type(sizeValue) == "table" and type(sizeValue.Height) == "number" then
+                    requested = math.max(requested, sizeValue.Height)
+                end
+                local minHeight = tbc.MinHeight or defaultHeight
+                local maxHeight = tbc.MaxHeight or math.max(minHeight, 220)
+                if tbc.ClampToUI ~= false then
+                    maxHeight = math.min(maxHeight, 260)
+                end
+                return math.floor(math.clamp(requested, minHeight, maxHeight))
+            end
+
+            local h = multiLine and resolveHeight(math.max(48, CompactStyle.TallRowHeight + 2)) or CompactStyle.RowHeight
             local item=Create("Frame",{Size=UDim2.new(1,0,0,h),BackgroundColor3=Theme.Surface2,BorderSizePixel=0,LayoutOrder=nextOrder(),Parent=page})
             ApplyCorner(item,6); ApplyStroke(item,Theme.BorderSoft,1,0.24); ApplyPadding(item,4,4,10,10)
             ApplyHoverEffect(item, Theme.Surface2, Theme.Surface3, true)
@@ -6498,10 +6535,11 @@ function MIDNIGHT:MakeWindow(config)
                 box=Create("TextBox",{
                     Text=def,PlaceholderText=ph,Font=Font,TextSize=CompactStyle.FieldTextSize,
                     TextColor3=Theme.TextPrimary,PlaceholderColor3=Theme.TextMuted,
-                    Size=UDim2.new(1,0,0,26),
+                    Size=UDim2.new(1,0,0,math.max(26, h - 18)),
                     Position=UDim2.new(0,0,0,16),
                     BackgroundColor3=Theme.InputBg,BorderSizePixel=0,
                     ClearTextOnFocus=false,TextWrapped=true,
+                    TextYAlignment=Enum.TextYAlignment.Top,
                     MultiLine=true,Parent=ic,
                 })
             else
@@ -6533,7 +6571,7 @@ function MIDNIGHT:MakeWindow(config)
             box.FocusLost:Connect(function(enterPressed)
                 TweenObject(boxStroke,{Color=Theme.Border},0.15)
                 TweenObject(box,{BackgroundColor3=Theme.InputBg},0.15)
-                if cb and (not submitOnEnter or enterPressed) then
+                if cb and ((submitOnEnter and enterPressed) or (invokeOnFocusLost and not submitOnEnter)) then
                     cb(box.Text, enterPressed)
                 end
             end)
@@ -6553,6 +6591,16 @@ function MIDNIGHT:MakeWindow(config)
                 end)
             end, "textbox input edit")
             return tdata
+        end
+
+        function td:AddTextArea(ac)
+            ac = ac or {}
+            ac.MultiLine = true
+            ac.SubmitOnEnter = false
+            if ac.InvokeCallbackOnFocusLost == nil then
+                ac.InvokeCallbackOnFocusLost = false
+            end
+            return self:AddTextBox(ac)
         end
 
         --// ADDCOLORPICKER (popup)
@@ -9552,16 +9600,16 @@ function MIDNIGHT:MakeWindow(config)
 
         local sectionName = feedback.SectionName or "Feedback"
         local headerText = feedback.Title or "Issues & Suggestions"
-        local bodyText = feedback.Text or "Leave your feedback about the script. What should we add / fix ?"
-        local placeholder = feedback.Placeholder or "Type feedback and press Enter..."
+        local bodyText = feedback.Text or "Write a bug if you found one, or suggest an improvement. Please write in English."
+        local placeholder = feedback.Placeholder or "Type your feedback here..."
         local inputName = feedback.InputName or "Feedback"
         local webhook = tostring(feedback.Webhook or "")
-        local successText = feedback.SuccessText or "We got your FeedBack!"
+        local successText = feedback.SuccessText or "Our team received your FeedBack. We'll look into it and maybe make some changes."
         local topic = feedback.Topic or headerText
 
         tab:AddSection({ Name = sectionName })
-        tab:AddLabel({ Name = headerText })
-        tab:AddLabel({ Name = bodyText })
+        tab:AddLabel({ Name = headerText, Wrap = true })
+        tab:AddLabel({ Name = bodyText, Wrap = true })
 
         local statusWidget
         local feedbackBox
@@ -9656,14 +9704,21 @@ function MIDNIGHT:MakeWindow(config)
             end)
         end
 
-        feedbackBox = tab:AddTextBox({
+        feedbackBox = tab:AddTextArea({
             Name = inputName,
             Placeholder = placeholder,
             Default = "",
-            MultiLine = false,
-            SubmitOnEnter = true,
-            Callback = function(text)
-                sendFeedback(text)
+            Height = feedback.TextAreaHeight or 138,
+            MaxHeight = feedback.MaxTextAreaHeight or 200,
+            MinHeight = feedback.MinTextAreaHeight or 96,
+            ClampToUI = true,
+            Callback = nil,
+        })
+
+        tab:AddButton({
+            Name = "Send FeedBack",
+            Callback = function()
+                sendFeedback(feedbackBox and feedbackBox:Get() or "")
             end,
         })
 
