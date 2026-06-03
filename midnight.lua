@@ -5439,6 +5439,22 @@ function MIDNIGHT:MakeWindow(config)
             return base
         end
 
+        local function autoCfgSubFlag(baseFlag, suffix)
+            if type(baseFlag) ~= "string" or baseFlag == "" or type(suffix) ~= "string" or suffix == "" then
+                return nil
+            end
+            local flag = baseFlag .. "__" .. suffix
+            flag = flag:gsub("[%z\1-\31]", "")
+            flag = flag:gsub("[\\/:*?\"<>|]", "_")
+            flag = flag:gsub("%s+", "_")
+            flag = flag:gsub("_+", "_")
+            flag = flag:gsub("^_+", ""):gsub("_+$", "")
+            if flag == "" then
+                return nil
+            end
+            return flag
+        end
+
         self._TabCount = self._TabCount + 1
 
         -- Auto-add separator in sidebar if tabs > 6
@@ -5803,6 +5819,23 @@ function MIDNIGHT:MakeWindow(config)
             local on = def
             local data = {_Value=on,_Key=bindKey,_Mode=bindMode,_KeyBadge=keyBadgeLabel}
             local bindVisible = not isMenuKey
+            local syncKeybindData
+
+            local function applyBindMode(newMode)
+                newMode = tostring(newMode or "Press")
+                if newMode ~= "Hold" and newMode ~= "Press" then
+                    newMode = "Press"
+                end
+                bindMode = newMode
+                data._Mode = bindMode
+                if data._KeybindData and data._KeybindData._Mode == "Hold" and data._KeybindData._Active and bindMode ~= "Hold" then
+                    data._KeybindData._Active = false
+                    if data._KeybindData._Callback then
+                        data._KeybindData._Callback(false)
+                    end
+                end
+                syncKeybindData()
+            end
 
             local function refreshKeyBadge()
                 local hasKey = bindKey ~= Enum.KeyCode.Unknown
@@ -5833,7 +5866,7 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            local function syncKeybindData()
+            syncKeybindData = function()
                 refreshKeyBadge()
                 if data._KeybindData then
                     data._KeybindData._Key = bindKey
@@ -5874,12 +5907,7 @@ function MIDNIGHT:MakeWindow(config)
                         if isMenuKey then MIDNIGHT:SetMenuKey(newKeyStr) end
                     end,
                     OnModeChange=function(newMode)
-                        data._Mode=newMode; bindMode=newMode
-                        if data._KeybindData and data._KeybindData._Mode=="Hold" and data._KeybindData._Active and newMode~="Hold" then
-                            data._KeybindData._Active=false
-                            if data._KeybindData._Callback then data._KeybindData._Callback(false) end
-                        end
-                        syncKeybindData()
+                        applyBindMode(newMode)
                     end,
                     OnVisibleChange=function(vis)
                         bindVisible = vis
@@ -5905,6 +5933,9 @@ function MIDNIGHT:MakeWindow(config)
                 syncKeybindData()
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
+            function data:SetMode(m)
+                applyBindMode(m)
+            end
             -- Config system
             if cfgFlag then
                 MIDNIGHT:_RegCfgWidget(cfgFlag,
@@ -5912,6 +5943,28 @@ function MIDNIGHT:MakeWindow(config)
                     function(v) data:Set(v) end,
                     "toggle"
                 )
+                local bindCfgFlag = autoCfgSubFlag(cfgFlag, "bind")
+                if bindCfgFlag then
+                    MIDNIGHT:_RegCfgWidget(bindCfgFlag,
+                        function()
+                            return {
+                                key = data._Key ~= Enum.KeyCode.Unknown and KeyCodeToName(data._Key) or "Unknown",
+                                mode = data._Mode or bindMode,
+                                visible = bindVisible,
+                            }
+                        end,
+                        function(v)
+                            if type(v) ~= "table" then return end
+                            if v.key ~= nil then data:SetKey(v.key) end
+                            if v.mode ~= nil then data:SetMode(v.mode) end
+                            if v.visible ~= nil then
+                                bindVisible = not not v.visible
+                                syncKeybindData()
+                            end
+                        end,
+                        "table"
+                    )
+                end
             end
             registerCommand(nm, "Toggle", function()
                 data:Set(not data._Value)
@@ -6197,6 +6250,10 @@ function MIDNIGHT:MakeWindow(config)
                 if isMenuKey then MIDNIGHT:SetMenuKey(KeyCodeToName(nk)) end
             end
             function kd:SetMode(m)
+                m = tostring(m or "Press")
+                if m ~= "Hold" and m ~= "Press" then
+                    m = "Press"
+                end
                 updateModeLabel(m)
                 if kd._Mode=="Hold" and kd._Active and m~="Hold" then
                     kd._Active=false
@@ -6213,6 +6270,25 @@ function MIDNIGHT:MakeWindow(config)
                     function(v) kd:Set(v) end,
                     "keybind"
                 )
+                local bindCfgFlag = autoCfgSubFlag(cfgFlag, "bind")
+                if bindCfgFlag then
+                    MIDNIGHT:_RegCfgWidget(bindCfgFlag,
+                        function()
+                            return {
+                                key = kd._Key ~= Enum.KeyCode.Unknown and KeyCodeToName(kd._Key) or "Unknown",
+                                mode = kd._Mode or mode,
+                                visible = kd._Visible ~= false,
+                            }
+                        end,
+                        function(v)
+                            if type(v) ~= "table" then return end
+                            if v.key ~= nil then kd:Set(v.key) end
+                            if v.mode ~= nil then kd:SetMode(v.mode) end
+                            if v.visible ~= nil then kd._Visible = not not v.visible end
+                        end,
+                        "table"
+                    )
+                end
             end
             registerCommand(nm, "Keybind", function()
                 local ap=kbBadge.AbsolutePosition
