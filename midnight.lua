@@ -2899,37 +2899,37 @@ function MIDNIGHT:_OpenDropdown(config)
         -- Click with ripple effect
         btn.MouseButton1Click:Connect(function()
             TweenObject(ob,{BackgroundColor3=AccentTint(Theme.Accent,0.16)},0.05)
-            task.defer(function()
-                if isMulti then
-                    multiSel[opt] = not multiSel[opt]
-                    local nowSel = multiSel[opt]
-                    TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.InputBg},0.12)
-                    TweenObject(lbl,{TextColor3=nowSel and Theme.TextAccent or Theme.TextSecondary},0.12)
-                    TweenObject(selBar,{BackgroundTransparency=nowSel and 0 or 1},0.12)
-                    if checkEl then
-                        TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.InputBg},0.12)
-                        -- Rebuild checkmark label
-                        for _, ch in ipairs(checkEl:GetChildren()) do
-                            if ch:IsA("TextLabel") then ch:Destroy() end
-                        end
-                        if nowSel then
-                            Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
-                                Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkEl})
-                        end
+            if isMulti then
+                multiSel[opt] = not multiSel[opt]
+                local nowSel = multiSel[opt]
+                TweenObject(ob,{BackgroundColor3=nowSel and Theme.TabActiveBg or Theme.InputBg},0.12)
+                TweenObject(lbl,{TextColor3=nowSel and Theme.TextAccent or Theme.TextSecondary},0.12)
+                TweenObject(selBar,{BackgroundTransparency=nowSel and 0 or 1},0.12)
+                if checkEl then
+                    TweenObject(checkEl,{BackgroundColor3=nowSel and Theme.Accent or Theme.InputBg},0.12)
+                    -- Rebuild checkmark label
+                    for _, ch in ipairs(checkEl:GetChildren()) do
+                        if ch:IsA("TextLabel") then ch:Destroy() end
                     end
-                else
-                    -- Single select: update all rows
-                    currentSel = opt
-                    for _, fr in ipairs(optFrames) do
-                        local isThis = fr._opt == opt
-                        TweenObject(fr._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.InputBg},0.12)
-                        TweenObject(fr._lbl,{TextColor3=isThis and Theme.TextAccent or Theme.TextSecondary},0.12)
-                        TweenObject(fr._bar,{BackgroundTransparency=isThis and 0 or 1},0.12)
+                    if nowSel then
+                        Create("TextLabel",{Text="вњ“",Font=FontBold,TextSize=9,TextColor3=Theme.TextPrimary,
+                            Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,ZIndex=ZIndex.DROPDOWN+4,Parent=checkEl})
                     end
-                    onSelect(opt)
-                    task.delay(0.12, function() self:_CloseDropdown() end)
                 end
-            end)
+            else
+                -- Single select: update all rows immediately
+                currentSel = opt
+                for _, fr in ipairs(optFrames) do
+                    local isThis = fr._opt == opt
+                    TweenObject(fr._frame,{BackgroundColor3=isThis and Theme.TabActiveBg or Theme.InputBg},0.12)
+                    TweenObject(fr._lbl,{TextColor3=isThis and Theme.TextAccent or Theme.TextSecondary},0.12)
+                    TweenObject(fr._bar,{BackgroundTransparency=isThis and 0 or 1},0.12)
+                end
+                onSelect(opt)
+                task.defer(function()
+                    self:_CloseDropdown()
+                end)
+            end
         end)
 
         table.insert(optFrames,{_opt=opt,_frame=ob,_lbl=lbl,_bar=selBar,_check=checkEl})
@@ -6294,6 +6294,23 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
+            local function applySelection(value, fireCallback)
+                if multi then
+                    selSet = {}
+                    if type(value) == "table" then
+                        for _, v in ipairs(value) do
+                            selSet[v] = true
+                        end
+                    end
+                else
+                    sel = value
+                end
+                refreshLabel()
+                if fireCallback and cb then
+                    cb(data._Value)
+                end
+            end
+
             -- Chevron tween on open/close
             local dropOpen = false
             sb.MouseButton1Click:Connect(function()
@@ -6307,14 +6324,9 @@ function MIDNIGHT:MakeWindow(config)
                     DropdownBtn=sb, Multi=multi,
                     OnSelect=function(opt)
                         if multi then
-                            -- opt is the table of selected values
-                            selSet = {}
-                            for _, v in ipairs(opt) do selSet[v] = true end
-                            refreshLabel()
-                            if cb then cb(opt) end
+                            applySelection(opt, true)
                         else
-                            sel = opt; refreshLabel()
-                            if cb then cb(opt) end
+                            applySelection(opt, true)
                         end
                         dropOpen = false
                         if chevIcon then TweenObject(chevIcon,{Rotation=0},0.12,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
@@ -6324,12 +6336,8 @@ function MIDNIGHT:MakeWindow(config)
 
             refreshLabel()
 
-            function data:Set(v)
-                if multi then
-                    selSet = {}
-                    if type(v) == "table" then for _, x in ipairs(v) do selSet[x]=true end end
-                else sel = v end
-                refreshLabel()
+            function data:Set(v, fireCallback)
+                applySelection(v, fireCallback == true)
             end
             function data:SetOptions(newOpts)
                 opts = newOpts
@@ -10130,17 +10138,17 @@ function MIDNIGHT:MakeWindow(config)
             local names = cfgListNames(MIDNIGHT)
             if #names == 0 then
                 savedDropdown:SetOptions({})
-                savedDropdown:Set(nil)
+                savedDropdown:Set(nil, true)
                 selectedConfigName = nil
                 return names
             end
             savedDropdown:SetOptions(names)
             local target = cfgSanitize(selectName or selectedConfigName or (savedDropdown and savedDropdown._Value) or "", "")
             if target ~= "" and table.find(names, target) then
-                savedDropdown:Set(target)
+                savedDropdown:Set(target, true)
                 selectedConfigName = target
             else
-                savedDropdown:Set(names[1])
+                savedDropdown:Set(names[1], true)
                 selectedConfigName = names[1]
             end
             return names
@@ -10356,6 +10364,10 @@ local function _CfgLegacyRootPath(midnight)
     return "workspace/MidnightLib/" .. _CfgGetHubName(midnight) .. "/configs"
 end
 
+local function _CfgBrokenLegacyRootPath(midnight)
+    return "workspace/workspace/MidnightLib/" .. _CfgGetHubName(midnight) .. "/configs"
+end
+
 local function _CfgEnsureRootPath(midnight)
     local root = _CfgRootPath(midnight)
     if type(makefolder) == "function" then
@@ -10370,6 +10382,23 @@ local function _CfgEnsureRootPath(midnight)
     return root
 end
 
+local function _CfgEnsureFolderForPath(path)
+    if type(makefolder) ~= "function" then
+        return
+    end
+    local parent = tostring(path):match("^(.*)[/\\][^/\\]+$")
+    if not parent or parent == "" then
+        return
+    end
+    local current = ""
+    for segment in parent:gmatch("[^/\\]+") do
+        current = current == "" and segment or (current .. "/" .. segment)
+        pcall(function()
+            makefolder(current)
+        end)
+    end
+end
+
 local function _CfgAttrKey(midnight, name)
     return "_cfg_" .. _CfgGetHubName(midnight) .. "_" .. _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
 end
@@ -10382,6 +10411,16 @@ end
 local function _CfgLegacyPath(midnight, name)
     local cfgName = _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
     return "midnight_cfg_" .. cfgName .. ".txt", cfgName
+end
+
+local function _CfgCollectCandidatePaths(midnight, name)
+    local cfgName = _CfgSanitizeName(name or (midnight and midnight._ConfigKey) or "default", "default")
+    return {
+        _CfgFilePath(midnight, cfgName),
+        _CfgLegacyRootPath(midnight) .. "/" .. cfgName .. ".txt",
+        _CfgBrokenLegacyRootPath(midnight) .. "/" .. cfgName .. ".txt",
+        _CfgLegacyPath(midnight, cfgName),
+    }, cfgName
 end
 
 local function _CfgCollectNamesFromPath(path, names, seen, stripPrefix)
@@ -10447,6 +10486,7 @@ local function _CfgListNames(midnight)
     local seen = {}
     _CfgCollectNamesFromPath(_CfgEnsureRootPath(midnight), names, seen, false)
     _CfgCollectNamesFromPath(_CfgLegacyRootPath(midnight), names, seen, false)
+    _CfgCollectNamesFromPath(_CfgBrokenLegacyRootPath(midnight), names, seen, false)
     _CfgCollectNamesFromPath(".", names, seen, true)
     table.sort(names, function(a, b)
         return tostring(a):lower() < tostring(b):lower()
@@ -10630,7 +10670,11 @@ function MIDNIGHT:SaveConfig(name, overwrite)
     local content = table.concat(lines, "\n")
     local ok, err = pcall(function()
         if writefile then
-            writefile(targetPath, content)
+            local candidatePaths = _CfgCollectCandidatePaths(self, actualName)
+            for _, path in ipairs(candidatePaths) do
+                _CfgEnsureFolderForPath(path)
+                writefile(path, content)
+            end
         else
             -- Fallback: store in hidden attribute on ScreenGui (session-only)
             if self._ScreenGui then
@@ -10650,26 +10694,21 @@ function MIDNIGHT:LoadConfig(name)
         warn("MIDNIGHT:LoadConfig() called without SetupConfig(key)")
         return false
     end
-    local fname, actualName = _CfgFilePath(self, name)
-    local legacyRoot = _CfgLegacyRootPath(self) .. "/" .. actualName .. ".txt"
-    local legacyName = _CfgLegacyPath(self, actualName)
+    local candidatePaths, actualName = _CfgCollectCandidatePaths(self, name)
     local content = nil
     pcall(function()
         if readfile then
-            content = readfile(fname)
-            if (not content or content == "") and legacyRoot then
-                local legacyRootContent = readfile(legacyRoot)
-                if legacyRootContent and legacyRootContent ~= "" then
-                    content = legacyRootContent
+            for _, path in ipairs(candidatePaths) do
+                local ok, fileContent = pcall(function()
+                    return readfile(path)
+                end)
+                if ok and fileContent and fileContent ~= "" then
+                    content = fileContent
+                    break
                 end
             end
-            if (not content or content == "") and legacyName then
-                local legacyContent = readfile(legacyName)
-                if legacyContent and legacyContent ~= "" then
-                    content = legacyContent
-                end
-            end
-        elseif self._ScreenGui then
+        end
+        if (not content or content == "") and self._ScreenGui then
             content = self._ScreenGui:GetAttribute(_CfgAttrKey(self, actualName))
         end
     end)
@@ -10694,17 +10733,14 @@ end
 
 function MIDNIGHT:ResetConfig(name)
     if not self._ConfigKey then return false end
-    local fname, actualName = _CfgFilePath(self, name)
-    local legacyRoot = _CfgLegacyRootPath(self) .. "/" .. actualName .. ".txt"
-    local legacyName = _CfgLegacyPath(self, actualName)
+    local candidatePaths, actualName = _CfgCollectCandidatePaths(self, name)
     pcall(function()
-        if delfile then delfile(fname)
-            pcall(function()
-                delfile(legacyRoot)
-            end)
-            pcall(function()
-                delfile(legacyName)
-            end)
+        if delfile then
+            for _, path in ipairs(candidatePaths) do
+                pcall(function()
+                    delfile(path)
+                end)
+            end
         end
         if self._ScreenGui then
             self._ScreenGui:SetAttribute(_CfgAttrKey(self, actualName), nil)
