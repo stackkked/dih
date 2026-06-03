@@ -3966,6 +3966,83 @@ function MIDNIGHT:CreateTargetHUD(config)
     end
 
     self._TargetHUD = hud
+
+    local function packUDim2(value)
+        if typeof(value) ~= "UDim2" then
+            return nil
+        end
+        return {
+            XScale = value.X.Scale,
+            XOffset = value.X.Offset,
+            YScale = value.Y.Scale,
+            YOffset = value.Y.Offset,
+        }
+    end
+
+    local function unpackUDim2(state, fallback)
+        if type(state) ~= "table" then
+            return fallback
+        end
+        local xs = tonumber(state.XScale or state[1] or 0) or 0
+        local xo = tonumber(state.XOffset or state[2] or 0) or 0
+        local ys = tonumber(state.YScale or state[3] or 0) or 0
+        local yo = tonumber(state.YOffset or state[4] or 0) or 0
+        return UDim2.new(xs, xo, ys, yo)
+    end
+
+    local targetHudCfgKey = "targethud"
+    if type(config.Flag) == "string" and config.Flag ~= "" then
+        targetHudCfgKey = "targethud:" .. config.Flag
+    end
+    targetHudCfgKey = targetHudCfgKey:gsub("[%z\1-\31]", "")
+    targetHudCfgKey = targetHudCfgKey:gsub("[\\/:*?\"<>|]", "_")
+    targetHudCfgKey = targetHudCfgKey:gsub("%s+", "_")
+    targetHudCfgKey = targetHudCfgKey:gsub("_+", "_")
+    targetHudCfgKey = targetHudCfgKey:gsub("^_+", ""):gsub("_+$", "")
+    if targetHudCfgKey == "" then
+        targetHudCfgKey = "targethud"
+    end
+
+    MIDNIGHT:_RegCfgWidget(targetHudCfgKey,
+        function()
+            return {
+                Position = packUDim2(hf.Position),
+                AnchorPoint = {
+                    X = hf.AnchorPoint.X,
+                    Y = hf.AnchorPoint.Y,
+                },
+                Custom = _isDragged == true or POS == nil,
+                Preset = POS,
+            }
+        end,
+        function(state)
+            if type(state) ~= "table" then
+                return
+            end
+
+            if type(state.Preset) == "string" and state.Preset ~= "" and not state.Custom then
+                _isDragged = false
+                POS = state.Preset
+                positionHUD()
+                return
+            end
+
+            if state.Position then
+                _isDragged = true
+                POS = nil
+                if type(state.AnchorPoint) == "table" then
+                    local ax = tonumber(state.AnchorPoint.X or state.AnchorPoint[1] or 0) or 0
+                    local ay = tonumber(state.AnchorPoint.Y or state.AnchorPoint[2] or 0) or 0
+                    hf.AnchorPoint = Vector2.new(ax, ay)
+                else
+                    hf.AnchorPoint = Vector2.new(0, 0)
+                end
+                hf.Position = unpackUDim2(state.Position, hf.Position)
+            end
+        end,
+        "table"
+    )
+
     return hud
 end
 
@@ -4775,6 +4852,63 @@ function MIDNIGHT:CreateKeybindList(config)
     self._KeybindListFrame   = kf
     self._KeybindListContent = lc2
     MakeDraggable(kf, tb2)
+
+    local function packUDim2(value)
+        if typeof(value) ~= "UDim2" then
+            return nil
+        end
+        return {
+            XScale = value.X.Scale,
+            XOffset = value.X.Offset,
+            YScale = value.Y.Scale,
+            YOffset = value.Y.Offset,
+        }
+    end
+
+    local function unpackUDim2(state, fallback)
+        if type(state) ~= "table" then
+            return fallback
+        end
+        local xs = tonumber(state.XScale or state[1] or 0) or 0
+        local xo = tonumber(state.XOffset or state[2] or 0) or 0
+        local ys = tonumber(state.YScale or state[3] or 0) or 0
+        local yo = tonumber(state.YOffset or state[4] or 0) or 0
+        return UDim2.new(xs, xo, ys, yo)
+    end
+
+    local keybindCfgKey = "keybindlist"
+    if type(config.Flag) == "string" and config.Flag ~= "" then
+        keybindCfgKey = "keybindlist:" .. config.Flag
+    end
+    keybindCfgKey = keybindCfgKey:gsub("[%z\1-\31]", "")
+    keybindCfgKey = keybindCfgKey:gsub("[\\/:*?\"<>|]", "_")
+    keybindCfgKey = keybindCfgKey:gsub("%s+", "_")
+    keybindCfgKey = keybindCfgKey:gsub("_+", "_")
+    keybindCfgKey = keybindCfgKey:gsub("^_+", ""):gsub("_+$", "")
+    if keybindCfgKey == "" then
+        keybindCfgKey = "keybindlist"
+    end
+
+    MIDNIGHT:_RegCfgWidget(keybindCfgKey,
+        function()
+            return {
+                Position = packUDim2(kf.Position),
+                Visible = kf.Visible == true,
+            }
+        end,
+        function(state)
+            if type(state) ~= "table" then
+                return
+            end
+            if state.Position then
+                kf.Position = unpackUDim2(state.Position, kf.Position)
+            end
+            if type(state.Visible) == "boolean" then
+                kf.Visible = state.Visible
+            end
+        end,
+        "table"
+    )
 
     local function refresh()
         if not lc2 or not lc2.Parent then return end
@@ -7214,6 +7348,83 @@ function MIDNIGHT:MakeWindow(config)
                 self:Show()
             end
         end
+
+        local function packUDim2(value)
+            if typeof(value) ~= "UDim2" then
+                return nil
+            end
+            return {
+                XScale = value.X.Scale,
+                XOffset = value.X.Offset,
+                YScale = value.Y.Scale,
+                YOffset = value.Y.Offset,
+            }
+        end
+
+        local function unpackUDim2(state, fallback)
+            if type(state) ~= "table" then
+                return fallback
+            end
+            local xs = tonumber(state.XScale or state[1] or 0) or 0
+            local xo = tonumber(state.XOffset or state[2] or 0) or 0
+            local ys = tonumber(state.YScale or state[3] or 0) or 0
+            local yo = tonumber(state.YOffset or state[4] or 0) or 0
+            return UDim2.new(xs, xo, ys, yo)
+        end
+
+        local windowCfgKey = "window:" .. tostring(fc.Flag or nm or "Window")
+        windowCfgKey = windowCfgKey:gsub("[%z\1-\31]", "")
+        windowCfgKey = windowCfgKey:gsub("[\\/:*?\"<>|]", "_")
+        windowCfgKey = windowCfgKey:gsub("%s+", "_")
+        windowCfgKey = windowCfgKey:gsub("_+", "_")
+        windowCfgKey = windowCfgKey:gsub("^_+", ""):gsub("_+$", "")
+        if windowCfgKey == "" then
+            windowCfgKey = "window:Window"
+        end
+
+        MIDNIGHT:_RegCfgWidget(windowCfgKey,
+            function()
+                return {
+                    Position = packUDim2(fw.Position),
+                    Size = {
+                        X = curFW,
+                        Y = curFH,
+                    },
+                    Visible = fData._Visible == true,
+                }
+            end,
+            function(state)
+                if type(state) ~= "table" then
+                    return
+                end
+                if type(state.Size) == "table" then
+                    local width = tonumber(state.Size.X or state.Size.Width or state.Size[1] or curFW) or curFW
+                    local height = tonumber(state.Size.Y or state.Size.Height or state.Size[2] or curFH) or curFH
+                    curFW = math.max(200, math.floor(width))
+                    curFH = math.max(150, math.floor(height))
+                    if fw and fw.Parent then
+                        fw.Size = UDim2.new(0, curFW, 0, curFH)
+                    end
+                end
+                if state.Position then
+                    local pos = unpackUDim2(state.Position, fw.Position)
+                    if fw and fw.Parent then
+                        fw.Position = pos
+                    end
+                end
+                if type(state.Visible) == "boolean" then
+                    fData._Visible = state.Visible
+                    if fw and fw.Parent then
+                        fw.Visible = state.Visible
+                        fw.BackgroundTransparency = state.Visible and 0 or 1
+                        if state.Visible and fw.Size.X.Offset == 0 and fw.Size.Y.Offset == 0 then
+                            fw.Size = UDim2.new(0, curFW, 0, curFH)
+                        end
+                    end
+                end
+            end,
+            "table"
+        )
 
         function fData:AddLine(text,color)
             local row=Create("Frame",{
@@ -9846,7 +10057,7 @@ function MIDNIGHT:MakeWindow(config)
                 hubName = hubName:gsub("_+", "_")
                 hubName = hubName:gsub("^_+", ""):gsub("_+$", "")
                 if hubName == "" then hubName = "MIDNIGHT" end
-                return "workspace/MidnightLib/" .. hubName .. "/configs"
+                return "MidnightLib/" .. hubName .. "/configs"
             end
         end
         local cfgSanitize = MIDNIGHT._CfgSanitizeName
@@ -10114,7 +10325,8 @@ end
     TextBox, ColorPicker, InlineColorPicker, Keybind, Table.
 
     Files are stored in:
-      workspace/MidnightLib/<hub name>/configs/<config name>.txt
+      MidnightLib/<hub name>/configs/<config name>.txt
+    Older configs from `workspace/MidnightLib/<hub name>/configs/` are still loaded.
 
     Internal registration:
       MIDNIGHT:_RegCfgWidget(flag, getter, setter, wtype)
@@ -10137,6 +10349,10 @@ local function _CfgGetHubName(midnight)
 end
 
 local function _CfgRootPath(midnight)
+    return "MidnightLib/" .. _CfgGetHubName(midnight) .. "/configs"
+end
+
+local function _CfgLegacyRootPath(midnight)
     return "workspace/MidnightLib/" .. _CfgGetHubName(midnight) .. "/configs"
 end
 
@@ -10168,6 +10384,36 @@ local function _CfgLegacyPath(midnight, name)
     return "midnight_cfg_" .. cfgName .. ".txt", cfgName
 end
 
+local function _CfgCollectNamesFromPath(path, names, seen, stripPrefix)
+    if type(listfiles) ~= "function" then
+        return
+    end
+    local ok, files = pcall(function()
+        return listfiles(path)
+    end)
+    if not ok or type(files) ~= "table" then
+        return
+    end
+
+    for _, filePath in ipairs(files) do
+        local stem = tostring(filePath):match("([^/\\]+)%.txt$")
+        if stem and stem ~= "" then
+            if stripPrefix then
+                local prefix = "midnight_cfg_"
+                if stem:sub(1, #prefix):lower() == prefix then
+                    stem = stem:sub(#prefix + 1)
+                else
+                    stem = nil
+                end
+            end
+            if stem and stem ~= "" and not seen[stem] then
+                seen[stem] = true
+                names[#names + 1] = stem
+            end
+        end
+    end
+end
+
 local function _CfgFileExists(path)
     if type(readfile) ~= "function" then
         return false
@@ -10197,21 +10443,11 @@ local function _CfgUniqueFilePath(midnight, name)
 end
 
 local function _CfgListNames(midnight)
-    local root = _CfgEnsureRootPath(midnight)
     local names = {}
-    if type(listfiles) == "function" then
-        local ok, files = pcall(function()
-            return listfiles(root)
-        end)
-        if ok and type(files) == "table" then
-            for _, path in ipairs(files) do
-                local stem = tostring(path):match("([^/\\]+)%.txt$")
-                if stem and stem ~= "" then
-                    names[#names + 1] = stem
-                end
-            end
-        end
-    end
+    local seen = {}
+    _CfgCollectNamesFromPath(_CfgEnsureRootPath(midnight), names, seen, false)
+    _CfgCollectNamesFromPath(_CfgLegacyRootPath(midnight), names, seen, false)
+    _CfgCollectNamesFromPath(".", names, seen, true)
     table.sort(names, function(a, b)
         return tostring(a):lower() < tostring(b):lower()
     end)
@@ -10415,11 +10651,18 @@ function MIDNIGHT:LoadConfig(name)
         return false
     end
     local fname, actualName = _CfgFilePath(self, name)
+    local legacyRoot = _CfgLegacyRootPath(self) .. "/" .. actualName .. ".txt"
     local legacyName = _CfgLegacyPath(self, actualName)
     local content = nil
     pcall(function()
         if readfile then
             content = readfile(fname)
+            if (not content or content == "") and legacyRoot then
+                local legacyRootContent = readfile(legacyRoot)
+                if legacyRootContent and legacyRootContent ~= "" then
+                    content = legacyRootContent
+                end
+            end
             if (not content or content == "") and legacyName then
                 local legacyContent = readfile(legacyName)
                 if legacyContent and legacyContent ~= "" then
@@ -10452,9 +10695,13 @@ end
 function MIDNIGHT:ResetConfig(name)
     if not self._ConfigKey then return false end
     local fname, actualName = _CfgFilePath(self, name)
+    local legacyRoot = _CfgLegacyRootPath(self) .. "/" .. actualName .. ".txt"
     local legacyName = _CfgLegacyPath(self, actualName)
     pcall(function()
         if delfile then delfile(fname)
+            pcall(function()
+                delfile(legacyRoot)
+            end)
             pcall(function()
                 delfile(legacyName)
             end)
