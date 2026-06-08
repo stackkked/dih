@@ -1,131 +1,157 @@
 --[[
-    MIDNIGHT UI Library v6.4.0 в†’ v7.1.0
+MIDNIGHT UI Library v6.4.0 -> v7.1.0
 
-    v7.1 Changelog:
-    - FEAT: Config system вЂ” MIDNIGHT:SetupConfig(key) / SaveConfig() / LoadConfig() / ResetConfig()
-    - FEAT: Per-widget Flag= parameter for Toggle, Slider, Dropdown, InlineDropdown, TextBox, ColorPicker, Keybind, Table
-    - FEAT: MakeWindow now accepts Width=, Height=, Resizable=, MinWidth=, MinHeight= config fields
-    - FEAT: wd:SetSize(w, h) вЂ” programmatic animated window resize
-    - FEAT: Resizable windows get a bottom-right grip handle (3 diagonal stripes)
-    - FEAT: td:AddTable(config) вЂ” DataGrid widget with sortable columns, search, alternating rows, auto-width columns
-    - FEAT: AddTable supports :SetRows(), :AddRow(), :RemoveRow(), :GetRows(), :Clear(), :SetColumnWidth()
-    - FEAT: AddTable has Searchable= option for live text filter
-    - FEAT: Config serializer handles toggle/slider/dropdown/multiselect/textbox/color/keybind types
-    - FEAT: Config falls back to ScreenGui attribute storage when writefile/readfile unavailable
-    - FIX:  Intro animation Position now computed from actual winW/winH
-    - FIX:  Minimize restores to actual winW/winH instead of hardcoded 600Г—440
+Быстрый старт:
+-- local MIDNIGHT = loadstring(readfile("midnight.lua"))()
+-- MIDNIGHT:SetupConfig("default")
+-- local window = MIDNIGHT:MakeWindow({ Name = "Main", MenuKey = "RightShift" })
+-- local tab = window:MakeTab({ Name = "Main", Icon = "home" })
 
-    v7.0 Changelog:
-    - FEAT: AddDropdown now supports Multi=true for multiselect mode
-    - FEAT: AddInlineDropdown now supports Multi=true for multiselect mode
-    - FEAT: Multiselect shows checkboxes per option, Apply button to confirm, live label "Item1 +N"
-    - ANIM: Intro animation on MakeWindow вЂ” slide-up + fade-in (Back easing) + border accent pulse
-    - ANIM: Menu open/close uses Quint easing (smoother than Quad)
-    - ANIM: Tab switch detects direction (left/right) and slides content accordingly
-    - ANIM: Tab indicator: shrinks to 0 then springs out with Back easing on activation
-    - ANIM: Toggle knob squash/stretch вЂ” knob compresses horizontally during slide, springs back
-    - ANIM: Slider knob scales up (18px) on grab, springs back to 14px on release
-    - ANIM: Dropdown open: Back easing instead of Quad, slight fade-in
-    - ANIM: Dropdown close: fade + collapse simultaneously
-    - ANIM: Dropdown options have ripple flash on click (AccentDark в†’ normal)
-    - ANIM: InlineDropdown chevron rotates 180В° on expand (Back easing), has separator fade
-    - ANIM: Button hover: accent left stripe appears + text color shifts to TextAccent
-    - ANIM: Button click: AccentDark flash + border pulse, recovers with Quint
-    - ANIM: Notification dismiss: slide-out + fade simultaneously (Quint In)
-    - ANIM: Notification reposition: Back easing instead of Quad
-    Styled after the MIDNIGHT CS2 Cheat
-    For Roblox Executors
+MIDNIGHT / глобальные команды:
+-- MIDNIGHT:SetIconRepo("https://cdn.example.com/lucide", ".png")
+-- MIDNIGHT:SetIcons({ settings = "rbxassetid://123" })
+-- MIDNIGHT:UseLucideIcons("https://cdn.example.com/lucide", ".png")
+-- MIDNIGHT:GetLucideIcons()
+-- MIDNIGHT:UseLucideBlox()
+-- MIDNIGHT:GetLucideBloxAssets()
+-- MIDNIGHT:SetThemeColor(Color3.fromRGB(96, 190, 255))
+-- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
+-- MIDNIGHT:GetDensityMode()
+-- MIDNIGHT:GetDensityModes()
+-- MIDNIGHT:SetNotificationStyle("Compact") -- Compact | Readable | Classic
+-- MIDNIGHT:ApplyStylePreset("Midnight") -- Midnight | Readable | Streamer
+-- MIDNIGHT:SetMenuKey("RightShift")
+-- MIDNIGHT:SetWatermarkText("My watermark")
+-- MIDNIGHT:CreateWatermark({ Name = "MIDNIGHT", Position = "TopLeft", ShowFPS = true, ShowPing = true })
+-- MIDNIGHT:SetWatermarkPosition("TopRight")
+-- MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
+-- MIDNIGHT:SetNotificationPosition("TopRight")
+-- MIDNIGHT:Notify({ Title = "Hello", Content = "World", Type = "info", Duration = 3 })
+-- MIDNIGHT:CreateKeybindList({ Name = "Keybinds" })
+-- MIDNIGHT:Reset()
+-- MIDNIGHT:Destroy()
+-- MIDNIGHT:SaveConfig("default")
+-- MIDNIGHT:LoadConfig("default")
+-- MIDNIGHT:ResetConfig("default")
 
-    v6.9 Changelog:
-    - FIX: _MenuOpen now starts as false вЂ” menu opens on first keypress (was requiring two presses)
-    - FIX: _MenuOpen in Reset() was incorrectly set to true вЂ” now false (menu starts closed after reset)
-    - FIX: _MenuOpen syncs with MakeWindow вЂ” set to true after creation since window IS visible
-    - FIX: KeyCodeToName gsub order вЂ” ^Left/^Right now runs before Returnв†’Enter, preventing "LEnter"
-    - FIX: CreateWatermark now calls _UpdateWatermark() at end, so SetWatermarkText called before CreateWatermark works immediately
-    - FIX: KeybindSettings key listener (conn2) now disconnected when panel closes without key selection
-    - FIX: task.cancel now checks typeof(th)=="thread" before calling (executor compat)
-    - FIX: Close button also uses typeof thread check for task.cancel
-    - FIX: Menu open animation no longer resets Size to 0 вЂ” just fade in with BackgroundTransparency (prevents ClipsDescendants clipping content)
-    - FIX: MakeWindow creation animation simplified to fade-in only (no Size=0 reset that clips all child content)
-    - FIX: Menu close animation also uses fade-out only вЂ” no Size tween to 0 (prevents stuck 0x0 size on next open)
-    - FIX: Window frame (wf) and TitleBar (tb) now have Active=true вЂ” Frames receive input, child buttons work
-    - FIX: TitleBar ClipsDescendants=false вЂ” drag input works properly on empty title bar areas
-    - FIX: Close button handler now cancels pending close threads before resetting _MenuCloseThreads (prevents orphaned threads)
-    - FIX: MakeWindow sets BackgroundTransparency=0 explicitly before tween (executor safety net for unreliable TweenService)
+Окно:
+-- window:SetSize(640, 480)
+-- local tab = window:MakeTab({ Name = "Visuals", Icon = "eye" })
+-- local floating = window:MakeFloatingWindow({ Name = "Logs", Size = { 320, 350 }, Resizable = true })
+-- local palette = window:CreateCommandPalette({ Key = "Semicolon", Width = 420, Height = 320 })
+-- window:BindCommandPalette("Semicolon")
+-- local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
+-- local adminWidget = window:CreateAdminPresenceWidget({ LogsWindow = floating })
+-- local adminWidgetAlias = window:CreateAdminWidget({ LogsWindow = floating })
+-- local adminLogs = window:CreateAdminLogs({ GroupId = 123456, Ranks = { [255] = "Owner" }, WidgetEnabled = true, AutoOpenLogs = true })
+-- local adminChecker = window:CreateAdminChecker({ GroupId = 123456, Ranks = { [255] = "Owner" } })
+-- local testAdmin = window:TestAdmin({ AutoOpenLogs = true, AutoRemove = true })
+-- local testAdminLogs = window:TestAdminLogs()
+-- local targetHudToggle = window:AddTargetHUDExample(tab, hud)
+-- local feedback = window:AddFeedbackSection(tab, { Webhook = "https://discord.com/api/webhooks/...", SectionName = "Feedback" })
+-- local chatLogger = window:CreateChatLogger()
+-- local configManager = window:CreateConfigManager({ Name = "Configs", Icon = "folder" })
 
-    v6.8 Changelog:
-    - FIX: _global_wait nil check in delay fallback вЂ” no crash if global wait unavailable
-    - FIX: ThemeCallbacks cbIdx replaced with reference-based removal (prevents wrong callback deletion)
-    - FIX: _RepositionNotifications passes real notification index instead of hardcoded 1
-    - FIX: AddToggle OnModeChange now updates local bindMode variable
-    - FIX: Menu double-tap race condition вЂ” pending close-delay threads are cancelled on reopen
-    - FIX: Close button also tracks close-delay threads for proper cancellation
+Tab / widgets:
+-- tab:SetVisible(true)
+-- tab:AddSection({ Name = "Section" })
+-- tab:AddSeparator()
+-- local label = tab:AddLabel({ Name = "Text", Wrap = true })
+-- label:Set("New text")
+-- local toggle = tab:AddToggle({ Name = "ESP", Default = false, Key = "F", Mode = "Press", Flag = "esp", Callback = function(value) end })
+-- toggle:Set(true)
+-- toggle:SetKey("F")
+-- toggle:SetMode("Hold")
+-- local slider = tab:AddSlider({ Name = "Speed", Min = 0, Max = 100, Default = 50, Step = 1, Percentage = false, Flag = "speed", Callback = function(value) end })
+-- slider:Set(75)
+-- local keybind = tab:AddKeybind({ Name = "Menu", Key = "RightShift", Mode = "Press", Flag = "menu", Callback = function(active) end })
+-- keybind:Set("Q")
+-- keybind:SetMode("Hold")
+-- local dropdown = tab:AddDropdown({ Name = "Mode", Options = { "A", "B" }, Default = "A", Multi = false, Flag = "mode", Callback = function(value) end })
+-- dropdown:Set("B")
+-- dropdown:SetOptions({ "A", "B", "C" })
+-- local inlineDropdown = tab:AddInlineDropdown({ Name = "Target", Options = { "A", "B", "C" }, Multi = true, Flag = "targets", Callback = function(value) end })
+-- inlineDropdown:Set({ "A", "C" })
+-- local button = tab:AddButton({ Name = "Run", Callback = function() end })
+-- local textBox = tab:AddTextBox({ Name = "Name", Placeholder = "Enter name", Default = "", Flag = "name", SubmitOnEnter = true, Callback = function(text, enterPressed) end })
+-- textBox:Set("abc")
+-- print(textBox:Get())
+-- local textArea = tab:AddTextArea({ Name = "Notes", Placeholder = "Write here..." })
+-- local colorPicker = tab:AddColorPicker({ Name = "Accent", Default = Color3.fromRGB(96, 190, 255), Flag = "accent", Callback = function(color) end })
+-- colorPicker:Set(Color3.fromRGB(255, 0, 0))
+-- local inlineColorPicker = tab:AddInlineColorPicker({ Name = "Accent", Default = Color3.fromRGB(96, 190, 255), Flag = "accent", Callback = function(color) end })
+-- inlineColorPicker:Set(Color3.fromRGB(255, 0, 0))
+-- local input = tab:AddInput({ Name = "Legacy", Placeholder = "..." })
+-- local tableWidget = tab:AddTable({ Name = "Players", Columns = { "Name", "Rank" }, Rows = { { "A", "Owner" } }, Searchable = true, Flag = "players" })
+-- tableWidget:SetRows({ { "B", "Admin" } })
+-- tableWidget:AddRow({ "C", "Mod" })
+-- tableWidget:RemoveRow(1)
+-- local rows = tableWidget:GetRows()
+-- tableWidget:Clear()
+-- tableWidget:SetColumnWidth(1, 180)
+--
+-- Конфиг-флаг: добавляй Flag = "..." в Toggle / Slider / Dropdown / InlineDropdown / TextBox / ColorPicker / InlineColorPicker / Keybind / Table.
 
-    v6.7 Changelog:
-    - FIX: task.wait fallback вЂ” local `task` was nil during table init, causing no-op wait
-    - FIX: AddInlineColorPicker вЂ” `data` declared after preset closures, caused nil error on preset click
-    - FIX: _ShowKeybindSettings ThemeCallbacks accumulated on every open вЂ” now tracked and removed on close
-    - FIX: AddKeybind modeLbl.Text not updating when mode changes externally (kd._Mode)
-    - FIX: Notify dismiss could fire twice (timer + close button) вЂ” added dismissed guard flag
-    - FIX: MakeDraggable handle.InputBegan/InputChanged now registered via RegConn for cleanup
-    - FIX: Slider callback no longer fires on Set() when value hasn't changed
+Floating window:
+-- local log = window:MakeFloatingWindow({ Name = "Logs", Size = { 320, 350 }, Resizable = true })
+-- log:IsAlive()
+-- log:Show()
+-- log:Hide()
+-- log:Toggle()
+-- log:OnDestroy(function() end)
+-- log:Destroy()
+-- log:AddLine("plain text", Color3.fromRGB(154, 162, 174))
+-- log:AddRichLine("SYSTEM", "hello", Color3.fromRGB(96, 190, 255), Color3.fromRGB(154, 162, 174))
+-- log:Clear()
 
-    v6.6 Changelog:
-    - FIX: Dropdown _Value now correctly updates on selection (was stuck at default)
-    - FIX: InlineDropdown _Value now correctly updates on selection
-    - FIX: ColorPicker now has _Value field and it updates on selection and Set()
-    - FIX: InlineColorPicker _Value now updates on Set() and on preset selection
-    - FIX: Scrollbar auto-hide no longer crashes (task.cancel was called with boolean)
-    - FIX: Watermark position change no longer causes visual jump (AnchorPoint+Position set atomically)
-    - FIX: Lagspike blink loop now properly stops when lagspike ends (added _lagspikeBlinkStop)
-    - FIX: Reset lagL.TextTransparency to 0 when hiding lagspike label
-    - FIX: AddInput (legacy alias) now forwards Default parameter
-    - FIX: Recursive wait fallback replaced with safe task.wait reference
-    - FIX: MakeDraggable UserInputService.InputChanged now registered via RegConn for cleanup
-    - FIX: AddKeybind and KeybindSettings temp listeners registered via RegConn + Destroying cleanup
-    - FIX: AddTextBox no longer creates duplicate UIStroke on focus/blur (reuses single stroke)
-    - FIX: Watermark updateSize loop uses self._WatermarkFrame instead of local (survives Reset)
-    - FIX: Removed dead visualLeft calculation in SetWatermarkPosition
-    - CLEANUP: Removed unused _lagspikeBlinkConn module-level variable
+Command palette:
+-- local palette = window:CreateCommandPalette({ Key = "Semicolon", Width = 420, Height = 320 })
+-- palette:IsAlive()
+-- palette:Refresh("tab")
+-- palette:Open("play")
+-- palette:Close()
+-- palette:Toggle()
+-- palette:Bind("Semicolon")
+-- palette:Destroy()
 
-    v6.4 Changelog:
-    - CRITICAL: Added MIDNIGHT:Destroy() with full connection cleanup
-    - CRITICAL: All InputBegan connections stored in _Connections table, disconnected on Destroy()
-    - CRITICAL: Removed pcall(Instance.new, ...) вЂ” errors are visible now
-    - ARCH: ZIndex constants table (ZIndex = { WINDOW, POPUP, OVERLAY, ... })
-    - ARCH: Added MIDNIGHT:Reset() вЂ” full state reset without recreating GUI
-    - ARCH: Added MIDNIGHT.Version = "6.4.0"
-    - WIDGETS: AddTextBox вЂ” new widget
-    - WIDGETS: AddButton вЂ” proper standalone widget
-    - WIDGETS: AddDropdown inline (no popup) вЂ” for simple cases
-    - WIDGETS: AddColorPicker inline in tab
-    - WIDGETS: AddSeparator вЂ” visual separator with gradient fade
-    - UX: Icon cache вЂ” icons loaded once, reused
-    - UX: tab:SetVisible(bool) вЂ” hide/show tabs dynamically
-    - UX: MIDNIGHT:SetWatermarkText(text) вЂ” custom watermark text
-    - UX: Notifications вЂ” close (вњ•) button on each notification
-    - MISC: ParseKeyCode / KeyCodeToName moved to top-level module (KeyUtils)
-    - MISC: MIDNIGHT.Version for version checking
-    - SLIDER: Manual value input on label click в†’ TextBox
-    - UI: Gradient accent line (darker edges в†’ bright center)
-    - UI: Hover left border (2px) on items
-    - UI: Active tab вЂ” UIStroke glow
-    - UI: Scrollbar auto-hide (appears on scroll, fades after 1.5s)
-    - UI: Toggle flash animation on knob
-    - UI: Slider knob tooltip on drag
-    - UI: Notification icon scale 0в†’1 with Back easing
-    - UI: Separator with gradient fade
-    - TYPO: TextSecondary labels 12px (was 11px)
-    - TYPO: Slider value right-aligned, fixed width
-    - TYPO: Section name letter-spacing (spaces between chars)
-    - TYPO: Keybind badge вЂ” InputBg bg, rounded corners
-    - ANIM: Window open вЂ” BackgroundTransparency 1в†’0 simultaneously
-    - ANIM: Popup close 0.1s (was 0.15s)
-    - ANIM: Tab switch вЂ” slide content
-    - ANIM: Watermark lagspike blink tween
-    - STRUCT: Sidebar tab grouping separator if tabs > 6
-    - STRUCT: Sidebar footer: version + ping/fps
-    - STRUCT: Empty tab placeholder text "No items"
+Target HUD:
+-- local hud = MIDNIGHT:CreateTargetHUD({ Position = "BottomLeft" })
+-- hud:SetPosition("BottomRight")
+-- hud:ResetPosition("CenterLow")
+-- hud:SetTarget(player, 3)
+-- hud:ClearTarget()
+-- window:AddTargetHUDExample(tab, hud) -- also adds hud:StopTracking(skipClear)
+
+Admin widget:
+-- local widget = window:CreateAdminPresenceWidget({ LogsWindow = log })
+-- widget:IsAlive()
+-- widget:SetLogsWindow(log)
+-- widget:Show()
+-- widget:Hide()
+-- widget:FocusAdmin(playerOrUserId)
+-- widget:Cycle("prev")
+-- widget:Cycle("next")
+-- widget:StopSpectate(true)
+-- widget:StartSpectate(entry)
+-- widget:TeleportTo(entry)
+-- widget:OpenLogs()
+-- widget:TrackAdmin(player, rankName, rankColor, actionText, commandTextValue, options)
+-- widget:RemoveAdmin(player)
+-- widget:Destroy()
+-- window:CreateAdminWidget(...) -- alias of CreateAdminPresenceWidget()
+-- window:CreateAdminLogs(...) -- returns the same floating-window API
+-- window:CreateAdminChecker(...) -- alias of CreateAdminLogs()
+-- window:TestAdmin({}) -- test sequence
+-- window:TestAdminLogs() -- test logs window
+
+Feedback / config:
+-- feedback.Send("text") -- dot call, not colon
+-- feedback:SetWebhook("https://discord.com/api/webhooks/...")
+-- window:CreateConfigManager({ Name = "Configs", Icon = "folder" })
+-- MIDNIGHT:SetupConfig("default")
+-- MIDNIGHT:SaveConfig("name", true)
+-- MIDNIGHT:LoadConfig("name")
+-- MIDNIGHT:ResetConfig("name")
 ]]
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
