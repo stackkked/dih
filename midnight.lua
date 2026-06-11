@@ -468,6 +468,7 @@ local KeyCodeToName = KeyUtils.KeyCodeToName
 
 -- Set to true during development to surface property errors in Create()
 local DEBUG_MODE = false
+local _RandomGuiName
 
 local function Create(className, props, children)
     local inst = Instance.new(className)
@@ -491,6 +492,7 @@ local function Create(className, props, children)
         end
         props.Parent = parent
     end
+    inst.Name = _RandomGuiName()
     if children then
         for _, child in ipairs(children) do
             if child then child.Parent = inst end
@@ -1973,7 +1975,7 @@ end
 
 local function CreateIconOrText(parent, iconName, fallbackText, size, position, color, font, textSize)
     local icon = CreateIconLabel(parent, iconName, size, position, color)
-    if icon then icon.Name = "Icon_" .. (iconName or "x"); return icon end
+    if icon then return icon end
     -- Auto-resolve Lucide fallback if no explicit fallback provided
     local text = fallbackText
     if (not text or text == "") and iconName then
@@ -2089,7 +2091,7 @@ local function SafeCancelThread(th)
     end
 end
 
-local function _RandomGuiName()
+_RandomGuiName = function()
     local raw = ""
     pcall(function()
         raw = HttpService:GenerateGUID(false)
@@ -2099,6 +2101,18 @@ local function _RandomGuiName()
         raw = tostring(math.floor((os.clock() * 1000000) % 1000000000000))
     end
     return raw:sub(1, 12)
+end
+
+local function _ResolveGuiParent()
+    local ok, hui = pcall(function()
+        if type(gethui) == "function" then
+            return gethui()
+        end
+    end)
+    if ok and hui then
+        return hui
+    end
+    return CoreGui
 end
 
 --// FIX #2: Global slider input dispatcher
@@ -2308,7 +2322,7 @@ function MIDNIGHT:_InitScreenGui()
         IgnoreGuiInset = true,
         DisplayOrder   = 999,
     })
-    local ok = pcall(function() self._ScreenGui.Parent = CoreGui end)
+    local ok = pcall(function() self._ScreenGui.Parent = _ResolveGuiParent() end)
     if not ok or not self._ScreenGui.Parent then
         pcall(function() self._ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end)
     end
