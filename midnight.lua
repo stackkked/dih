@@ -2658,6 +2658,11 @@ local MIDNIGHT = {
     _KeybindListContent = nil,
     _RefreshKeybindList = nil,
 
+    -- v7.5: deferred creation queue — watermark/keybind list wait for MakeWindow
+    _DeferredWatermark = nil,  -- config table for CreateWatermark
+    _DeferredKeybindList = nil,  -- config table for CreateKeybindList
+    _WindowCreated = false,  -- set true after first MakeWindow
+
     _Initialized = false,
     _ThemeCallbacks = {},
 
@@ -2940,7 +2945,7 @@ function MIDNIGHT:_InitScreenGui()
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn   = false,
         IgnoreGuiInset = true,
-        DisplayOrder   = 999,
+        DisplayOrder   = 9999,  -- v7.5: increased to be above game overlays
     })
     local ok = pcall(function() self._ScreenGui.Parent = _ResolveGuiParent() end)
     if not ok or not self._ScreenGui.Parent then
@@ -4236,6 +4241,11 @@ end
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:CreateWatermark(config)
     config = config or {}
+    -- v7.5: if window not created yet, defer creation until MakeWindow
+    if not self._WindowCreated then
+        self._DeferredWatermark = config
+        return
+    end
     local name = config.Name or "MIDNIGHT"
     self._WatermarkPosition = config.Position or "TopLeft"
     self._WatermarkConfig = {
@@ -4265,10 +4275,12 @@ function MIDNIGHT:CreateWatermark(config)
         BackgroundColor3 = Theme.UtilityBg,
         BackgroundTransparency = 1,  -- v7.5: start transparent for fade-in animation
         BorderSizePixel = 0, ClipsDescendants = true,
-        ZIndex = ZIndex.NOTIFY,
+        ZIndex = 1000,  -- v7.5: very high ZIndex to be above everything
         Parent = self._ScreenGui,
     })
-    StyleUtilityOverlay(wmFrame, Theme.Accent)
+    -- v7.5: solid opaque background (no tint overlay — was making it see-through)
+    ApplyCorner(wmFrame, 8)
+    ApplyStroke(wmFrame, Theme.BorderSoft, 1, 0.0)  -- fully opaque stroke
     -- v7.3: gradient on watermark bg for depth
     -- v7.4: removed gradient (solid bg looks cleaner)
     -- v7.3: subtle glow behind watermark
@@ -4401,7 +4413,7 @@ function MIDNIGHT:CreateWatermark(config)
     -- v7.5: add UIScale for spring-y entrance
     local wmScale = Create("UIScale", {Scale = 0.85, Parent = wmFrame})
     wmFrame.Position = ShiftUDim2(wmTargetPos, 0, -8)
-    -- v7.5: fade in + scale up + slide down
+    -- v7.5: fade in to fully opaque (0) + scale up + slide down
     TweenObject(wmFrame, {
         BackgroundTransparency = 0,
         Position = wmTargetPos,
@@ -5916,6 +5928,11 @@ end
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:CreateKeybindList(config)
     config = config or {}
+    -- v7.5: if window not created yet, defer creation until MakeWindow
+    if not self._WindowCreated then
+        self._DeferredKeybindList = config
+        return
+    end
     local title = config.Name or "Keybinds"
     self:_InitScreenGui()
 
@@ -6645,6 +6662,23 @@ function MIDNIGHT:MakeWindow(config)
     end
 
     table.insert(self._Windows, wd)
+
+    -- v7.5: mark window as created and flush deferred watermark/keybind list
+    self._WindowCreated = true
+    if self._DeferredWatermark then
+        local cfg = self._DeferredWatermark
+        self._DeferredWatermark = nil
+        task.delay(0.3, function()
+            pcall(function() self:CreateWatermark(cfg) end)
+        end)
+    end
+    if self._DeferredKeybindList then
+        local cfg = self._DeferredKeybindList
+        self._DeferredKeybindList = nil
+        task.delay(0.35, function()
+            pcall(function() self:CreateKeybindList(cfg) end)
+        end)
+    end
 
     --// в•ђв•ђв•ђ MAKE TAB в•ђв•ђв•ђ
     function wd:MakeTab(tabConfig)
