@@ -218,6 +218,59 @@ Feedback / config:
 ]]
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+--// COMPAT POLYFILLS
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+-- math.clamp is Luau-specific (Roblox). Provide a polyfill for non-Luau environments.
+if not math.clamp then
+    math.clamp = function(value, minV, maxV)
+        return math.max(minV, math.min(maxV, value))
+    end
+end
+
+-- math.round is also Luau-specific in some contexts.
+if not math.round then
+    math.round = function(value)
+        local f = math.floor(value)
+        if value - f >= 0.5 then return f + 1 end
+        return f
+    end
+end
+
+-- table.unpack / unpack compat (Lua 5.2+ removed global unpack)
+if not unpack then unpack = table.unpack end
+if not table.unpack then table.unpack = unpack end
+
+-- tick() is Roblox-specific (returns seconds since epoch as a number).
+-- Provide a polyfill for non-Roblox environments.
+if not tick then
+    tick = function() return os.clock() end
+end
+
+-- task library may be missing in vanilla Lua
+local task = task or {
+    spawn = function(f, ...)
+        local args = {...}
+        local co = coroutine.create(function() f(unpack(args)) end)
+        coroutine.resume(co)
+        return co
+    end,
+    delay = function(t, f, ...)
+        local args = {...}
+        local co = coroutine.create(function() f(unpack(args)) end)
+        coroutine.resume(co)
+        return co
+    end,
+    defer = function(f, ...)
+        local args = {...}
+        local co = coroutine.create(function() f(unpack(args)) end)
+        coroutine.resume(co)
+        return co
+    end,
+    wait = function(t) return 0 end,
+    cancel = function(t) end,
+}
+
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 --// SERVICES
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Players          = game:GetService("Players")
