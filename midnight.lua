@@ -11534,71 +11534,73 @@ function MIDNIGHT:MakeWindow(config)
                     local cam = workspace.CurrentCamera or camera
                     if not cam then
                         hud:ClearTarget()
-                        -- skip to next iteration
-                        goto __skip_outer__
-                    end
-
-                    local mousePos = UIS:GetMouseLocation()
-                    local mX, mY = mousePos.X, mousePos.Y
-                    local bestPlayer = nil
-                    local bestDistSq = math.huge
-
-                    for i = 1, #trackedPlayers do
-                        local p = trackedPlayers[i]
-                        local entry = charCache[p]
-                        if not entry then
-                            local char = p.Character
-                            if not char then
-                                goto __skip_inner__
-                            end
-
-                            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            if not root then
-                                goto __skip_inner__
-                            end
-
-                            entry = { char = char, root = root, hum = hum }
-                            charCache[p] = entry
-                        end
-
-                        local hum = entry.hum
-                        if hum and hum.Health <= 0 then
-                            charCache[p] = nil
-                            goto __skip_inner__
-                        end
-
-                        if not entry.root or not entry.root.Parent then
-                            charCache[p] = nil
-                            goto __skip_inner__
-                        end
-
-                        local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
-                        if not onScreen then
-                            goto __skip_inner__
-                        end
-
-                        local dx, dy = sp.X - mX, sp.Y - mY
-                        local dSq = dx * dx + dy * dy
-                        if dSq < bestDistSq then
-                            bestDistSq = dSq
-                            bestPlayer = p
-                        end
-
-                        :: __skip_inner__ ::
-                    end
-
-                    if bestPlayer then
-                        if hud._CurrentPlayer ~= bestPlayer
-                            or hud._CurrentCharacter ~= bestPlayer.Character
-                            or not hud._Visible then
-                            hud:SetTarget(bestPlayer)
-                        end
                     else
-                        hud:ClearTarget()
-                    end
+                        local mousePos = UIS:GetMouseLocation()
+                        local mX, mY = mousePos.X, mousePos.Y
+                        local bestPlayer = nil
+                        local bestDistSq = math.huge
 
-                    :: __skip_outer__ ::
+                        for i = 1, #trackedPlayers do
+                            local p = trackedPlayers[i]
+                            local entry = charCache[p]
+                            local skip = false
+
+                            if not entry then
+                                local char = p.Character
+                                if not char then
+                                    skip = true
+                                else
+                                    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+                                    local hum = char:FindFirstChildOfClass("Humanoid")
+                                    if not root then
+                                        skip = true
+                                    else
+                                        entry = { char = char, root = root, hum = hum }
+                                        charCache[p] = entry
+                                    end
+                                end
+                            end
+
+                            if not skip and entry then
+                                local hum = entry.hum
+                                if hum and hum.Health <= 0 then
+                                    charCache[p] = nil
+                                    skip = true
+                                end
+                            end
+
+                            if not skip and entry then
+                                if not entry.root or not entry.root.Parent then
+                                    charCache[p] = nil
+                                    skip = true
+                                end
+                            end
+
+                            if not skip and entry then
+                                local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
+                                if not onScreen then
+                                    skip = true
+                                else
+                                    local dx, dy = sp.X - mX, sp.Y - mY
+                                    local dSq = dx * dx + dy * dy
+                                    if dSq < bestDistSq then
+                                        bestDistSq = dSq
+                                        bestPlayer = p
+                                    end
+                                end
+                            end
+                        end
+
+                        if bestPlayer then
+                            if hud._CurrentPlayer ~= bestPlayer
+                                or hud._CurrentCharacter ~= bestPlayer.Character
+                                or not hud._Visible then
+                                hud:SetTarget(bestPlayer)
+                            end
+                        else
+                            hud:ClearTarget()
+                        end
+                    end
                 end
             end)
         end
