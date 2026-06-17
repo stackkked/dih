@@ -6717,56 +6717,35 @@ function MIDNIGHT:MakeWindow(config)
         UDim2.new(0,10,0,10),UDim2.new(0,6,0.5,-5),
         Theme.TextMuted,FontBold,8)
 
-    -- v7.5: search by tab name OR by widget/command names within each tab
-    -- NOTE: this function runs AFTER wd is created (forward reference via closure)
+    -- v7.5: search by tab name OR by widget names within each tab
+    -- Simpler approach: each tab stores _WidgetNames array, search checks it directly
     local filterTabs
     filterTabs = function(query)
         if not wd then return end
         local q = string.lower(query or "")
-        -- Collect all commands to know which widgets exist in which tabs
-        local allCommands = {}
-        if wd._CollectCommands then
-            local ok, cmds = pcall(function() return wd:_CollectCommands() end)
-            if ok and type(cmds) == "table" then
-                allCommands = cmds
-            end
-        end
-
         local tabsList = wd._Tabs or {}
         for _, t in ipairs(tabsList) do
             if t._Button then
                 if q == "" then
                     t._Button.Visible = true
                 else
-                    -- Match by tab name
+                    -- Check tab name
                     local tabNameLower = string.lower(t._Name or "")
-                    local tabNameMatch = string.find(tabNameLower, q, 1, true) ~= nil
-                    -- Match by widget names within this tab (via commands subtitle)
-                    local widgetMatch = false
-                    if not tabNameMatch and #allCommands > 0 then
-                        for _, cmd in ipairs(allCommands) do
-                            if type(cmd) == "table" then
-                                local subtitle = tostring(cmd.Subtitle or "")
-                                -- subtitle format for widgets: "TabName / Kind"
-                                -- subtitle for tabs: "Open tab" (skip these)
-                                local cmdTabName = subtitle:match("^([^/]+)%s*/")
-                                if cmdTabName then
-                                    cmdTabName = cmdTabName:gsub("^%s+", ""):gsub("%s+$", "")
-                                    local cmdTabNameLower = string.lower(cmdTabName)
-                                    if cmdTabNameLower == tabNameLower then
-                                        -- This command belongs to this tab — check title + search
-                                        local titleLower = string.lower(tostring(cmd.Title or ""))
-                                        local searchLower = string.lower(tostring(cmd.Search or ""))
-                                        if string.find(titleLower, q, 1, true) or string.find(searchLower, q, 1, true) then
-                                            widgetMatch = true
-                                            break
-                                        end
-                                    end
+                    if string.find(tabNameLower, q, 1, true) then
+                        t._Button.Visible = true
+                    else
+                        -- Check widget names stored on the tab
+                        local found = false
+                        if t._WidgetNames and type(t._WidgetNames) == "table" then
+                            for _, wname in ipairs(t._WidgetNames) do
+                                if string.find(string.lower(wname), q, 1, true) then
+                                    found = true
+                                    break
                                 end
                             end
                         end
+                        t._Button.Visible = found
                     end
-                    t._Button.Visible = tabNameMatch or widgetMatch
                 end
             end
         end
@@ -7113,6 +7092,7 @@ function MIDNIGHT:MakeWindow(config)
             _Layout=nil, _Window=wd, _ItemCount=0,
             _Indicator=indicator, _IndicatorGlow=indicatorGlow, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
+            _WidgetNames={},  -- v7.5: widget names for search
             _Placeholder=placeholder,
             _Select=nil,
         }
@@ -7125,23 +7105,22 @@ function MIDNIGHT:MakeWindow(config)
 
             local outgoing = self._ActiveTab
 
-            -- v7.5: Tab switch — "fast scroll up" effect
-            -- Outgoing slides UP + fades, incoming appears from below + slides up to center
+            -- v7.5: "Scroll up" tab switch
+            -- Outgoing content scrolls UP and out, incoming content scrolls UP from below
+            -- Both happen simultaneously but in separate clip frames (no overlap)
 
-            -- Phase 1: Outgoing slides up + fades out (0.15s)
+            -- Phase 1: Outgoing scrolls up + fades (0.18s)
             if outgoing and outgoing._PageClip and outgoing ~= td then
                 local outScale = outgoing._PageClip:FindFirstChildWhichIsA("UIScale")
-                -- Slide page UP via position offset (negative Y = up)
                 if outgoing._Page then
-                    TweenObject(outgoing._Page, {Position = UDim2.new(0, 4, 0, -30)}, 0.15,
+                    TweenObject(outgoing._Page, {Position = UDim2.new(0, 4, 0, -35)}, 0.18,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
                 if outScale then
-                    TweenObject(outScale, {Scale = 0.95}, 0.15,
+                    TweenObject(outScale, {Scale = 0.96}, 0.18,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
-                -- Hide outgoing after slide
-                SafeDelay(0.16, function()
+                SafeDelay(0.19, function()
                     if outgoing._PageClip and self._ActiveTab ~= outgoing then
                         outgoing._PageClip.Visible = false
                         if outScale then outScale.Scale = 1 end
@@ -7152,7 +7131,7 @@ function MIDNIGHT:MakeWindow(config)
                 end)
             end
 
-            -- Phase 2: Update all tab buttons
+            -- Phase 2: Update tab buttons
             for _, t in ipairs(self._Tabs) do
                 local active = (t == td)
                 if t._PageClip then
@@ -7208,17 +7187,17 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            -- Phase 3: Incoming starts from below, slides UP to center (fast scroll up)
+            -- Phase 3: Incoming scrolls up from below (starts immediately, slight delay for outgoing to begin leaving)
             pageClip.Visible = true
-            pageClipScale.Scale = 0.98
-            -- Start page below center (Y offset +30), then slide up to center
-            page.Position = UDim2.new(0, 4, 0, 30)
-            SafeDelay(0.16, function()
+            pageClipScale.Scale = 0.97
+            -- Start from below (Y: +35), scroll UP to center (Y: +4)
+            page.Position = UDim2.new(0, 4, 0, 35)
+            SafeDelay(0.08, function()
                 if self._ActiveTab == td and pageClip and pageClip.Parent then
-                    -- Fast scroll up: slide from +30 to +4 (upward), with Quint for snappy feel
+                    -- Fast scroll up: 35 → 4 (upward), snappy Quint
                     TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    TweenObject(pageClipScale, {Scale = 1}, 0.25,
+                    TweenObject(pageClipScale, {Scale = 1}, 0.26,
                         Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 end
             end)
@@ -7288,6 +7267,10 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local function registerCommand(title, kind, action, extraSearch)
+            -- v7.5: store widget name on tab for search
+            if title and td._WidgetNames then
+                td._WidgetNames[#td._WidgetNames + 1] = title
+            end
             return wd:_RegisterCommand({
                 Title = title,
                 Subtitle = tabName .. " / " .. (kind or "Action"),
