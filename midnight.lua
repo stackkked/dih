@@ -4148,27 +4148,28 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         if w._GetCurrentFrameSize then
                             openW, openH = w:_GetCurrentFrameSize()
                         end
+                        local tbH = CompactStyle.TitleBarHeight  -- v7.5: use CompactStyle (titleBarH is local in MakeWindow)
                         -- Center coordinates
                         local cx, cy = 0.5, 0.5
-                        -- Phase 0: start as collapsed strip (width=0, height=titleBarH)
+                        -- Phase 0: start as collapsed strip (width=0, height=tbH)
                         w._Frame.Visible = true
                         w._Frame.BackgroundTransparency = 0
-                        w._Frame.Size = UDim2.new(0, 0, 0, titleBarH)
-                        w._Frame.Position = UDim2.new(cx, 0, cy, -titleBarH/2)
+                        w._Frame.Size = UDim2.new(0, 0, 0, tbH)
+                        w._Frame.Position = UDim2.new(cx, 0, cy, -tbH/2)
 
                         -- Phase 1: expand width from 0 to openW (horizontal expand from center)
                         TweenObject(w._Frame, {
-                            Size = UDim2.new(0, openW, 0, titleBarH),
-                            Position = UDim2.new(cx, -openW/2, cy, -titleBarH/2),
-                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                            Size = UDim2.new(0, openW, 0, tbH),
+                            Position = UDim2.new(cx, -openW/2, cy, -tbH/2),
+                        }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-                        -- Phase 2: expand height from titleBarH to openH (vertical expand from center)
-                        local th1 = task.delay(0.16, function()
+                        -- Phase 2: expand height from tbH to openH AFTER phase 1 completes (smoother)
+                        local th1 = task.delay(0.26, function()
                             if self._MenuOpen and w._Frame and w._Frame.Parent then
                                 TweenObject(w._Frame, {
                                     Size = UDim2.new(0, openW, 0, openH),
                                     Position = UDim2.new(cx, -openW/2, cy, -openH/2),
-                                }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                                }, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                             end
                         end)
                         table.insert(self._MenuCloseThreads, th1)
@@ -6277,37 +6278,37 @@ function MIDNIGHT:MakeWindow(config)
             if w._Frame then
                 local frame = w._Frame
                 local wScale = frame:FindFirstChildWhichIsA("UIScale")
-                -- v7.5: 2-phase close animation
-                -- Phase 1: collapse vertically to center (height -> titleBarH)
+                -- v7.5: 2-phase close animation — wait for phase 1 to finish before phase 2
                 -- Store original size for re-open
                 local origW = winW
                 local origH = winH
+                local tbH = CompactStyle.TitleBarHeight
                 local centerX = frame.Position.X.Scale
                 local centerY = frame.Position.Y.Scale
                 local centerOffsetX = frame.Position.X.Offset + origW/2
                 local centerOffsetY = frame.Position.Y.Offset + origH/2
 
-                -- Phase 1: collapse height to titleBarH (vertical shrink to center)
-                local phase1H = titleBarH
+                -- Phase 1: collapse height to tbH (vertical shrink to center) — 0.26s
                 TweenObject(frame, {
-                    Size = UDim2.new(0, origW, 0, phase1H),
-                    Position = UDim2.new(centerX, centerOffsetX - origW/2, centerY, centerOffsetY - phase1H/2),
-                }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    Size = UDim2.new(0, origW, 0, tbH),
+                    Position = UDim2.new(centerX, centerOffsetX - origW/2, centerY, centerOffsetY - tbH/2),
+                }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
                 -- Phase 2: collapse width to 0 (horizontal shrink from sides to center)
-                local th1 = task.delay(0.18, function()
+                -- Wait for phase 1 to fully complete (0.26s) before starting phase 2
+                local th1 = task.delay(0.28, function()
                     if not self._MenuOpen and frame and frame.Parent then
                         TweenObject(frame, {
-                            Size = UDim2.new(0, 0, 0, phase1H),
-                            Position = UDim2.new(centerX, centerOffsetX, centerY, centerOffsetY - phase1H/2),
+                            Size = UDim2.new(0, 0, 0, tbH),
+                            Position = UDim2.new(centerX, centerOffsetX, centerY, centerOffsetY - tbH/2),
                             BackgroundTransparency = 1,
-                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     end
                 end)
                 table.insert(self._MenuCloseThreads, th1)
 
-                -- Phase 3: hide after animation completes
-                local th2 = task.delay(0.40, function()
+                -- Phase 3: hide after both phases complete (0.28 + 0.24 = ~0.55s)
+                local th2 = task.delay(0.58, function()
                     if not self._MenuOpen and frame and frame.Parent then
                         frame.Visible = false
                         -- Restore original size/position for next open
