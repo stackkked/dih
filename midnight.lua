@@ -3173,8 +3173,10 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     local onClose        = config.OnClose
     local currentKeyStr  = config.CurrentKeyStr or "None"
     local onKeyChange    = config.OnKeyChange
+    local onUnbind       = config.OnUnbind  -- v7.5: new callback for unbind
 
-    local panelW, panelHFinal = 198, 156
+    -- v7.5: increased panel height to fit Unbind button (was 156, now 184)
+    local panelW, panelHFinal = 198, 184
 
     local vpSize = GetViewportSize()
     local posX = position.X + 4
@@ -3376,6 +3378,37 @@ function MIDNIGHT:_ShowKeybindSettings(config)
         TweenObject(visKnob,{Position=UDim2.new(0,visState and 18 or 2,0.5,-5)},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
         TweenObject(visKnob,{BackgroundColor3=visState and Color3.fromRGB(230,230,240) or Theme.ToggleKnob},0.18)
         if onVisibleChange then onVisibleChange(visState) end
+    end)
+
+    -- v7.5: Unbind button — clears the current keybind
+    local unbindBtn = Create("TextButton",{
+        Text="Unbind", Font=FontBold, TextSize=10,
+        TextColor3=Theme.TextSecondary,
+        Size=UDim2.new(1,0,0,24), Position=UDim2.new(0,0,0,144),
+        BackgroundColor3=Theme.InputBg, BorderSizePixel=0,
+        ZIndex=ZIndex.POPUP+3, Parent=pf,
+    })
+    ApplyCorner(unbindBtn,4)
+    ApplyStroke(unbindBtn, Theme.Error, 1, 0.4)
+    ApplyPressFeedback(unbindBtn, 0.97, 0.08)
+    unbindBtn.MouseEnter:Connect(function()
+        TweenObject(unbindBtn,{BackgroundColor3=Theme.Error, TextColor3=Color3.fromRGB(255,255,255)},0.15)
+    end)
+    unbindBtn.MouseLeave:Connect(function()
+        TweenObject(unbindBtn,{BackgroundColor3=Theme.InputBg, TextColor3=Theme.TextSecondary},0.18)
+    end)
+    unbindBtn.MouseButton1Click:Connect(function()
+        -- v7.5: clear key visually
+        keyBtn.Text = "[ None ]"
+        keyBtn.TextColor3 = Theme.TextMuted
+        -- Reset to None via callback (pass Unknown key)
+        if onKeyChange then onKeyChange(Enum.KeyCode.Unknown, "None") end
+        if onUnbind then onUnbind() end
+        -- Brief feedback flash
+        TweenObject(unbindBtn,{BackgroundColor3=Theme.Error},0.05)
+        task.delay(0.15, function()
+            TweenObject(unbindBtn,{BackgroundColor3=Theme.InputBg, TextColor3=Theme.TextSecondary},0.25)
+        end)
     end)
 
     TweenObject(pf,     {BackgroundTransparency=0}, 0.15)
@@ -4109,23 +4142,36 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
             for _, w in ipairs(self._Windows) do
                 if w._Frame then
                     if self._MenuOpen then
-                        w._Frame.Visible = true
-                        w._Frame.BackgroundTransparency = 1
-                        local scale = w._Frame:FindFirstChildWhichIsA("UIScale")
-                        if scale then
-                            scale.Scale = 0.96
-                        end
-                        -- BUG-E FIX: respect minimized state вЂ” don't force full height if window was minimized
+                        -- v7.5: 2-phase open animation (reverse of close)
+                        -- Start from collapsed state: width=0, height=titleBarH, centered
                         local openW, openH = CompactStyle.WindowWidth, (w._IsMinimized and CompactStyle.CollapsedWindowHeight or CompactStyle.WindowHeight)
                         if w._GetCurrentFrameSize then
                             openW, openH = w:_GetCurrentFrameSize()
                         end
-                        w._Frame.Size = UDim2.new(0, openW, 0, openH)
-                        -- Smooth fade in
-                        TweenObject(w._Frame, {BackgroundTransparency=0}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                        if scale then
-                            TweenObject(scale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                        end
+                        -- Center coordinates
+                        local cx, cy = 0.5, 0.5
+                        -- Phase 0: start as collapsed strip (width=0, height=titleBarH)
+                        w._Frame.Visible = true
+                        w._Frame.BackgroundTransparency = 0
+                        w._Frame.Size = UDim2.new(0, 0, 0, titleBarH)
+                        w._Frame.Position = UDim2.new(cx, 0, cy, -titleBarH/2)
+
+                        -- Phase 1: expand width from 0 to openW (horizontal expand from center)
+                        TweenObject(w._Frame, {
+                            Size = UDim2.new(0, openW, 0, titleBarH),
+                            Position = UDim2.new(cx, -openW/2, cy, -titleBarH/2),
+                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+                        -- Phase 2: expand height from titleBarH to openH (vertical expand from center)
+                        local th1 = task.delay(0.16, function()
+                            if self._MenuOpen and w._Frame and w._Frame.Parent then
+                                TweenObject(w._Frame, {
+                                    Size = UDim2.new(0, openW, 0, openH),
+                                    Position = UDim2.new(cx, -openW/2, cy, -openH/2),
+                                }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                            end
+                        end)
+                        table.insert(self._MenuCloseThreads, th1)
                     else
                         local scale = w._Frame:FindFirstChildWhichIsA("UIScale")
                         if scale then
@@ -6180,34 +6226,7 @@ function MIDNIGHT:MakeWindow(config)
     ApplyCorner(tb,CompactStyle.HeaderRadius)
     -- v7.4: removed the bottom border line (was looking like a dark strip)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.WindowBg,BorderSizePixel=0,Parent=tb})
-    -- v7.4: circular glow behind moon icon (was square shadow image)
-    local logoGlow = Create("Frame",{
-        Name="LogoGlow",
-        Size=UDim2.new(0, 26, 0, 26),
-        Position=UDim2.new(0, 9, 0.5, -13),
-        BackgroundColor3=Theme.Accent,
-        BackgroundTransparency=0.85,
-        BorderSizePixel=0,
-        ZIndex=ZIndex.CONTENT-1,
-        Parent=tb,
-    })
-    -- Make it a perfect circle
-    Create("UICorner", {CornerRadius=UDim.new(1, 0), Parent=logoGlow})
-    -- Add a soft blur via ImageLabel with circle image
-    local logoGlowSoft = Create("ImageLabel",{
-        Name="LogoGlowSoft",
-        Size=UDim2.new(0, 40, 0, 40),
-        Position=UDim2.new(0, 2, 0.5, -20),
-        BackgroundTransparency=1,
-        Image="rbxassetid://266543268",  -- circle image
-        ImageColor3=Theme.Accent,
-        ImageTransparency=0.85,
-        ScaleType=Enum.ScaleType.Stretch,
-        ZIndex=ZIndex.CONTENT-2,
-        Parent=tb,
-    })
-    -- pulsing logo glow (circular)
-    PulseGlow(logoGlowSoft, 0.55, 0.85, 1.6)
+    -- v7.5: removed logo glow (was looking bad as a square/circle behind moon icon)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
     Create("TextLabel",{
         Text=windowName,Font=FontBold,TextSize=12,TextColor3=Theme.TextPrimary,
@@ -6256,21 +6275,49 @@ function MIDNIGHT:MakeWindow(config)
         end
         for _, w in ipairs(self._Windows) do
             if w._Frame then
-                -- v7.2: mirror open animation — reverse scale + position offset + fade
-                local wScale = w._Frame:FindFirstChildWhichIsA("UIScale")
-                TweenObject(w._Frame, {BackgroundTransparency = 1}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                if wScale then
-                    TweenObject(wScale, {Scale = 0.94}, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-                end
-                TweenObject(w._Frame, {Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2 + 12)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                local th = task.delay(0.25, function()
-                    if not self._MenuOpen then
-                        w._Frame.Visible = false
-                        -- restore scale for next open
-                        if wScale then wScale.Scale = 0.94 end
+                local frame = w._Frame
+                local wScale = frame:FindFirstChildWhichIsA("UIScale")
+                -- v7.5: 2-phase close animation
+                -- Phase 1: collapse vertically to center (height -> titleBarH)
+                -- Store original size for re-open
+                local origW = winW
+                local origH = winH
+                local centerX = frame.Position.X.Scale
+                local centerY = frame.Position.Y.Scale
+                local centerOffsetX = frame.Position.X.Offset + origW/2
+                local centerOffsetY = frame.Position.Y.Offset + origH/2
+
+                -- Phase 1: collapse height to titleBarH (vertical shrink to center)
+                local phase1H = titleBarH
+                TweenObject(frame, {
+                    Size = UDim2.new(0, origW, 0, phase1H),
+                    Position = UDim2.new(centerX, centerOffsetX - origW/2, centerY, centerOffsetY - phase1H/2),
+                }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+                -- Phase 2: collapse width to 0 (horizontal shrink from sides to center)
+                local th1 = task.delay(0.18, function()
+                    if not self._MenuOpen and frame and frame.Parent then
+                        TweenObject(frame, {
+                            Size = UDim2.new(0, 0, 0, phase1H),
+                            Position = UDim2.new(centerX, centerOffsetX, centerY, centerOffsetY - phase1H/2),
+                            BackgroundTransparency = 1,
+                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     end
                 end)
-                table.insert(self._MenuCloseThreads, th)
+                table.insert(self._MenuCloseThreads, th1)
+
+                -- Phase 3: hide after animation completes
+                local th2 = task.delay(0.40, function()
+                    if not self._MenuOpen and frame and frame.Parent then
+                        frame.Visible = false
+                        -- Restore original size/position for next open
+                        frame.Size = UDim2.new(0, origW, 0, origH)
+                        frame.Position = UDim2.new(0.5, -origW/2, 0.5, -origH/2)
+                        frame.BackgroundTransparency = 0
+                        if wScale then wScale.Scale = 1 end
+                    end
+                end)
+                table.insert(self._MenuCloseThreads, th2)
             end
         end
         for _, fw in ipairs(self._FloatingWindows or {}) do
@@ -6383,19 +6430,22 @@ function MIDNIGHT:MakeWindow(config)
         UDim2.new(0,10,0,10),UDim2.new(0,6,0.5,-5),
         Theme.TextMuted,FontBold,8)
 
-    -- v7.4: search by tab name OR by widget/command names within each tab
-    local function filterTabs(query)
+    -- v7.5: search by tab name OR by widget/command names within each tab
+    -- NOTE: this function runs AFTER wd is created (forward reference via closure)
+    local filterTabs
+    filterTabs = function(query)
         local q = string.lower(query or "")
         -- Collect all commands to know which widgets exist in which tabs
         local allCommands = {}
-        if self._CollectCommands then
-            local ok, cmds = pcall(function() return self:_CollectCommands() end)
+        if wd and wd._CollectCommands then
+            local ok, cmds = pcall(function() return wd:_CollectCommands() end)
             if ok and type(cmds) == "table" then
                 allCommands = cmds
             end
         end
 
-        for _, t in ipairs(self._Tabs) do
+        local tabsList = (wd and wd._Tabs) or {}
+        for _, t in ipairs(tabsList) do
             if t._Button then
                 if q == "" then
                     t._Button.Visible = true
@@ -6408,15 +6458,17 @@ function MIDNIGHT:MakeWindow(config)
                         for _, cmd in ipairs(allCommands) do
                             if type(cmd) == "table" then
                                 local subtitle = tostring(cmd.Subtitle or "")
-                                -- subtitle format: "TabName / Kind" — check if this command belongs to this tab
+                                -- subtitle format: "TabName / Kind"
                                 local cmdTabName = subtitle:match("^([^/]+)%s*/")
-                                if cmdTabName and cmdTabName:gsub("%s+$", "") == t._Name then
-                                    -- This command belongs to this tab — check title
-                                    local titleMatch = string.find(string.lower(tostring(cmd.Title or "")), q, 1, true) ~= nil
-                                    local searchMatch = string.find(string.lower(tostring(cmd.Search or "")), q, 1, true) ~= nil
-                                    if titleMatch or searchMatch then
-                                        widgetMatch = true
-                                        break
+                                if cmdTabName then
+                                    cmdTabName = cmdTabName:gsub("^%s+", ""):gsub("%s+$", "")
+                                    if cmdTabName == t._Name then
+                                        local titleMatch = string.find(string.lower(tostring(cmd.Title or "")), q, 1, true) ~= nil
+                                        local searchMatch = string.find(string.lower(tostring(cmd.Search or "")), q, 1, true) ~= nil
+                                        if titleMatch or searchMatch then
+                                            widgetMatch = true
+                                            break
+                                        end
                                     end
                                 end
                             end
@@ -6466,6 +6518,8 @@ function MIDNIGHT:MakeWindow(config)
     ApplyCorner(contentFrame,CompactStyle.WindowRadius)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface0,BorderSizePixel=0,Parent=contentFrame})
 
+    -- v7.5: forward declare wd so filterTabs closure can reference it
+    local wd
     wd = {
         _Frame=wf, _TitleBar=tb, _Body=body, _Sidebar=sidebar,
         _TabList=tabList, _ContentFrame=contentFrame,
@@ -6752,20 +6806,28 @@ function MIDNIGHT:MakeWindow(config)
                 return
             end
 
-            -- v7.3: crossfade via UIScale + position offset (pageClip stays fully transparent
-            -- so it never paints over content)
+            -- v7.5: improved tab switch — slide outgoing left, slide incoming from right
             local outgoing = self._ActiveTab
             if outgoing and outgoing._PageClip and outgoing ~= td then
                 local outClip = outgoing._PageClip
                 local outScale = outClip:FindFirstChildWhichIsA("UIScale")
+                -- Slide outgoing left + fade + scale down
                 if outScale then
-                    TweenObject(outScale, {Scale = 0.96}, 0.18,
+                    TweenObject(outScale, {Scale = 0.94}, 0.20,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
-                task.delay(0.2, function()
+                -- Slide page position to the left
+                if outgoing._Page then
+                    TweenObject(outgoing._Page, {Position = UDim2.new(0, -20, 0, 4)}, 0.20,
+                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                end
+                task.delay(0.22, function()
                     if outgoing._PageClip and self._ActiveTab ~= outgoing then
                         outgoing._PageClip.Visible = false
-                        if outScale then outScale.Scale = 0.96 end
+                        if outScale then outScale.Scale = 0.94 end
+                        if outgoing._Page then
+                            outgoing._Page.Position = UDim2.new(0, 4, 0, 4)
+                        end
                     end
                 end)
             end
@@ -6779,39 +6841,43 @@ function MIDNIGHT:MakeWindow(config)
                 TweenObject(t._Button,{
                     BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
                     BackgroundTransparency = active and 0.4 or 1,
-                },0.18)
+                },0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 TweenObject(t._Indicator,{
                     Size = active and UDim2.new(0,3,0.62,0) or UDim2.new(0,3,0,0),
                     Position = active and UDim2.new(0,0,0.19,0) or UDim2.new(0,0,0.5,0),
-                },0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                },0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                 -- v7.3: animate indicator glow
                 if t._IndicatorGlow then
                     if active then
-                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0.62, 0), Position = UDim2.new(0, -2, 0.19, 0), ImageTransparency = 0.45}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0.62, 0), Position = UDim2.new(0, -2, 0.19, 0), ImageTransparency = 0.45}, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
-                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0, 0), Position = UDim2.new(0, -2, 0.5, 0), ImageTransparency = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0, 0), Position = UDim2.new(0, -2, 0.5, 0), ImageTransparency = 1}, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     end
                 end
                 if t._Label then
-                    TweenObject(t._Label,{TextColor3 = active and Theme.TextAccent or Theme.TextSecondary},0.18)
+                    TweenObject(t._Label,{TextColor3 = active and Theme.TextAccent or Theme.TextSecondary},0.22)
                 end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
-                        TweenObject(t._IconEl,{ImageColor3 = active and Theme.Accent or Theme.TextMuted},0.18)
+                        TweenObject(t._IconEl,{ImageColor3 = active and Theme.Accent or Theme.TextMuted},0.22)
                     else
-                        TweenObject(t._IconEl,{TextColor3 = active and Theme.Accent or Theme.TextMuted},0.18)
+                        TweenObject(t._IconEl,{TextColor3 = active and Theme.Accent or Theme.TextMuted},0.22)
                     end
                 end
                 if t._GlowStroke then
-                    TweenObject(t._GlowStroke,{Transparency = active and 0.72 or 1},0.18)
+                    TweenObject(t._GlowStroke,{Transparency = active and 0.72 or 1},0.22)
                 end
             end
 
-            -- v7.3: incoming page — scale-in via UIScale (page stays transparent)
+            -- v7.5: incoming page — slide from right + scale up
             pageClip.Visible = true
-            pageClipScale.Scale = 0.96
-            TweenObject(pageClipScale, {Scale = 1}, 0.30,
+            pageClipScale.Scale = 0.94
+            page.Position = UDim2.new(0, 20, 0, 4)
+            -- Animate: slide to center + scale up
+            TweenObject(pageClipScale, {Scale = 1}, 0.32,
                 Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.30,
+                Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
             self._ActiveTab = td
         end
@@ -6926,17 +6992,21 @@ function MIDNIGHT:MakeWindow(config)
                 Parent=resolveParent(),
             })
 
-            -- Header frame (clickable when collapsible) — v7.4: Active=true to capture clicks only on header area
+            -- Header frame (clickable when collapsible) — v7.5: header must NOT cover content
             local header = Create("Frame",{
+                Name="SectionHeader",
                 Size=UDim2.new(1,0,0,CompactStyle.SectionHeight),
                 BackgroundTransparency=1,
                 Active=true,
                 Parent=sf,
             })
+            -- v7.5: headerBtn only covers the header area (24px height), explicit size
             local headerBtn
             if collapsible then
                 headerBtn = Create("TextButton",{
-                    Text="", Size=UDim2.new(1,0,1,0),
+                    Text="",
+                    Size=UDim2.new(1, 0, 0, CompactStyle.SectionHeight),  -- explicit 24px, not 1 scale
+                    Position=UDim2.new(0, 0, 0, 0),
                     BackgroundTransparency=1,
                     ZIndex=ZIndex.CONTENT+5,
                     Active=true,
