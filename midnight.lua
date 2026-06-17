@@ -1716,37 +1716,22 @@ local function _PlayLoadingIntroImpl(self, config)
     })
 
     -- ============================================================
-    -- LOGO STAGE (centered, top portion of card)
+    -- LOGO STAGE — large brand text instead of moon icon
     -- ============================================================
-    local logoY = 50
+    local logoY = 70
     local logoStage = Create("Frame", {
-        Size = UDim2.new(0, 120, 0, 120),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0, logoY),
+        Size = UDim2.new(1, 0, 0, 80),
+        Position = UDim2.new(0, 0, 0, logoY),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
-    local logoScale = Create("UIScale", {Scale = 0.3, Parent = logoStage})
+    local logoScale = Create("UIScale", {Scale = 0.7, Parent = logoStage})
 
-    -- Pulsing glow ring behind logo
-    local glowRing = Create("Frame", {
-        Size = UDim2.new(0, 80, 0, 80),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        BackgroundColor3 = Theme.Accent,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ZIndex = ZIndex.TOP + 1,
-        Parent = logoStage,
-    })
-    Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = glowRing})
-    local glowScale = Create("UIScale", {Scale = 0.8, Parent = glowRing})
-
-    -- Outer glow (larger, more diffused)
-    local outerGlow = Create("ImageLabel", {
-        Size = UDim2.new(0, 120, 0, 120),
+    -- Pulsing accent glow behind brand text
+    local brandGlow = Create("ImageLabel", {
+        Size = UDim2.new(0, 200, 0, 60),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundTransparency = 1,
@@ -1754,32 +1739,51 @@ local function _PlayLoadingIntroImpl(self, config)
         ImageColor3 = Theme.Accent,
         ImageTransparency = 1,
         ScaleType = Enum.ScaleType.Stretch,
-        ZIndex = ZIndex.TOP,
+        ZIndex = ZIndex.TOP + 1,
         Parent = logoStage,
     })
 
-    -- Moon icon (centered in logo stage) — direct TextLabel (CreateIconOrText not yet defined)
-    local moonIcon = Create("TextLabel", {
-        Text = "moon",
+    -- Brand text (uses config.Title = window name from MakeWindow)
+    local brandText = Create("TextLabel", {
+        Text = titleText,
         Font = FontBold,
-        TextSize = 24,
-        TextColor3 = Theme.Accent,
+        TextSize = 32,
+        TextColor3 = Theme.TextPrimary,
         TextTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Center,
         TextYAlignment = Enum.TextYAlignment.Center,
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(0.5, -14, 0.5, -14),
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         ZIndex = ZIndex.TOP + 3,
         Parent = logoStage,
     })
 
-    -- Orbiting dots (3 dots at different radii)
+    -- Accent underline (grows from center)
+    local underline = Create("Frame", {
+        Size = UDim2.new(0, 0, 0, 2),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 1, -8),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 3,
+        Parent = logoStage,
+    })
+    ApplyCorner(underline, 1)
+    -- Gradient on underline for richer look
+    Create("UIGradient", {
+        Color = ColorSequence.new(Theme.Accent, Theme.AccentGradient2 or Theme.Accent),
+        Transparency = NumberSequence.new(0, 0.5),
+        Parent = underline,
+    })
+
+    -- Orbiting dots — now orbit the brand text area
     local orbitDots = {}
     local orbitConfigs = {
-        {radius = 48, speed = 1.2, size = 5, offset = 0,    transparency = 0.2},
-        {radius = 55, speed = 0.8, size = 4, offset = 2.094, transparency = 0.35},  -- 120deg
-        {radius = 42, speed = 1.5, size = 3, offset = 4.188, transparency = 0.5},   -- 240deg
+        {radius = 70, speed = 1.0, size = 5, offset = 0,    transparency = 0.15},
+        {radius = 80, speed = 0.7, size = 4, offset = 2.094, transparency = 0.3},
+        {radius = 60, speed = 1.3, size = 3, offset = 4.188, transparency = 0.45},
     }
     for i, cfg in ipairs(orbitConfigs) do
         local dot = Create("Frame", {
@@ -1793,10 +1797,23 @@ local function _PlayLoadingIntroImpl(self, config)
             Parent = logoStage,
         })
         Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = dot})
-        orbitDots[i] = {frame = dot, radius = cfg.radius, speed = cfg.speed, offset = cfg.offset, targetTransparency = cfg.transparency}
+        -- Subtle glow on each dot
+        local dotGlow = Create("ImageLabel", {
+            Size = UDim2.new(0, cfg.size * 3, 0, cfg.size * 3),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://266543268",
+            ImageColor3 = Theme.Accent,
+            ImageTransparency = 1,
+            ScaleType = Enum.ScaleType.Stretch,
+            ZIndex = ZIndex.TOP + 1,
+            Parent = dot,
+        })
+        orbitDots[i] = {frame = dot, glow = dotGlow, radius = cfg.radius, speed = cfg.speed, offset = cfg.offset, targetTransparency = cfg.transparency}
     end
 
-    -- Orbit animation loop
+    -- Orbit animation loop — moves dots AND their glows
     local orbitConn
     local orbitStart = os.clock()
     orbitConn = RunService.RenderStepped:Connect(function()
@@ -1809,23 +1826,24 @@ local function _PlayLoadingIntroImpl(self, config)
             if od.frame and od.frame.Parent then
                 local angle = od.offset + t * od.speed
                 local x = math.cos(angle) * od.radius
-                local y = math.sin(angle) * od.radius
+                local y = math.sin(angle) * od.radius * 0.55  -- elliptical orbit (wider than tall)
                 od.frame.Position = UDim2.new(0.5, x, 0.5, y)
             end
         end
     end)
     RegConn(orbitConn)
 
-    -- Glow pulse loop
+    -- Brand glow pulse loop
     local pulseConn
     pulseConn = RunService.RenderStepped:Connect(function()
-        if not glowRing or not glowRing.Parent then
+        if not brandGlow or not brandGlow.Parent then
             if pulseConn then pulseConn:Disconnect() end
             return
         end
         local t = os.clock() - orbitStart
-        local pulse = 0.85 + math.sin(t * 2.5) * 0.12
-        glowScale.Scale = pulse
+        local pulse = 0.78 + math.sin(t * 2.0) * 0.10
+        -- pulse the glow transparency
+        brandGlow.ImageTransparency = pulse
     end)
     RegConn(pulseConn)
 
@@ -1937,19 +1955,23 @@ local function _PlayLoadingIntroImpl(self, config)
     TweenObject(cardScale, {Scale = 1}, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     TweenObject(innerHL, {BackgroundTransparency = 0.06}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-    -- Phase 2: Logo entrance (0.1 - 0.6s)
+    -- Phase 2: Logo entrance (0.1 - 0.7s)
     task.delay(0.1, function()
-        TweenObject(logoScale, {Scale = 1}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        TweenObject(glowRing, {BackgroundTransparency = 0.75}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(outerGlow, {ImageTransparency = 0.8}, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        if moonIcon and moonIcon:IsA("TextLabel") then
-            TweenObject(moonIcon, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        end
+        TweenObject(logoScale, {Scale = 1}, 0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        TweenObject(brandText, {TextTransparency = 0}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(brandGlow, {ImageTransparency = 0.78}, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        -- Underline grows from 0 to ~70% width
+        task.delay(0.25, function()
+            TweenObject(underline, {Size = UDim2.new(0, 160, 0, 2), BackgroundTransparency = 0.15}, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        end)
         -- Orbit dots fade in staggered
         for i, od in ipairs(orbitDots) do
-            task.delay(0.15 + i * 0.08, function()
+            task.delay(0.2 + i * 0.1, function()
                 if od.frame and od.frame.Parent then
                     TweenObject(od.frame, {BackgroundTransparency = od.targetTransparency}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    if od.glow then
+                        TweenObject(od.glow, {ImageTransparency = 0.8}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    end
                 end
             end)
         end
@@ -2011,17 +2033,19 @@ local function _PlayLoadingIntroImpl(self, config)
         if finished then return end
         finished = true
 
-        -- Phase 5: "Ready!" state (0.3s hold)
-        -- Glow ring turns success green
-        TweenObject(glowRing, {BackgroundColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(outerGlow, {ImageColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        if moonIcon and moonIcon:IsA("TextLabel") then
-            TweenObject(moonIcon, {TextColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        end
+        -- Phase 5: "Ready!" state
+        -- Brand glow turns success green
+        TweenObject(brandGlow, {ImageColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(brandText, {TextColor3 = Theme.TextPrimary}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        -- Underline turns green
+        TweenObject(underline, {BackgroundColor3 = Theme.Success}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         -- All orbit dots turn green
         for _, od in ipairs(orbitDots) do
             if od.frame and od.frame.Parent then
                 TweenObject(od.frame, {BackgroundColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                if od.glow then
+                    TweenObject(od.glow, {ImageColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                end
             end
         end
         -- All segments turn green
@@ -2063,14 +2087,15 @@ local function _PlayLoadingIntroImpl(self, config)
 
             -- Logo fade + scale down
             TweenObject(logoScale, {Scale = 0.85}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(glowRing, {BackgroundTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(outerGlow, {ImageTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            if moonIcon and moonIcon:IsA("TextLabel") then
-                TweenObject(moonIcon, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            end
+            TweenObject(brandGlow, {ImageTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(brandText, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(underline, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2)}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             for _, od in ipairs(orbitDots) do
                 if od.frame and od.frame.Parent then
                     TweenObject(od.frame, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                    if od.glow then
+                        TweenObject(od.glow, {ImageTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                    end
                 end
             end
 
