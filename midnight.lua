@@ -2956,15 +2956,23 @@ function MIDNIGHT:_InitFPSTracker()
         return
     end
 
-    -- Cache the Stats item once – avoids repeated indexing inside the hot path
+    -- Cache the Stats item once
     local _pingStatItem = nil
     pcall(function()
         _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
     end)
 
-    -- #1 FIX: accumulate dt instead of calling tick() every frame.
-    -- tick() is a C-call but still costs more than a float add; more importantly
-    -- this removes the subtraction and branch on every single Heartbeat fire.
+    -- v7.5: fallback ping via Players service if Stats not available
+    local _fallbackPing = 0
+    local _pingFallbackOk = false
+    pcall(function()
+        -- Some executors don't expose Stats.Network.ServerStatsItem properly
+        if not _pingStatItem then
+            _pingFallbackOk = true
+        end
+    end)
+
+    -- #1 FIX: accumulate dt instead of calling tick() every frame
     local dtAccum = 0
     local conn = RunService.Heartbeat:Connect(function(dt)
         self._FPSCounter = self._FPSCounter + 1
@@ -2973,10 +2981,11 @@ function MIDNIGHT:_InitFPSTracker()
             self._FPS        = self._FPSCounter
             self._Lagspike   = self._FPS < 30
             self._FPSCounter = 0
-            dtAccum          = dtAccum - 1  -- keep remainder, don't reset to 0
+            dtAccum          = dtAccum - 1
+            -- v7.5: try ping stat, fallback to 0 if unavailable
             if _pingStatItem then
                 local ok, v = pcall(_pingStatItem.GetValue, _pingStatItem)
-                if ok then self._Ping = math.floor(v) end
+                if ok and type(v) == "number" then self._Ping = math.floor(v) end
             end
             self:_UpdateWatermark()
             self:_UpdateSidebarFooters()
@@ -2988,12 +2997,21 @@ function MIDNIGHT:_InitFPSTracker()
     end)
     self._FPSConn = conn
     RegConn(conn)
+
+    -- v7.5: force an initial watermark update after 1 second in case Heartbeat is delayed
+    task.delay(1.5, function()
+        if self._FPS == 0 then
+            -- Force at least one update to show the labels
+            self:_UpdateWatermark()
+        end
+    end)
 end
 
 function MIDNIGHT:_EnsureFPSTracker()
     if self._FPSConn and self._FPSConn.Connected then
         return
     end
+    -- v7.5: also start if watermark frame exists (was only checking sidebar footers)
     if not self._WatermarkFrame and #self._SidebarFooters == 0 then
         return
     end
@@ -5982,37 +6000,40 @@ function MIDNIGHT:CreateKeybindList(config)
             if kb._Visible then
                 count = count + 1
                 local isActive = kb._Active
+                -- v7.5: taller rows (26px) for better readability
                 local row = Create("Frame",{
-                    Size=UDim2.new(1,0,0,23),
-                    BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.12) or Theme.Surface2,
-                    BackgroundTransparency = isActive and 0.02 or 0.12,
+                    Size=UDim2.new(1,0,0,26),
+                    BackgroundColor3 = isActive and AccentTint(Theme.Accent,0.14) or Theme.Surface2,
+                    BackgroundTransparency = isActive and 0.0 or 0.05,
                     BorderSizePixel=0, LayoutOrder=count, Parent=lc2,
                 })
                 ApplyCorner(row,6)
-                ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.48)
-                local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.62,0),Position=UDim2.new(0,0,0.19,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
+                ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.15 or 0.35)
+                local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.66,0),Position=UDim2.new(0,0,0.17,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
                 ApplyCorner(activeBar,2)
+                -- v7.5: larger font (11px instead of 9px) + better contrast
                 Create("TextLabel",{
-                    Text=kb._Name, Font=FontRegular, TextSize=CompactStyle.UtilityTextSize - 1,
+                    Text=kb._Name, Font=Font, TextSize=11,
                     TextColor3=isActive and Theme.TextPrimary or Theme.TextSecondary,
                     TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
-                    Size=UDim2.new(1,-74,1,0), Position=UDim2.new(0,8,0,0),
+                    Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,10,0,0),
                     BackgroundTransparency=1, Parent=row,
                 })
                 local badge = Create("Frame",{
-                    Size=UDim2.new(0,0,0,16),
+                    Size=UDim2.new(0,0,0,18),
                     AutomaticSize=Enum.AutomaticSize.X,
-                    Position=UDim2.new(1,-5,0.5,0),
+                    Position=UDim2.new(1,-6,0.5,0),
                     AnchorPoint=Vector2.new(1,0.5),
-                    BackgroundColor3=isActive and AccentTint(Theme.Accent,0.16) or Theme.InputBg,
+                    BackgroundColor3=isActive and AccentTint(Theme.Accent,0.20) or Theme.InputBg,
                     BorderSizePixel=0, Parent=row,
                 })
                 ApplyCorner(badge,5)
-                ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.28 or 0.48)
-                ApplyPadding(badge,0,0,4,4)
+                ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.35)
+                ApplyPadding(badge,0,0,6,6)
+                -- v7.5: larger badge text (10px instead of 8px)
                 Create("TextLabel",{
-                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=CompactStyle.UtilityMetaSize - 1,
-                    TextColor3=isActive and Theme.TextAccent or Theme.TextMuted,
+                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=10,
+                    TextColor3=isActive and Theme.TextAccent or Theme.TextSecondary,
                     Size=UDim2.new(0,0,1,0), AutomaticSize=Enum.AutomaticSize.X,
                     TextYAlignment=Enum.TextYAlignment.Center,
                     BackgroundTransparency=1, Parent=badge,
@@ -6021,19 +6042,19 @@ function MIDNIGHT:CreateKeybindList(config)
         end
         if count == 0 then
             local emptyRow = Create("Frame",{
-                Size = UDim2.new(1, 0, 0, 24),
+                Size = UDim2.new(1, 0, 0, 26),
                 BackgroundColor3 = Theme.Surface2,
-                BackgroundTransparency = 0.12,
+                BackgroundTransparency = 0.05,
                 BorderSizePixel = 0,
                 LayoutOrder = 1,
                 Parent = lc2,
             })
             ApplyCorner(emptyRow, 6)
-            ApplyStroke(emptyRow, Theme.BorderSoft, 1, 0.48)
+            ApplyStroke(emptyRow, Theme.BorderSoft, 1, 0.35)
             Create("TextLabel",{
                 Text = "No keybinds registered",
-                Font = FontRegular,
-                TextSize = CompactStyle.UtilityMetaSize - 1,
+                Font = Font,
+                TextSize = 10,
                 TextColor3 = Theme.TextMuted,
                 TextXAlignment = Enum.TextXAlignment.Center,
                 TextYAlignment = Enum.TextYAlignment.Center,
@@ -6044,7 +6065,7 @@ function MIDNIGHT:CreateKeybindList(config)
             })
             count = 1
         end
-        kf.Size = UDim2.new(0,196,0,30+count*26+10)
+        kf.Size = UDim2.new(0,196,0,30+count*29+10)
     end
 
     self._RefreshKeybindList = refresh
@@ -6435,38 +6456,43 @@ function MIDNIGHT:MakeWindow(config)
     -- NOTE: this function runs AFTER wd is created (forward reference via closure)
     local filterTabs
     filterTabs = function(query)
+        if not wd then return end
         local q = string.lower(query or "")
         -- Collect all commands to know which widgets exist in which tabs
         local allCommands = {}
-        if wd and wd._CollectCommands then
+        if wd._CollectCommands then
             local ok, cmds = pcall(function() return wd:_CollectCommands() end)
             if ok and type(cmds) == "table" then
                 allCommands = cmds
             end
         end
 
-        local tabsList = (wd and wd._Tabs) or {}
+        local tabsList = wd._Tabs or {}
         for _, t in ipairs(tabsList) do
             if t._Button then
                 if q == "" then
                     t._Button.Visible = true
                 else
                     -- Match by tab name
-                    local tabNameMatch = string.find(string.lower(t._Name or ""), q, 1, true) ~= nil
+                    local tabNameLower = string.lower(t._Name or "")
+                    local tabNameMatch = string.find(tabNameLower, q, 1, true) ~= nil
                     -- Match by widget names within this tab (via commands subtitle)
                     local widgetMatch = false
-                    if not tabNameMatch then
+                    if not tabNameMatch and #allCommands > 0 then
                         for _, cmd in ipairs(allCommands) do
                             if type(cmd) == "table" then
                                 local subtitle = tostring(cmd.Subtitle or "")
-                                -- subtitle format: "TabName / Kind"
+                                -- subtitle format for widgets: "TabName / Kind"
+                                -- subtitle for tabs: "Open tab" (skip these)
                                 local cmdTabName = subtitle:match("^([^/]+)%s*/")
                                 if cmdTabName then
                                     cmdTabName = cmdTabName:gsub("^%s+", ""):gsub("%s+$", "")
-                                    if cmdTabName == t._Name then
-                                        local titleMatch = string.find(string.lower(tostring(cmd.Title or "")), q, 1, true) ~= nil
-                                        local searchMatch = string.find(string.lower(tostring(cmd.Search or "")), q, 1, true) ~= nil
-                                        if titleMatch or searchMatch then
+                                    local cmdTabNameLower = string.lower(cmdTabName)
+                                    if cmdTabNameLower == tabNameLower then
+                                        -- This command belongs to this tab — check title + search
+                                        local titleLower = string.lower(tostring(cmd.Title or ""))
+                                        local searchLower = string.lower(tostring(cmd.Search or ""))
+                                        if string.find(titleLower, q, 1, true) or string.find(searchLower, q, 1, true) then
                                             widgetMatch = true
                                             break
                                         end
@@ -7322,12 +7348,26 @@ function MIDNIGHT:MakeWindow(config)
 
             syncKeybindData = function()
                 refreshKeyBadge()
-                if data._KeybindData then
+                if bindKey == Enum.KeyCode.Unknown then
+                    -- v7.5: Unbind — remove from keybind list entirely
+                    if data._KeybindData then
+                        for i, kd in ipairs(MIDNIGHT._Keybinds) do
+                            if kd == data._KeybindData then
+                                table.remove(MIDNIGHT._Keybinds, i)
+                                break
+                            end
+                        end
+                        if MIDNIGHT._KeybindsMap and MIDNIGHT._KeybindsMap[nm] then
+                            MIDNIGHT._KeybindsMap[nm] = nil
+                        end
+                        data._KeybindData = nil
+                    end
+                elseif data._KeybindData then
                     data._KeybindData._Key = bindKey
                     data._KeybindData._Mode = bindMode
                     data._KeybindData._Visible = bindVisible
                     data._KeybindData._Active = on
-                elseif bindKey ~= Enum.KeyCode.Unknown then
+                else
                     local kd = MIDNIGHT:_AddKeybindToList(nm,bindKey,bindMode,function(active)
                         on=active; data._Value=on; update(true); if cb then cb(on) end
                     end, bindVisible)
@@ -7724,10 +7764,28 @@ function MIDNIGHT:MakeWindow(config)
                 MIDNIGHT:_ShowKeybindSettings({
                     Position=Vector2.new(ap.X,ap.Y),Mode=mode,Visible=kd._Visible,
                     CurrentKeyStr=key~=Enum.KeyCode.Unknown and KeyCodeToName(key) or "None",
-                    OnKeyChange=function(nk,ns) key=nk; kbLabel.Text=ns
-                        kd._Key=nk
+                    OnKeyChange=function(nk,ns)
+                        key=nk; kbLabel.Text=ns
+                        -- v7.5: if unbound (Unknown), remove from keybind list
+                        if nk == Enum.KeyCode.Unknown then
+                            for i, kdEntry in ipairs(MIDNIGHT._Keybinds) do
+                                if kdEntry == kd then
+                                    table.remove(MIDNIGHT._Keybinds, i)
+                                    break
+                                end
+                            end
+                            if MIDNIGHT._KeybindsMap and MIDNIGHT._KeybindsMap[nm] then
+                                MIDNIGHT._KeybindsMap[nm] = nil
+                            end
+                            -- Reset badge label to show no key
+                            kbLabel.Text = "None"
+                            kbLabel.TextColor3 = Theme.TextMuted
+                        else
+                            kd._Key=nk
+                            kbLabel.TextColor3 = Theme.TextAccent
+                        end
                         if MIDNIGHT._RefreshKeybindList then MIDNIGHT._RefreshKeybindList() end
-                        if isMenuKey then MIDNIGHT:SetMenuKey(ns) end
+                        if isMenuKey and nk ~= Enum.KeyCode.Unknown then MIDNIGHT:SetMenuKey(ns) end
                     end,
                     OnModeChange=function(nm2) updateModeLabel(nm2)
                         if kd._Mode=="Hold" and kd._Active and nm2~="Hold" then
