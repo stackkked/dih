@@ -6171,28 +6171,43 @@ function MIDNIGHT:MakeWindow(config)
         animateWindowOpen()
     end
 
-    -- TITLE BAR
+    -- TITLE BAR — v7.4: matches window bg (no separate dark strip)
     local tb = Create("Frame",{
         Name="TitleBar", Size=UDim2.new(1,0,0,titleBarH),
-        BackgroundColor3=Theme.UtilityHeader, BorderSizePixel=0,
+        BackgroundColor3=Theme.WindowBg, BorderSizePixel=0,
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
-    -- v7.3: gradient on titlebar for depth
-    -- v7.4: removed gradient (solid bg)
-    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.UtilityHeader,BorderSizePixel=0,Parent=tb})
-    Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=tb})
-    -- v7.3: glow behind logo
-    local logoGlow = Create("ImageLabel",{
-        Size=UDim2.new(0, 32, 0, 32),
-        Position=UDim2.new(0, 4, 0.5, -16),
-        BackgroundTransparency=1, Image="rbxassetid://6015897843",
-        ImageColor3=Theme.Accent, ImageTransparency=0.7,
-        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
-        ZIndex=ZIndex.CONTENT, Parent=tb,
+    -- v7.4: removed the bottom border line (was looking like a dark strip)
+    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.WindowBg,BorderSizePixel=0,Parent=tb})
+    -- v7.4: circular glow behind moon icon (was square shadow image)
+    local logoGlow = Create("Frame",{
+        Name="LogoGlow",
+        Size=UDim2.new(0, 26, 0, 26),
+        Position=UDim2.new(0, 9, 0.5, -13),
+        BackgroundColor3=Theme.Accent,
+        BackgroundTransparency=0.85,
+        BorderSizePixel=0,
+        ZIndex=ZIndex.CONTENT-1,
+        Parent=tb,
     })
-    -- pulsing logo glow
-    PulseGlow(logoGlow, 0.5, 0.85, 1.6)
+    -- Make it a perfect circle
+    Create("UICorner", {CornerRadius=UDim.new(1, 0), Parent=logoGlow})
+    -- Add a soft blur via ImageLabel with circle image
+    local logoGlowSoft = Create("ImageLabel",{
+        Name="LogoGlowSoft",
+        Size=UDim2.new(0, 40, 0, 40),
+        Position=UDim2.new(0, 2, 0.5, -20),
+        BackgroundTransparency=1,
+        Image="rbxassetid://266543268",  -- circle image
+        ImageColor3=Theme.Accent,
+        ImageTransparency=0.85,
+        ScaleType=Enum.ScaleType.Stretch,
+        ZIndex=ZIndex.CONTENT-2,
+        Parent=tb,
+    })
+    -- pulsing logo glow (circular)
+    PulseGlow(logoGlowSoft, 0.55, 0.85, 1.6)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
     Create("TextLabel",{
         Text=windowName,Font=FontBold,TextSize=12,TextColor3=Theme.TextPrimary,
@@ -6351,9 +6366,9 @@ function MIDNIGHT:MakeWindow(config)
     Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=tabList})
     ApplyPadding(tabList,4,4,CompactStyle.SidebarPadding,CompactStyle.SidebarPadding)
 
-    -- v7.2: tab search box at top of sidebar
+    -- v7.4: tab search box at top of sidebar — searches both tab names AND widget names
     local tabSearchBox = Create("TextBox",{
-        Text="", PlaceholderText="Search tabs...",
+        Text="", PlaceholderText="Search func...",
         Font=Font, TextSize=10, TextColor3=Theme.TextPrimary,
         PlaceholderColor3=Theme.TextMuted,
         Size=UDim2.new(1,-8,0,22),
@@ -6367,15 +6382,47 @@ function MIDNIGHT:MakeWindow(config)
     CreateIconOrText(tabSearchBox,"search",nil,
         UDim2.new(0,10,0,10),UDim2.new(0,6,0.5,-5),
         Theme.TextMuted,FontBold,8)
+
+    -- v7.4: search by tab name OR by widget/command names within each tab
     local function filterTabs(query)
         local q = string.lower(query or "")
+        -- Collect all commands to know which widgets exist in which tabs
+        local allCommands = {}
+        if self._CollectCommands then
+            local ok, cmds = pcall(function() return self:_CollectCommands() end)
+            if ok and type(cmds) == "table" then
+                allCommands = cmds
+            end
+        end
+
         for _, t in ipairs(self._Tabs) do
             if t._Button then
                 if q == "" then
                     t._Button.Visible = true
                 else
-                    local match = string.find(string.lower(t._Name or ""), q, 1, true) ~= nil
-                    t._Button.Visible = match
+                    -- Match by tab name
+                    local tabNameMatch = string.find(string.lower(t._Name or ""), q, 1, true) ~= nil
+                    -- Match by widget names within this tab (via commands subtitle)
+                    local widgetMatch = false
+                    if not tabNameMatch then
+                        for _, cmd in ipairs(allCommands) do
+                            if type(cmd) == "table" then
+                                local subtitle = tostring(cmd.Subtitle or "")
+                                -- subtitle format: "TabName / Kind" — check if this command belongs to this tab
+                                local cmdTabName = subtitle:match("^([^/]+)%s*/")
+                                if cmdTabName and cmdTabName:gsub("%s+$", "") == t._Name then
+                                    -- This command belongs to this tab — check title
+                                    local titleMatch = string.find(string.lower(tostring(cmd.Title or "")), q, 1, true) ~= nil
+                                    local searchMatch = string.find(string.lower(tostring(cmd.Search or "")), q, 1, true) ~= nil
+                                    if titleMatch or searchMatch then
+                                        widgetMatch = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    t._Button.Visible = tabNameMatch or widgetMatch
                 end
             end
         end
@@ -6544,7 +6591,8 @@ function MIDNIGHT:MakeWindow(config)
         local btn = Create("TextButton",{
             Name="Tab_"..tabName,
             Size=UDim2.new(1,0,0,CompactStyle.TabHeight),
-            BackgroundColor3=Theme.Surface2,
+            BackgroundColor3=Theme.ContentBg,  -- v7.4: tab bg matches UI bg (was Surface2)
+            BackgroundTransparency=1,  -- v7.4: transparent by default (matches sidebar)
             BorderSizePixel=0, Text="",
             LayoutOrder=self._TabCount,
             ZIndex=ZIndex.CONTENT+1,
@@ -6727,7 +6775,11 @@ function MIDNIGHT:MakeWindow(config)
                 if t._PageClip then
                     t._PageClip.Visible = active or (t == outgoing)
                 end
-                TweenObject(t._Button,{BackgroundColor3 = active and Theme.TabActiveBg or Theme.Surface2},0.18)
+                -- v7.4: tabs use transparency (transparent when inactive, subtle bg when active)
+                TweenObject(t._Button,{
+                    BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
+                    BackgroundTransparency = active and 0.4 or 1,
+                },0.18)
                 TweenObject(t._Indicator,{
                     Size = active and UDim2.new(0,3,0.62,0) or UDim2.new(0,3,0,0),
                     Position = active and UDim2.new(0,0,0.19,0) or UDim2.new(0,0,0.5,0),
@@ -6767,18 +6819,23 @@ function MIDNIGHT:MakeWindow(config)
 
         ApplyPressFeedback(btn, 0.97, 0.08)
         btn.MouseButton1Click:Connect(selectTab)
-        ApplyHoverEffect(btn, Theme.Surface2, Theme.Surface3, false, {
-            GetNormalBg = function()
-                return self._ActiveTab == td and Theme.TabActiveBg or Theme.Surface2
-            end,
-            GetHoverBg = function()
-                return self._ActiveTab == td and Theme.TabActiveBg or Theme.Surface3
-            end,
-        })
+        -- v7.4: hover shows a subtle bg highlight (transparency-based)
+        btn.MouseEnter:Connect(function()
+            if self._ActiveTab ~= td then
+                TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.7}, 0.18)
+            end
+        end)
+        btn.MouseLeave:Connect(function()
+            if self._ActiveTab ~= td then
+                TweenObject(btn, {BackgroundColor3 = Theme.ContentBg, BackgroundTransparency = 1}, 0.18)
+            end
+        end)
         if #self._Tabs == 1 then
             pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
             pageClipScale.Scale = 1
-            TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.18)
+            -- v7.4: first tab uses transparency-based active state
+            btn.BackgroundTransparency = 0.4
+            btn.BackgroundColor3 = Theme.TabActiveBg
             TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
             if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
@@ -6869,10 +6926,11 @@ function MIDNIGHT:MakeWindow(config)
                 Parent=resolveParent(),
             })
 
-            -- Header frame (clickable when collapsible)
+            -- Header frame (clickable when collapsible) — v7.4: Active=true to capture clicks only on header area
             local header = Create("Frame",{
                 Size=UDim2.new(1,0,0,CompactStyle.SectionHeight),
                 BackgroundTransparency=1,
+                Active=true,
                 Parent=sf,
             })
             local headerBtn
@@ -6880,7 +6938,9 @@ function MIDNIGHT:MakeWindow(config)
                 headerBtn = Create("TextButton",{
                     Text="", Size=UDim2.new(1,0,1,0),
                     BackgroundTransparency=1,
-                    ZIndex=ZIndex.CONTENT+1,
+                    ZIndex=ZIndex.CONTENT+5,
+                    Active=true,
+                    AutoButtonColor=false,
                     Parent=header,
                 })
             end
@@ -7000,7 +7060,9 @@ function MIDNIGHT:MakeWindow(config)
 
             if headerBtn then
                 ApplyPressFeedback(headerBtn, 0.99, 0.06)
+                -- v7.4: explicitly capture only MouseButton1 clicks on this header
                 headerBtn.MouseButton1Click:Connect(function()
+                    -- Toggle only this section's collapsed state
                     collapsed = not collapsed
                     applyCollapsed(true)
                 end)
