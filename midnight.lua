@@ -312,78 +312,77 @@ local ZIndex = {
 --// THEME
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
-    WindowBg       = Color3.fromRGB(15, 17, 20),
-    SidebarBg      = Color3.fromRGB(16, 18, 21),
-    ContentBg      = Color3.fromRGB(18, 20, 24),
-    TabBg          = Color3.fromRGB(20, 22, 26),
-    TabHoverBg     = Color3.fromRGB(24, 27, 32),
-    TabActiveBg    = Color3.fromRGB(28, 31, 37),
-    ItemBg         = Color3.fromRGB(20, 22, 26),
-    ItemHoverBg    = Color3.fromRGB(24, 27, 32),
-    InputBg        = Color3.fromRGB(23, 26, 31),
-    DropdownBg     = Color3.fromRGB(18, 20, 24),
-    TitleBarBg     = Color3.fromRGB(15, 17, 20),
-    Accent         = Color3.fromRGB(96, 190, 255),
-    AccentHover    = Color3.fromRGB(128, 205, 255),
-    AccentDark     = Color3.fromRGB(58, 143, 204),
-    TextPrimary    = Color3.fromRGB(234, 238, 242),
-    TextSecondary  = Color3.fromRGB(154, 162, 174),
-    TextMuted      = Color3.fromRGB(92, 101, 114),
-    TextAccent     = Color3.fromRGB(128, 205, 255),
-    Border         = Color3.fromRGB(33, 37, 43),
-    BorderLight    = Color3.fromRGB(43, 48, 56),
-    BorderAccent   = Color3.fromRGB(51, 90, 120),
-    ToggleOn       = Color3.fromRGB(96, 190, 255),
-    ToggleOff      = Color3.fromRGB(40, 44, 52),
+    -- CORE BACKGROUNDS — deep dark with subtle blue tint (Midnight CS2 style)
+    WindowBg       = Color3.fromRGB(14, 16, 22),
+    SidebarBg      = Color3.fromRGB(11, 13, 18),
+    ContentBg      = Color3.fromRGB(16, 18, 24),
+    TabBg          = Color3.fromRGB(18, 20, 27),
+    TabHoverBg     = Color3.fromRGB(24, 27, 35),
+    TabActiveBg    = Color3.fromRGB(28, 32, 42),
+    ItemBg         = Color3.fromRGB(18, 20, 27),
+    ItemHoverBg    = Color3.fromRGB(24, 27, 35),
+    InputBg        = Color3.fromRGB(22, 25, 32),
+    DropdownBg     = Color3.fromRGB(18, 20, 27),
+    TitleBarBg     = Color3.fromRGB(16, 18, 24),
+    Accent         = Color3.fromRGB(96, 165, 250),
+    AccentHover    = Color3.fromRGB(125, 180, 255),
+    AccentDark     = Color3.fromRGB(56, 130, 220),
+    AccentSoft     = Color3.fromRGB(140, 195, 255),
+    AccentMuted    = Color3.fromRGB(70, 110, 165),
+    AccentFaint    = Color3.fromRGB(30, 50, 75),
+    TextPrimary    = Color3.fromRGB(240, 244, 248),
+    TextSecondary  = Color3.fromRGB(170, 178, 190),
+    TextMuted      = Color3.fromRGB(105, 115, 128),
+    TextAccent     = Color3.fromRGB(140, 195, 255),
+    Border         = Color3.fromRGB(40, 45, 55),
+    BorderLight    = Color3.fromRGB(55, 62, 75),
+    BorderAccent   = Color3.fromRGB(60, 110, 165),
+    BorderSoft     = Color3.fromRGB(28, 32, 40),
+    BorderStrong   = Color3.fromRGB(65, 72, 85),
+    ToggleOn       = Color3.fromRGB(96, 165, 250),
+    ToggleOff      = Color3.fromRGB(28, 32, 40),
     ToggleKnob     = Color3.fromRGB(255, 255, 255),
-    SliderTrack    = Color3.fromRGB(34, 38, 45),
-    SliderFill     = Color3.fromRGB(96, 190, 255),
+    SliderTrack    = Color3.fromRGB(28, 32, 40),
+    SliderFill     = Color3.fromRGB(96, 165, 250),
     SliderKnob     = Color3.fromRGB(255, 255, 255),
     Success        = Color3.fromRGB(74, 222, 128),
     Warning        = Color3.fromRGB(250, 204, 21),
     Error          = Color3.fromRGB(248, 113, 113),
-    Info           = Color3.fromRGB(96, 190, 255),
-    WatermarkBg    = Color3.fromRGB(15, 17, 20),
-    KeybindBg      = Color3.fromRGB(15, 17, 20),
-    CloseNormal    = Color3.fromRGB(40, 44, 52),
-    CloseHover     = Color3.fromRGB(168, 62, 62),
-    MinNormal      = Color3.fromRGB(40, 44, 52),
-    MinHover       = Color3.fromRGB(47, 60, 76),
-    ScrollBarColor = Color3.fromRGB(62, 74, 90),
-    ScrollBarBg    = Color3.fromRGB(26, 29, 34),
+    Info           = Color3.fromRGB(96, 165, 250),
+    WatermarkBg    = Color3.fromRGB(14, 16, 22),
+    KeybindBg      = Color3.fromRGB(14, 16, 22),
+    CloseNormal    = Color3.fromRGB(40, 45, 55),
+    CloseHover     = Color3.fromRGB(220, 70, 70),
+    MinNormal      = Color3.fromRGB(40, 45, 55),
+    MinHover       = Color3.fromRGB(70, 110, 165),
+    ScrollBarColor = Color3.fromRGB(70, 80, 95),
+    ScrollBarBg    = Color3.fromRGB(20, 23, 30),
     Shadow         = Color3.fromRGB(0, 0, 0),
     SeparatorBg    = Color3.fromRGB(33, 37, 43),
-    InputHoverBg   = Color3.fromRGB(27, 31, 37),
-    OverlayBg      = Color3.fromRGB(14, 16, 20),
-    OverlayCard    = Color3.fromRGB(18, 21, 26),
+    InputHoverBg   = Color3.fromRGB(28, 32, 40),
+    OverlayBg      = Color3.fromRGB(18, 20, 27),
+    OverlayCard    = Color3.fromRGB(22, 25, 32),
     OverlayStroke  = Color3.fromRGB(45, 54, 66),
-    BorderSoft     = Color3.fromRGB(29, 33, 39),
-    BorderStrong   = Color3.fromRGB(52, 59, 70),
-    AccentSoft     = Color3.fromRGB(118, 202, 255),
-    AccentMuted    = Color3.fromRGB(72, 130, 166),
-    AccentFaint    = Color3.fromRGB(34, 55, 68),
-    UtilityBg      = Color3.fromRGB(13, 15, 18),
-    UtilityHeader  = Color3.fromRGB(17, 19, 23),
-    UtilityAccent  = Color3.fromRGB(87, 179, 238),
-    Surface0       = Color3.fromRGB(13, 15, 18),
-    Surface1       = Color3.fromRGB(16, 18, 21),
-    Surface2       = Color3.fromRGB(20, 22, 26),
-    Surface3       = Color3.fromRGB(24, 27, 32),
-
-    -- v7.3: Extended palette for richer visuals
-    Surface4       = Color3.fromRGB(28, 31, 37),
-    Surface5       = Color3.fromRGB(32, 36, 42),
-    AccentGlow     = Color3.fromRGB(96, 190, 255),
-    AccentGradient1 = Color3.fromRGB(96, 190, 255),
-    AccentGradient2 = Color3.fromRGB(74, 158, 255),
+    UtilityBg      = Color3.fromRGB(14, 16, 22),
+    UtilityHeader  = Color3.fromRGB(18, 20, 27),
+    UtilityAccent  = Color3.fromRGB(96, 165, 250),
+    Surface0       = Color3.fromRGB(14, 16, 22),
+    Surface1       = Color3.fromRGB(18, 20, 27),
+    Surface2       = Color3.fromRGB(22, 25, 32),
+    Surface3       = Color3.fromRGB(28, 32, 40),
+    Surface4       = Color3.fromRGB(32, 36, 42),
+    Surface5       = Color3.fromRGB(36, 40, 46),
+    AccentGlow     = Color3.fromRGB(96, 165, 250),
+    AccentGradient1 = Color3.fromRGB(96, 165, 250),
+    AccentGradient2 = Color3.fromRGB(74, 144, 226),
     AccentGradient3 = Color3.fromRGB(140, 110, 255),
-    GradientStart  = Color3.fromRGB(28, 31, 38),
-    GradientEnd    = Color3.fromRGB(18, 20, 24),
+    GradientStart  = Color3.fromRGB(22, 25, 32),
+    GradientEnd    = Color3.fromRGB(14, 16, 22),
     HoverOverlay   = Color3.fromRGB(255, 255, 255),
-    HoverOverlayT  = 0.04,  -- transparency
+    HoverOverlayT  = 0.04,
     PressOverlay   = Color3.fromRGB(0, 0, 0),
-    PressOverlayT  = 0.10,  -- transparency
-    FocusRing      = Color3.fromRGB(96, 190, 255),
+    PressOverlayT  = 0.10,
+    FocusRing      = Color3.fromRGB(96, 165, 250),
     FocusRingT     = 0.45,
     Shadow0        = Color3.fromRGB(0, 0, 0),
     Shadow0T       = 0.40,
@@ -393,18 +392,18 @@ local Theme = {
     Shadow2T       = 0.75,
     Highlight      = Color3.fromRGB(255, 255, 255),
     HighlightT     = 0.06,
-    SelectionBg    = Color3.fromRGB(96, 190, 255),
+    SelectionBg    = Color3.fromRGB(96, 165, 250),
     SelectionBgT   = 0.18,
-    BadgeBg        = Color3.fromRGB(96, 190, 255),
+    BadgeBg        = Color3.fromRGB(96, 165, 250),
     BadgeBgT       = 0.20,
     BadgeText      = Color3.fromRGB(180, 220, 255),
     Divider        = Color3.fromRGB(33, 37, 43),
     DividerSoft    = Color3.fromRGB(26, 29, 34),
-    Glow0          = Color3.fromRGB(96, 190, 255),
+    Glow0          = Color3.fromRGB(96, 165, 250),
     Glow0T         = 0.30,
-    Glow1          = Color3.fromRGB(96, 190, 255),
+    Glow1          = Color3.fromRGB(96, 165, 250),
     Glow1T         = 0.55,
-    Glow2          = Color3.fromRGB(96, 190, 255),
+    Glow2          = Color3.fromRGB(96, 165, 250),
     Glow2T         = 0.75,
 }
 
@@ -4180,7 +4179,7 @@ function MIDNIGHT:CreateWatermark(config)
     })
     StyleUtilityOverlay(wmFrame, Theme.Accent)
     -- v7.3: gradient on watermark bg for depth
-    ApplyGradient(wmFrame, Theme.Surface1, Theme.UtilityBg, 90)
+    -- v7.4: removed gradient (solid bg looks cleaner)
     -- v7.3: subtle glow behind watermark
     local wmGlow = Create("ImageLabel",{
         Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
@@ -5363,7 +5362,7 @@ function MIDNIGHT:Notify(config)
     })
     ApplyCorner(nf,compactMode and 8 or 10)
     -- v7.3: gradient on notification card for depth
-    ApplyGradient(nf, Theme.Surface1, compactMode and Theme.OverlayBg or Theme.WindowBg, 90)
+    -- v7.4: removed gradient (solid bg)
     local nfStroke = ApplyStroke(nf, Theme.BorderSoft, 1, 1)
     local nfScale = Create("UIScale",{Scale=compactMode and 0.985 or 0.97,Parent=nf})
 
@@ -5837,7 +5836,7 @@ function MIDNIGHT:CreateKeybindList(config)
     })
     StyleUtilityOverlay(kf, Theme.Accent)
     -- v7.3: gradient on keybind list bg for depth
-    ApplyGradient(kf, Theme.Surface1, Theme.UtilityBg, 90)
+    -- v7.4: removed gradient (solid bg)
     -- v7.3: subtle glow behind keybind list
     local kfGlow = Create("ImageLabel",{
         Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
@@ -6116,8 +6115,7 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.WINDOW-1,Parent=wf,
     })
     ApplyStroke(wf,Theme.BorderSoft,1,0.16)
-    -- v7.3: subtle gradient on window bg for depth
-    ApplyGradient(wf, Theme.Surface1, Theme.WindowBg, 90)
+    -- v7.4: removed gradient (was making window look washed out)
     local wfScale = Create("UIScale", {Scale = 0.94, Parent = wf})
     local openPosition = UDim2.new(0.5, -winW/2, 0.5, -winH/2)
     wf.Visible = false
@@ -6181,7 +6179,7 @@ function MIDNIGHT:MakeWindow(config)
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
     -- v7.3: gradient on titlebar for depth
-    ApplyGradient(tb, Theme.Surface2, Theme.UtilityHeader, 90)
+    -- v7.4: removed gradient (solid bg)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.UtilityHeader,BorderSizePixel=0,Parent=tb})
     Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=tb})
     -- v7.3: glow behind logo
@@ -6553,8 +6551,7 @@ function MIDNIGHT:MakeWindow(config)
             Parent=tabList,
         })
         ApplyCorner(btn,5)
-        -- v7.3: gradient on tab button for depth
-        ApplyGradient(btn, Theme.Surface3, Theme.Surface2, 90)
+        -- v7.4: removed gradient (was making tabs look washed out); solid bg instead
 
         local btnContent = Create("Frame",{Size=UDim2.new(1,-12,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Parent=btn})
         Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
@@ -7111,38 +7108,26 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,Parent=keyBadge,
             })
 
-            -- v7.3: toggle switch with gradient when on, larger knob, glow on knob
+            -- v7.4: clean toggle switch — dark OFF, vibrant ON, no gradient
             local sw = Create("Frame",{
                 Size=UDim2.new(0,rowToggleW,0,20),Position=UDim2.new(1,-rowToggleW,0.5,-10),
                 BackgroundColor3=Theme.ToggleOff,BorderSizePixel=0,ClipsDescendants=false,Parent=ic,
             })
             ApplyCorner(sw,10)
-            ApplyStroke(sw, Theme.BorderSoft, 1, 0.4)
-            -- gradient on switch (visible when on)
-            local swGradient = Create("UIGradient",{
-                Color=ColorSequence.new(Theme.Accent, Theme.AccentGradient2),
-                Rotation=0, Parent=sw,
-            })
-            -- glow around toggle switch when on
+            ApplyStroke(sw, Theme.BorderLight, 1, 0.3)
+            -- subtle inner shadow when off (just border, no gradient)
+            -- glow around toggle switch when on (only)
             local toggleGlow = ApplyGlow(sw, Theme.Accent, 0.7)
-            -- knob with shadow + glow
+            if toggleGlow then toggleGlow.ImageTransparency = 1 end
+            -- knob (white circle)
             local knob = Create("Frame",{
-                Size=UDim2.new(0,16,0,16),Position=UDim2.new(0,2,0.5,-8),
+                Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,3,0.5,-7),
                 BackgroundColor3=Theme.ToggleKnob,BorderSizePixel=0,Parent=sw,
             })
-            ApplyCorner(knob,8)
-            -- knob drop shadow
+            ApplyCorner(knob,7)
+            -- knob subtle shadow ring (dark border)
             Create("UIStroke",{
-                Color=Color3.fromRGB(0,0,0),Thickness=1,Transparency=0.5,Parent=knob,
-            })
-            -- knob glow when on (subtle)
-            local knobGlow = Create("ImageLabel",{
-                Size=UDim2.new(0, 24, 0, 24),
-                Position=UDim2.new(0, -4, 0.5, -12),
-                BackgroundTransparency=1, Image="rbxassetid://6015897843",
-                ImageColor3=Theme.Accent, ImageTransparency=1,
-                ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
-                ZIndex=sw.ZIndex-1, Parent=sw,
+                Color=Color3.fromRGB(20, 22, 28),Thickness=1,Transparency=0.2,Parent=knob,
             })
 
             local on = def
@@ -7174,35 +7159,30 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             local function update(anim)
-                -- v7.3: track is 34px wide, knob is 16px, padding 2px
-                -- ON: knob at X = 34 - 16 - 2 = 16
-                -- OFF: knob at X = 2
-                local onX = rowToggleW - 16 - 2
-                local offX = 2
+                -- v7.4: track is 34px wide, knob is 14px, padding 3px
+                -- ON: knob at X = 34 - 14 - 3 = 17
+                -- OFF: knob at X = 3
+                local onX = rowToggleW - 14 - 3
+                local offX = 3
                 if on then
                     if anim then
-                        -- v7.3: spring-y transition with Back easing on knob
-                        TweenObject(sw,{BackgroundColor3=col},0.20,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        TweenObject(knob,{Position=UDim2.new(0,onX,0.5,-8),Size=UDim2.new(0,16,0,16)},0.24,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-                        if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=0.45},0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
-                        if knobGlow then TweenObject(knobGlow,{ImageTransparency=0.55, Position=UDim2.new(0, onX-4, 0.5, -12)},0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                        TweenObject(sw,{BackgroundColor3=Theme.Accent},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,onX,0.5,-7)},0.26,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=0.55},0.30,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
                     else
-                        sw.BackgroundColor3=col
-                        knob.Size=UDim2.new(0,16,0,16); knob.Position=UDim2.new(0,onX,0.5,-8)
-                        if toggleGlow then toggleGlow.ImageTransparency=0.45 end
-                        if knobGlow then knobGlow.ImageTransparency=0.55; knobGlow.Position=UDim2.new(0, onX-4, 0.5, -12) end
+                        sw.BackgroundColor3=Theme.Accent
+                        knob.Position=UDim2.new(0,onX,0.5,-7)
+                        if toggleGlow then toggleGlow.ImageTransparency=0.55 end
                     end
                 else
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.20,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        TweenObject(knob,{Position=UDim2.new(0,offX,0.5,-8),Size=UDim2.new(0,16,0,16)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,offX,0.5,-7)},0.24,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                         if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=1},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
-                        if knobGlow then TweenObject(knobGlow,{ImageTransparency=1, Position=UDim2.new(0, offX-4, 0.5, -12)},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
                     else
                         sw.BackgroundColor3=Theme.ToggleOff
-                        knob.Size=UDim2.new(0,16,0,16); knob.Position=UDim2.new(0,offX,0.5,-8)
+                        knob.Position=UDim2.new(0,offX,0.5,-7)
                         if toggleGlow then toggleGlow.ImageTransparency=1 end
-                        if knobGlow then knobGlow.ImageTransparency=1; knobGlow.Position=UDim2.new(0, offX-4, 0.5, -12) end
                     end
                 end
             end
@@ -7365,7 +7345,7 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,Parent=valueWrap,
             })
 
-            -- v7.3: thicker track (6px instead of 4) for easier interaction + gradient fill
+            -- v7.4: clean slider — thicker track (6px), solid accent fill (no gradient), compact knob
             local track = Create("Frame",{
                 Size=UDim2.new(1,0,0,6),Position=UDim2.new(0,0,0,26),
                 BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic,
@@ -7375,11 +7355,12 @@ function MIDNIGHT:MakeWindow(config)
             local r0 = (def-mn)/range
             local fill = Create("Frame",{Size=UDim2.new(r0,0,1,0),BackgroundColor3=Theme.SliderFill,BorderSizePixel=0,Parent=track})
             ApplyCorner(fill,3)
-            -- v7.3: gradient on fill for richness
-            ApplyGradient(fill, Theme.AccentGradient2, Theme.AccentGradient1, 0)
+            -- v7.4: solid color fill (no gradient — was looking washed out)
             local k = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(r0,-7,0.5,-7),BackgroundColor3=Theme.SliderKnob,BorderSizePixel=0,Parent=track})
-            ApplyCorner(k,7); Create("UIStroke",{Color=Theme.Accent,Thickness=1.2,Transparency=0.08,Parent=k})
-            -- v7.2: glow around slider knob
+            ApplyCorner(k,7)
+            -- knob border (subtle dark ring)
+            Create("UIStroke",{Color=Theme.Accent,Thickness=1.5,Transparency=0.0,Parent=k})
+            -- v7.4: glow around slider knob (only visible while dragging)
             local sliderGlow = ApplyGlow(k, Theme.Accent, 0.7)
             if sliderGlow then sliderGlow.ImageTransparency = 1 end
 
@@ -8094,10 +8075,7 @@ function MIDNIGHT:MakeWindow(config)
                 Parent=resolveParent(),
             })
             ApplyCorner(item,6); ApplyStroke(item,vStroke,1,0.24); ApplyPadding(item,0,0,10,10)
-            -- v7.3: gradient on button bg for depth
-            if vGrad1 and vGrad2 then
-                ApplyGradient(item, vGrad1, vGrad2, 90)
-            end
+            -- v7.4: removed gradient (was making buttons look washed out)
             -- v7.3: inner highlight for primary variant (glass edge)
             if variant == "primary" or variant == "danger" then
                 ApplyInnerHighlight(item, Color3.fromRGB(255, 255, 255), 0.08)
@@ -8952,7 +8930,7 @@ function MIDNIGHT:MakeWindow(config)
         })
         StyleUtilityOverlay(fw, Theme.Accent)
         -- v7.3: gradient + glow for floating window
-        ApplyGradient(fw, Theme.Surface1, Theme.OverlayBg, 90)
+        -- v7.4: removed gradient (solid bg)
         local fwGlow = Create("ImageLabel",{
             Size=UDim2.new(1,20,1,20),Position=UDim2.new(0,-10,0,-10),
             BackgroundTransparency=1, Image="rbxassetid://6015897843",
@@ -9336,7 +9314,7 @@ function MIDNIGHT:MakeWindow(config)
         })
         StyleUtilityOverlay(pf, Theme.Accent)
         -- v7.3: gradient on palette bg for depth
-        ApplyGradient(pf, Theme.Surface1, Theme.OverlayBg, 90)
+        -- v7.4: removed gradient (solid bg)
         -- v7.3: glow around palette
         local pfGlow = Create("ImageLabel",{
             Size=UDim2.new(1,28,1,28),Position=UDim2.new(0,-14,0,-14),
@@ -9757,8 +9735,7 @@ function MIDNIGHT:MakeWindow(config)
             Parent = MIDNIGHT._ScreenGui,
         })
         ApplyCorner(wf, 10)
-        -- v7.3: gradient on admin presence widget bg
-        ApplyGradient(wf, Theme.Surface1, Theme.WindowBg, 90)
+        -- v7.4: removed gradient (solid bg looks cleaner)
         local wfStroke = ApplyStroke(wf, Theme.Border, 1, 1)
         local wfScale = Create("UIScale",{Scale=0.97,Parent=wf})
 
