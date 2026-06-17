@@ -6843,7 +6843,8 @@ function MIDNIGHT:MakeWindow(config)
     function wd:_CollectCommands()
         local commands = {}
         for _, t in ipairs(self._Tabs) do
-            if t._Name and t._Button and t._Button.Visible ~= false then
+            -- v7.5: collect ALL tabs regardless of Visible (search needs full list)
+            if t._Name then
                 commands[#commands + 1] = {
                     Title = t._Name,
                     Subtitle = "Open tab",
@@ -7124,45 +7125,51 @@ function MIDNIGHT:MakeWindow(config)
 
             local outgoing = self._ActiveTab
 
-            -- v7.5: Clean tab switch — NO overlap, NO position slide
-            -- Phase 1: Instantly hide outgoing, show incoming
+            -- v7.5: Tab switch — "fast scroll up" effect
+            -- Outgoing slides UP + fades, incoming appears from below + slides up to center
+
+            -- Phase 1: Outgoing slides up + fades out (0.15s)
             if outgoing and outgoing._PageClip and outgoing ~= td then
                 local outScale = outgoing._PageClip:FindFirstChildWhichIsA("UIScale")
-                -- Quick fade-out outgoing (0.12s) then hide
-                if outScale then
-                    TweenObject(outScale, {Scale = 0.96}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                -- Slide page UP via position offset (negative Y = up)
+                if outgoing._Page then
+                    TweenObject(outgoing._Page, {Position = UDim2.new(0, 4, 0, -30)}, 0.15,
+                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
-                -- Hide outgoing AFTER quick fade, BEFORE incoming appears
-                SafeDelay(0.13, function()
+                if outScale then
+                    TweenObject(outScale, {Scale = 0.95}, 0.15,
+                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                end
+                -- Hide outgoing after slide
+                SafeDelay(0.16, function()
                     if outgoing._PageClip and self._ActiveTab ~= outgoing then
                         outgoing._PageClip.Visible = false
                         if outScale then outScale.Scale = 1 end
+                        if outgoing._Page then
+                            outgoing._Page.Position = UDim2.new(0, 4, 0, 4)
+                        end
                     end
                 end)
             end
 
-            -- Phase 2: Update all tab buttons (indicator, label, icon, glow)
+            -- Phase 2: Update all tab buttons
             for _, t in ipairs(self._Tabs) do
                 local active = (t == td)
                 if t._PageClip then
-                    -- Only incoming is visible (after outgoing hides)
                     if active then
                         t._PageClip.Visible = true
                     elseif t ~= outgoing then
                         t._PageClip.Visible = false
                     end
                 end
-                -- Tab button appearance
                 TweenObject(t._Button, {
                     BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
                     BackgroundTransparency = active and 0.4 or 1,
                 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                -- Indicator bar
                 TweenObject(t._Indicator, {
                     Size = active and UDim2.new(0, 3, 0.62, 0) or UDim2.new(0, 3, 0, 0),
                     Position = active and UDim2.new(0, 0, 0.19, 0) or UDim2.new(0, 0, 0.5, 0),
                 }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                -- Indicator glow
                 if t._IndicatorGlow then
                     if active then
                         TweenObject(t._IndicatorGlow, {
@@ -7178,13 +7185,11 @@ function MIDNIGHT:MakeWindow(config)
                         }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     end
                 end
-                -- Label color
                 if t._Label then
                     TweenObject(t._Label, {
                         TextColor3 = active and Theme.TextAccent or Theme.TextSecondary,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
-                -- Icon color
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
                         TweenObject(t._IconEl, {
@@ -7196,7 +7201,6 @@ function MIDNIGHT:MakeWindow(config)
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
-                -- Glow stroke
                 if t._GlowStroke then
                     TweenObject(t._GlowStroke, {
                         Transparency = active and 0.72 or 1,
@@ -7204,13 +7208,17 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            -- Phase 3: Incoming page scale-in (starts AFTER outgoing hides)
+            -- Phase 3: Incoming starts from below, slides UP to center (fast scroll up)
             pageClip.Visible = true
-            pageClipScale.Scale = 0.97
-            -- Wait for outgoing to hide, then animate incoming
-            SafeDelay(0.14, function()
+            pageClipScale.Scale = 0.98
+            -- Start page below center (Y offset +30), then slide up to center
+            page.Position = UDim2.new(0, 4, 0, 30)
+            SafeDelay(0.16, function()
                 if self._ActiveTab == td and pageClip and pageClip.Parent then
-                    TweenObject(pageClipScale, {Scale = 1}, 0.28,
+                    -- Fast scroll up: slide from +30 to +4 (upward), with Quint for snappy feel
+                    TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
+                        Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    TweenObject(pageClipScale, {Scale = 1}, 0.25,
                         Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                 end
             end)
