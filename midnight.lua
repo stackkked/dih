@@ -7122,78 +7122,98 @@ function MIDNIGHT:MakeWindow(config)
                 return
             end
 
-            -- v7.5: improved tab switch — slide outgoing left, slide incoming from right
             local outgoing = self._ActiveTab
+
+            -- v7.5: Clean tab switch — NO overlap, NO position slide
+            -- Phase 1: Instantly hide outgoing, show incoming
             if outgoing and outgoing._PageClip and outgoing ~= td then
-                local outClip = outgoing._PageClip
-                local outScale = outClip:FindFirstChildWhichIsA("UIScale")
-                -- Slide outgoing left + fade + scale down
+                local outScale = outgoing._PageClip:FindFirstChildWhichIsA("UIScale")
+                -- Quick fade-out outgoing (0.12s) then hide
                 if outScale then
-                    TweenObject(outScale, {Scale = 0.94}, 0.20,
-                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    TweenObject(outScale, {Scale = 0.96}, 0.12, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
-                -- Slide page position to the left
-                if outgoing._Page then
-                    TweenObject(outgoing._Page, {Position = UDim2.new(0, -20, 0, 4)}, 0.20,
-                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                end
-                task.delay(0.22, function()
+                -- Hide outgoing AFTER quick fade, BEFORE incoming appears
+                SafeDelay(0.13, function()
                     if outgoing._PageClip and self._ActiveTab ~= outgoing then
                         outgoing._PageClip.Visible = false
-                        if outScale then outScale.Scale = 0.94 end
-                        if outgoing._Page then
-                            outgoing._Page.Position = UDim2.new(0, 4, 0, 4)
-                        end
+                        if outScale then outScale.Scale = 1 end
                     end
                 end)
             end
 
+            -- Phase 2: Update all tab buttons (indicator, label, icon, glow)
             for _, t in ipairs(self._Tabs) do
                 local active = (t == td)
                 if t._PageClip then
-                    t._PageClip.Visible = active or (t == outgoing)
+                    -- Only incoming is visible (after outgoing hides)
+                    if active then
+                        t._PageClip.Visible = true
+                    elseif t ~= outgoing then
+                        t._PageClip.Visible = false
+                    end
                 end
-                -- v7.4: tabs use transparency (transparent when inactive, subtle bg when active)
-                TweenObject(t._Button,{
+                -- Tab button appearance
+                TweenObject(t._Button, {
                     BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
                     BackgroundTransparency = active and 0.4 or 1,
-                },0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                TweenObject(t._Indicator,{
-                    Size = active and UDim2.new(0,3,0.62,0) or UDim2.new(0,3,0,0),
-                    Position = active and UDim2.new(0,0,0.19,0) or UDim2.new(0,0,0.5,0),
-                },0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                -- v7.3: animate indicator glow
+                }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                -- Indicator bar
+                TweenObject(t._Indicator, {
+                    Size = active and UDim2.new(0, 3, 0.62, 0) or UDim2.new(0, 3, 0, 0),
+                    Position = active and UDim2.new(0, 0, 0.19, 0) or UDim2.new(0, 0, 0.5, 0),
+                }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                -- Indicator glow
                 if t._IndicatorGlow then
                     if active then
-                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0.62, 0), Position = UDim2.new(0, -2, 0.19, 0), ImageTransparency = 0.45}, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        TweenObject(t._IndicatorGlow, {
+                            Size = UDim2.new(0, 8, 0.62, 0),
+                            Position = UDim2.new(0, -2, 0.19, 0),
+                            ImageTransparency = 0.45,
+                        }, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
-                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0, 0), Position = UDim2.new(0, -2, 0.5, 0), ImageTransparency = 1}, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        TweenObject(t._IndicatorGlow, {
+                            Size = UDim2.new(0, 8, 0, 0),
+                            Position = UDim2.new(0, -2, 0.5, 0),
+                            ImageTransparency = 1,
+                        }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     end
                 end
+                -- Label color
                 if t._Label then
-                    TweenObject(t._Label,{TextColor3 = active and Theme.TextAccent or Theme.TextSecondary},0.22)
+                    TweenObject(t._Label, {
+                        TextColor3 = active and Theme.TextAccent or Theme.TextSecondary,
+                    }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
+                -- Icon color
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
-                        TweenObject(t._IconEl,{ImageColor3 = active and Theme.Accent or Theme.TextMuted},0.22)
+                        TweenObject(t._IconEl, {
+                            ImageColor3 = active and Theme.Accent or Theme.TextMuted,
+                        }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
-                        TweenObject(t._IconEl,{TextColor3 = active and Theme.Accent or Theme.TextMuted},0.22)
+                        TweenObject(t._IconEl, {
+                            TextColor3 = active and Theme.Accent or Theme.TextMuted,
+                        }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
+                -- Glow stroke
                 if t._GlowStroke then
-                    TweenObject(t._GlowStroke,{Transparency = active and 0.72 or 1},0.22)
+                    TweenObject(t._GlowStroke, {
+                        Transparency = active and 0.72 or 1,
+                    }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
             end
 
-            -- v7.5: incoming page — slide from right + scale up
+            -- Phase 3: Incoming page scale-in (starts AFTER outgoing hides)
             pageClip.Visible = true
-            pageClipScale.Scale = 0.94
-            page.Position = UDim2.new(0, 20, 0, 4)
-            -- Animate: slide to center + scale up
-            TweenObject(pageClipScale, {Scale = 1}, 0.32,
-                Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-            TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.30,
-                Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            pageClipScale.Scale = 0.97
+            -- Wait for outgoing to hide, then animate incoming
+            SafeDelay(0.14, function()
+                if self._ActiveTab == td and pageClip and pageClip.Parent then
+                    TweenObject(pageClipScale, {Scale = 1}, 0.28,
+                        Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+                end
+            end)
 
             self._ActiveTab = td
         end
