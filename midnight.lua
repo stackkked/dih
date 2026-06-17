@@ -6288,9 +6288,12 @@ function MIDNIGHT:MakeWindow(config)
         QueueWindowBorderPulse()
     end
 
+    -- v7.5: calculate when the window will actually be visible
+    -- (after loading intro + open animation)
+    local introDelay = 0
     if not self._LoadingIntroPlayed then
         self._LoadingIntroPlayed = true
-        local introDelay = _PlayLoadingIntroImpl(self, {
+        introDelay = _PlayLoadingIntroImpl(self, {
             Parent = self._ScreenGui,
             Title = windowName,
             Subtitle = "Loading interface...",
@@ -6664,18 +6667,25 @@ function MIDNIGHT:MakeWindow(config)
     table.insert(self._Windows, wd)
 
     -- v7.5: mark window as created and flush deferred watermark/keybind list
+    -- IMPORTANT: wait for loading intro + window open animation to complete
+    -- before showing watermark/keybinds (they should appear AFTER the window)
     self._WindowCreated = true
+    -- Window becomes visible at introDelay, open animation takes ~0.42s
+    -- Watermark appears 0.2s after window is fully open
+    -- Keybinds appear 0.3s after watermark
+    local wmDelay = math.max(0, introDelay) + 0.5
+    local klDelay = math.max(0, introDelay) + 0.65
     if self._DeferredWatermark then
         local cfg = self._DeferredWatermark
         self._DeferredWatermark = nil
-        task.delay(0.3, function()
+        task.delay(wmDelay, function()
             pcall(function() self:CreateWatermark(cfg) end)
         end)
     end
     if self._DeferredKeybindList then
         local cfg = self._DeferredKeybindList
         self._DeferredKeybindList = nil
-        task.delay(0.35, function()
+        task.delay(klDelay, function()
             pcall(function() self:CreateKeybindList(cfg) end)
         end)
     end
