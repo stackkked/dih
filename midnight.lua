@@ -2962,16 +2962,6 @@ function MIDNIGHT:_InitFPSTracker()
         _pingStatItem = Stats.Network.ServerStatsItem["Data Ping"]
     end)
 
-    -- v7.5: fallback ping via Players service if Stats not available
-    local _fallbackPing = 0
-    local _pingFallbackOk = false
-    pcall(function()
-        -- Some executors don't expose Stats.Network.ServerStatsItem properly
-        if not _pingStatItem then
-            _pingFallbackOk = true
-        end
-    end)
-
     -- #1 FIX: accumulate dt instead of calling tick() every frame
     local dtAccum = 0
     local conn = RunService.Heartbeat:Connect(function(dt)
@@ -2998,11 +2988,13 @@ function MIDNIGHT:_InitFPSTracker()
     self._FPSConn = conn
     RegConn(conn)
 
-    -- v7.5: force an initial watermark update after 1 second in case Heartbeat is delayed
-    task.delay(1.5, function()
-        if self._FPS == 0 then
-            -- Force at least one update to show the labels
-            self:_UpdateWatermark()
+    -- v7.5: force updates every 2 seconds as fallback (in case Heartbeat is slow)
+    task.spawn(function()
+        while self._WatermarkFrame and self._WatermarkFrame.Parent do
+            task.wait(2)
+            -- Force update watermark with current FPS/Ping
+            pcall(function() self:_UpdateWatermark() end)
+            pcall(function() self:_UpdateSidebarFooters() end)
         end
     end)
 end
@@ -4271,6 +4263,7 @@ function MIDNIGHT:CreateWatermark(config)
         Name = _RandomGuiName(), Size = UDim2.new(0,500,0,30),
         Position = UDim2.new(0,12,0,6),
         BackgroundColor3 = Theme.UtilityBg,
+        BackgroundTransparency = 1,  -- v7.5: start transparent for fade-in animation
         BorderSizePixel = 0, ClipsDescendants = true,
         ZIndex = ZIndex.NOTIFY,
         Parent = self._ScreenGui,
@@ -4405,7 +4398,15 @@ function MIDNIGHT:CreateWatermark(config)
     -- Apply any pre-set custom watermark text immediately
     self:_UpdateWatermark()
     local wmTargetPos = wmFrame.Position
-    wmFrame.Position = ShiftUDim2(wmTargetPos, 0, -10)
+    -- v7.5: add UIScale for spring-y entrance
+    local wmScale = Create("UIScale", {Scale = 0.85, Parent = wmFrame})
+    wmFrame.Position = ShiftUDim2(wmTargetPos, 0, -8)
+    -- v7.5: fade in + scale up + slide down
+    TweenObject(wmFrame, {
+        BackgroundTransparency = 0,
+        Position = wmTargetPos,
+    }, 0.36, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(wmScale, {Scale = 1}, 0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     local wmSweep = Create("Frame", {
         Size = UDim2.new(0, 54, 1, 0),
         Position = UDim2.new(-0.2, 0, 0, 0),
@@ -4471,20 +4472,20 @@ function MIDNIGHT:_UpdateWatermark()
     local c = wf:FindFirstChild("Content"); if not c then return end
     local needsResize = false
 
-    -- #2 FIX: cache label references on first call so FindFirstChild is not
-    -- called every second (these labels are created once and never renamed).
-    if not self._WatermarkLabels then
-        self._WatermarkLabels = {
-            fps  = c:FindFirstChild("FPSLabel"),
-            ping = c:FindFirstChild("PingLabel"),
-            lag  = c:FindFirstChild("LagspikeLabel"),
-            cus  = c:FindFirstChild("CustomLabel"),
-        }
-    end
-    local fpsL  = self._WatermarkLabels.fps
-    local pingL = self._WatermarkLabels.ping
-    local lagL  = self._WatermarkLabels.lag
-    local cusL  = self._WatermarkLabels.cus
+    -- v7.5: re-find labels every call (more robust than caching)
+    -- Caching can fail if labels are recreated or parented differently
+    local fpsL  = c:FindFirstChild("FPSLabel")
+    local pingL = c:FindFirstChild("PingLabel")
+    local lagL  = c:FindFirstChild("LagspikeLabel")
+    local cusL  = c:FindFirstChild("CustomLabel")
+
+    -- Also cache for other code that expects _WatermarkLabels
+    self._WatermarkLabels = {
+        fps  = fpsL,
+        ping = pingL,
+        lag  = lagL,
+        cus  = cusL,
+    }
 
     if fpsL  then fpsL.Text  = self._FPS.." fps";  fpsL.TextColor3  = self._Lagspike and Theme.Error or Theme.TextSecondary end
     if pingL then pingL.Text = self._Ping.." ms";  pingL.TextColor3 = self._Ping>150 and Theme.Warning or Theme.TextSecondary end
@@ -5929,7 +5930,9 @@ function MIDNIGHT:CreateKeybindList(config)
     local kf = Create("Frame",{
         Name=_RandomGuiName(), Size=UDim2.new(0,196,0,30),
         Position=UDim2.new(1,-204,0,38),
-        BackgroundColor3=Theme.UtilityBg, BorderSizePixel=0,
+        BackgroundColor3=Theme.UtilityBg,
+        BackgroundTransparency = 1,  -- v7.5: start transparent for fade-in
+        BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
     StyleUtilityOverlay(kf, Theme.Accent)
@@ -6103,6 +6106,15 @@ function MIDNIGHT:CreateKeybindList(config)
 
     self._RefreshKeybindList = refresh
     refresh()
+    -- v7.5: spring-y entrance animation for keybind list
+    local kfScale = Create("UIScale", {Scale = 0.88, Parent = kf})
+    local kfTargetPos = kf.Position
+    kf.Position = UDim2.new(1, -190, 0, 30)  -- start slightly off-screen
+    TweenObject(kf, {
+        BackgroundTransparency = 0,
+        Position = kfTargetPos,
+    }, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    TweenObject(kfScale, {Scale = 1}, 0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     AnimateReveal(kf, {
         Duration = 0.28,
         Stagger = 0.02,
