@@ -1,5 +1,50 @@
 --[[
-MIDNIGHT UI Library v6.4.0 -> v7.2.0
+MIDNIGHT UI Library v6.4.0 -> v7.3.0
+
+v7.3.0 Changelog (.major redesign):
+  CRITICAL FIXES:
+  + Fixed tabs not displaying (page.BackgroundTransparency was making ScrollingFrame opaque)
+  + Fixed StaggerReveal on page breaking widget backgrounds
+  + Fixed AddSection AutomaticSize.Y conflict with size tweens (now uses explicit height
+    computed from UIListLayout.AbsoluteContentSize)
+  + Fixed resolveParent() called before td was defined
+
+  VISUAL OVERHAUL:
+  + Window: gradient bg, larger shadow (32px), smoother spring intro (Back easing 0.42s)
+  + TitleBar: gradient bg, pulsing accent glow behind logo icon
+  + Tab buttons: gradient bg, gradient indicator with animated glow on active
+  + Toggle: 16px knob (was 14), gradient switch, glow on knob + switch when ON
+  + Slider: 6px track (was 4), gradient fill, larger knob with glow while dragging
+  + Button: gradient bg on primary/danger variants, inner highlight (glass edge),
+    glow on primary/danger variant that intensifies on hover
+  + Watermark: gradient bg, subtle accent glow behind
+  + KeybindList: gradient bg, subtle accent glow behind
+  + Command Palette: gradient bg, accent glow, glassmorphism blur on open
+  + Floating Window: gradient bg, accent glow, spring-y scale open/close
+  + Dropdown: glassmorphism blur behind popup
+  + ColorPicker: glassmorphism blur behind popup
+
+  ANIMATIONS:
+  + Tab crossfade via UIScale (Back easing, 0.30s) — no longer hides content
+  + Toggle knob: Back easing for springy feel
+  + Floating window: scale-in with Back easing
+  + Tab indicator glow: animated size + position + transparency
+  + Logo glow: continuous pulse (Sine, 1.6s loop)
+
+  EXTENDED HELPERS:
+  + ApplyGradient, ApplyInnerHighlight, ApplyShadow, ApplyHoverGlow, ApplyActiveGlow
+  + PulseLoop, PulseGlow, RippleEffect, ApplyRippleOnClick, MakeSpinner
+  + HoverScale, ApplyFocusRing
+
+  EXTENDED THEME:
+  + Surface4/Surface5, AccentGradient1/2/3, GradientStart/End
+  + HoverOverlay, PressOverlay, FocusRing, Shadow0/1/2
+  + Highlight, SelectionBg, BadgeBg, Divider, Glow0/1/2
+
+  EXTENDED MOTION:
+  + Bounce, Spring, Snap, Smooth, SmoothIn/Out, TabSwitch, TabSwitchIn
+  + Hover, HoverOut, Press, PressRelease, Pulse, Glow, GlowFade
+  + SlideIn/Out, ScaleIn/Out, FadeIn/Out
 
 v7.2.0 Changelog:
   + Collapsible Sections (with chevron + smooth height tween)
@@ -271,6 +316,43 @@ local Theme = {
     Surface1       = Color3.fromRGB(16, 18, 21),
     Surface2       = Color3.fromRGB(20, 22, 26),
     Surface3       = Color3.fromRGB(24, 27, 32),
+
+    -- v7.3: Extended palette for richer visuals
+    Surface4       = Color3.fromRGB(28, 31, 37),
+    Surface5       = Color3.fromRGB(32, 36, 42),
+    AccentGlow     = Color3.fromRGB(96, 190, 255),
+    AccentGradient1 = Color3.fromRGB(96, 190, 255),
+    AccentGradient2 = Color3.fromRGB(74, 158, 255),
+    AccentGradient3 = Color3.fromRGB(140, 110, 255),
+    GradientStart  = Color3.fromRGB(28, 31, 38),
+    GradientEnd    = Color3.fromRGB(18, 20, 24),
+    HoverOverlay   = Color3.fromRGB(255, 255, 255),
+    HoverOverlayT  = 0.04,  -- transparency
+    PressOverlay   = Color3.fromRGB(0, 0, 0),
+    PressOverlayT  = 0.10,  -- transparency
+    FocusRing      = Color3.fromRGB(96, 190, 255),
+    FocusRingT     = 0.45,
+    Shadow0        = Color3.fromRGB(0, 0, 0),
+    Shadow0T       = 0.40,
+    Shadow1        = Color3.fromRGB(0, 0, 0),
+    Shadow1T       = 0.60,
+    Shadow2        = Color3.fromRGB(0, 0, 0),
+    Shadow2T       = 0.75,
+    Highlight      = Color3.fromRGB(255, 255, 255),
+    HighlightT     = 0.06,
+    SelectionBg    = Color3.fromRGB(96, 190, 255),
+    SelectionBgT   = 0.18,
+    BadgeBg        = Color3.fromRGB(96, 190, 255),
+    BadgeBgT       = 0.20,
+    BadgeText      = Color3.fromRGB(180, 220, 255),
+    Divider        = Color3.fromRGB(33, 37, 43),
+    DividerSoft    = Color3.fromRGB(26, 29, 34),
+    Glow0          = Color3.fromRGB(96, 190, 255),
+    Glow0T         = 0.30,
+    Glow1          = Color3.fromRGB(96, 190, 255),
+    Glow1T         = 0.55,
+    Glow2          = Color3.fromRGB(96, 190, 255),
+    Glow2T         = 0.75,
 }
 
 local Font        = Enum.Font.GothamSemibold
@@ -418,6 +500,28 @@ local Motion = {
     OverlayOut = {Duration = 0.18, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
     Intro = {Duration = 0.34, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
     Loading = {Duration = 1.35, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    -- v7.3: extended presets
+    Bounce = {Duration = 0.42, Style = Enum.EasingStyle.Back, Direction = Enum.EasingDirection.Out},
+    Spring = {Duration = 0.48, Style = Enum.EasingStyle.Elastic, Direction = Enum.EasingDirection.Out},
+    Snap = {Duration = 0.08, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    Smooth = {Duration = 0.26, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    SmoothIn = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
+    SmoothOut = {Duration = 0.30, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    TabSwitch = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    TabSwitchIn = {Duration = 0.18, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
+    Hover = {Duration = 0.16, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    HoverOut = {Duration = 0.20, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    Press = {Duration = 0.06, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    PressRelease = {Duration = 0.12, Style = Enum.EasingStyle.Back, Direction = Enum.EasingDirection.Out},
+    Pulse = {Duration = 0.6, Style = Enum.EasingStyle.Sine, Direction = Enum.EasingDirection.InOut},
+    Glow = {Duration = 0.22, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    GlowFade = {Duration = 0.20, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    SlideIn = {Duration = 0.26, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.Out},
+    SlideOut = {Duration = 0.20, Style = Enum.EasingStyle.Quint, Direction = Enum.EasingDirection.In},
+    ScaleIn = {Duration = 0.28, Style = Enum.EasingStyle.Back, Direction = Enum.EasingDirection.Out},
+    ScaleOut = {Duration = 0.22, Style = Enum.EasingStyle.Back, Direction = Enum.EasingDirection.In},
+    FadeIn = {Duration = 0.18, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.Out},
+    FadeOut = {Duration = 0.14, Style = Enum.EasingStyle.Quad, Direction = Enum.EasingDirection.In},
 }
 
 local CurrentDensityMode = "Compact"
@@ -1000,6 +1104,248 @@ local function ApplyFocusGlow(frame, color)
     local glow = ApplyGlow(frame, color or Theme.Accent, 0.7)
     glow.ImageTransparency = 1
     return glow
+end
+
+--// ============================================================
+--// v7.3 — ADDITIONAL VISUAL HELPERS
+--// ============================================================
+
+-- ApplyGradient: apply a UIGradient to a frame with two colors and rotation
+local function ApplyGradient(frame, color1, color2, rotation)
+    if not frame then return nil end
+    rotation = rotation or 90
+    local grad = Create("UIGradient", {
+        Color = ColorSequence.new(color1, color2),
+        Rotation = rotation,
+        Parent = frame,
+    })
+    return grad
+end
+
+-- ApplyInnerHighlight: adds a 1px lighter line at top of frame for depth (like glass edge)
+local function ApplyInnerHighlight(frame, color, transparency)
+    if not frame then return nil end
+    local hl = Create("Frame", {
+        Name = "InnerHighlight",
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = color or Theme.Highlight,
+        BackgroundTransparency = transparency or Theme.HighlightT,
+        BorderSizePixel = 0,
+        ZIndex = frame.ZIndex + 1,
+        Parent = frame,
+    })
+    return hl
+end
+
+-- ApplyShadow: attach a shadow image with adjustable intensity (0..1)
+local SHADOW_IMAGES = {
+    [1] = "rbxassetid://1316045217",  -- small
+    [2] = "rbxassetid://1316045217",  -- medium
+    [3] = "rbxassetid://1316045217",  -- large
+}
+local function ApplyShadow(frame, level, intensity)
+    if not frame then return nil end
+    level = math.clamp(level or 1, 1, 3)
+    intensity = intensity or 0.6
+    local pad = level * 6
+    local shadow = Create("ImageLabel", {
+        Name = "Shadow",
+        Size = UDim2.new(1, pad * 2, 1, pad * 2),
+        Position = UDim2.new(0, -pad, 0, -pad),
+        BackgroundTransparency = 1,
+        Image = SHADOW_IMAGES[level],
+        ImageColor3 = Theme.Shadow0,
+        ImageTransparency = 1 - intensity,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(10, 10, 118, 118),
+        ZIndex = frame.ZIndex - 1,
+        Parent = frame,
+    })
+    return shadow
+end
+
+-- ApplyHoverGlow: shows a glow on hover (used for buttons)
+local function ApplyHoverGlow(frame, color, intensity)
+    if not frame then return nil end
+    local glow = ApplyGlow(frame, color or Theme.Accent, intensity or 0.7)
+    if glow then glow.ImageTransparency = 1 end
+    frame.MouseEnter:Connect(function()
+        if glow then TweenObject(glow, {ImageTransparency = 0.6}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out) end
+    end)
+    frame.MouseLeave:Connect(function()
+        if glow then TweenObject(glow, {ImageTransparency = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out) end
+    end)
+    return glow
+end
+
+-- ApplyActiveGlow: shows a glow when `isActive()` returns true
+local function ApplyActiveGlow(frame, color, isActiveFn)
+    if not frame or not isActiveFn then return nil end
+    local glow = ApplyGlow(frame, color or Theme.Accent, 0.7)
+    if glow then glow.ImageTransparency = 1 end
+    -- caller can manually trigger update
+    return {
+        Glow = glow,
+        Update = function()
+            if glow then
+                if isActiveFn() then
+                    TweenObject(glow, {ImageTransparency = 0.55}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                else
+                    TweenObject(glow, {ImageTransparency = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                end
+            end
+        end,
+    }
+end
+
+-- PulseLoop: animate a property back and forth forever (used for status dots, etc.)
+local function PulseLoop(frame, prop, from, to, duration)
+    if not frame then return nil end
+    duration = duration or 0.8
+    local t = 0
+    local dir = 1
+    local conn
+    conn = RunService.RenderStepped:Connect(function(dt)
+        if not frame or not frame.Parent then
+            if conn then conn:Disconnect() end
+            return
+        end
+        t = t + dt * dir
+        if t >= 1 then t = 1; dir = -1 end
+        if t <= 0 then t = 0; dir = 1 end
+        -- lerp
+        if type(from) == "number" and type(to) == "number" then
+            frame[prop] = from + (to - from) * t
+        end
+    end)
+    RegConn(conn)
+    return conn
+end
+
+-- PulseGlow: pulse the glow transparency forever
+local function PulseGlow(glow, fromT, toT, duration)
+    if not glow then return nil end
+    return PulseLoop(glow, "ImageTransparency", fromT or 0.4, toT or 0.8, duration or 0.8)
+end
+
+-- RippleEffect: creates a ripple at click position (iOS-style)
+local function RippleEffect(frame, clickPos, color)
+    if not frame or not clickPos then return end
+    color = color or Theme.Highlight
+    local absPos = frame.AbsolutePosition
+    local relX = clickPos.X - absPos.X
+    local relY = clickPos.Y - absPos.Y
+    local ripple = Create("ImageLabel", {
+        Name = "Ripple",
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0, relX, 0, relY),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://266543268",  -- circle
+        ImageColor3 = color,
+        ImageTransparency = 0.6,
+        ZIndex = frame.ZIndex + 10,
+        Parent = frame,
+    })
+    ApplyCircleCorner(ripple)
+    TweenObject(ripple, {
+        Size = UDim2.new(0, 200, 0, 200),
+        ImageTransparency = 1,
+    }, 0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    task.delay(0.6, function()
+        if ripple and ripple.Parent then ripple:Destroy() end
+    end)
+end
+
+-- ApplyRippleOnClick: attaches a ripple effect to a clickable frame
+local function ApplyRippleOnClick(frame, color)
+    if not frame then return end
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            RippleEffect(frame, input.Position, color)
+        end
+    end)
+end
+
+-- MakeSpinner: creates a rotating spinner frame
+local function MakeSpinner(parent, size, color, thickness)
+    if not parent then return nil end
+    size = size or 16
+    thickness = thickness or 2
+    local spinner = Create("Frame", {
+        Size = UDim2.new(0, size, 0, size),
+        BackgroundTransparency = 1,
+        Parent = parent,
+    })
+    local arc = Create("ImageLabel", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://266543268",
+        ImageColor3 = color or Theme.Accent,
+        ImageTransparency = 0.2,
+        Parent = spinner,
+    })
+    ApplyCircleCorner(arc)
+    Create("UIStroke", {
+        Color = color or Theme.Accent,
+        Thickness = thickness,
+        Transparency = 0.4,
+        Parent = spinner,
+    })
+    local conn
+    local startT = os.clock()
+    conn = RunService.RenderStepped:Connect(function()
+        if not spinner or not spinner.Parent then
+            if conn then conn:Disconnect() end
+            return
+        end
+        spinner.Rotation = ((os.clock() - startT) * 360) % 360
+    end)
+    RegConn(conn)
+    return spinner
+end
+
+-- HoverScale: subtle scale-up on hover
+local function HoverScale(frame, scale, duration)
+    if not frame then return nil end
+    scale = scale or 1.02
+    duration = duration or 0.18
+    local uiscale = frame:FindFirstChildWhichIsA("UIScale")
+    if not uiscale then
+        uiscale = Create("UIScale", {Scale = 1, Parent = frame})
+    end
+    frame.MouseEnter:Connect(function()
+        TweenObject(uiscale, {Scale = scale}, duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    end)
+    frame.MouseLeave:Connect(function()
+        TweenObject(uiscale, {Scale = 1}, duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    end)
+    return uiscale
+end
+
+-- ApplyFocusRing: a glowing outline OUTSIDE the frame when focused (via separate frame)
+local function ApplyFocusRing(frame, color, thickness)
+    if not frame then return nil end
+    thickness = thickness or 2
+    local ring = Create("Frame", {
+        Name = "FocusRing",
+        Size = UDim2.new(1, thickness * 2, 1, thickness * 2),
+        Position = UDim2.new(0, -thickness, 0, -thickness),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Visible = false,
+        ZIndex = frame.ZIndex + 5,
+        Parent = frame.Parent,
+    })
+    ApplyCircleCorner(ring)
+    Create("UIStroke", {
+        Color = color or Theme.FocusRing,
+        Thickness = thickness,
+        Transparency = Theme.FocusRingT,
+        Parent = ring,
+    })
+    return ring
 end
 
 -- #7 OPT: single helper instead of repeating math.floor(c.R*255) everywhere
@@ -2226,7 +2572,7 @@ end
 --// MIDNIGHT LIBRARY
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local MIDNIGHT = {
-    Version = "7.2.0",
+    Version = "7.3.0",
 
     _ScreenGui  = nil,
     _Windows    = {},
@@ -3780,6 +4126,16 @@ function MIDNIGHT:CreateWatermark(config)
         Parent = self._ScreenGui,
     })
     StyleUtilityOverlay(wmFrame, Theme.Accent)
+    -- v7.3: gradient on watermark bg for depth
+    ApplyGradient(wmFrame, Theme.Surface1, Theme.UtilityBg, 90)
+    -- v7.3: subtle glow behind watermark
+    local wmGlow = Create("ImageLabel",{
+        Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
+        BackgroundTransparency=1, Image="rbxassetid://6015897843",
+        ImageColor3=Theme.Accent, ImageTransparency=0.85,
+        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+        ZIndex=ZIndex.NOTIFY-1, Parent=wmFrame,
+    })
 
     local content = Create("Frame",{
         Name="Content", Size=UDim2.new(1,-18,1,-6),
@@ -4953,6 +5309,8 @@ function MIDNIGHT:Notify(config)
         Parent=self._ScreenGui,
     })
     ApplyCorner(nf,compactMode and 8 or 10)
+    -- v7.3: gradient on notification card for depth
+    ApplyGradient(nf, Theme.Surface1, compactMode and Theme.OverlayBg or Theme.WindowBg, 90)
     local nfStroke = ApplyStroke(nf, Theme.BorderSoft, 1, 1)
     local nfScale = Create("UIScale",{Scale=compactMode and 0.985 or 0.97,Parent=nf})
 
@@ -5425,6 +5783,16 @@ function MIDNIGHT:CreateKeybindList(config)
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
     StyleUtilityOverlay(kf, Theme.Accent)
+    -- v7.3: gradient on keybind list bg for depth
+    ApplyGradient(kf, Theme.Surface1, Theme.UtilityBg, 90)
+    -- v7.3: subtle glow behind keybind list
+    local kfGlow = Create("ImageLabel",{
+        Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
+        BackgroundTransparency=1, Image="rbxassetid://6015897843",
+        ImageColor3=Theme.Accent, ImageTransparency=0.88,
+        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+        ZIndex=ZIndex.WINDOW-1, Parent=kf,
+    })
 
     local tb2 = StyleQuietHeader(kf, 28, ZIndex.WINDOW + 1)
     local tc2 = Create("Frame",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,8,0,0),BackgroundTransparency=1,Parent=tb2})
@@ -5686,14 +6054,17 @@ function MIDNIGHT:MakeWindow(config)
         Parent = self._ScreenGui,
     })
     ApplyCorner(wf,CompactStyle.WindowRadius)
+    -- v7.3: bigger, richer shadow (level 2)
     Create("ImageLabel",{
-        Size=UDim2.new(1,24,1,24),Position=UDim2.new(0,-12,0,-12),
+        Size=UDim2.new(1,32,1,32),Position=UDim2.new(0,-16,0,-16),
         BackgroundTransparency=1,Image="rbxassetid://6015897843",
-        ImageColor3=Theme.Shadow,ImageTransparency=0.68,
+        ImageColor3=Theme.Shadow,ImageTransparency=0.55,
         ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
         ZIndex=ZIndex.WINDOW-1,Parent=wf,
     })
     ApplyStroke(wf,Theme.BorderSoft,1,0.16)
+    -- v7.3: subtle gradient on window bg for depth
+    ApplyGradient(wf, Theme.Surface1, Theme.WindowBg, 90)
     local wfScale = Create("UIScale", {Scale = 0.94, Parent = wf})
     local openPosition = UDim2.new(0.5, -winW/2, 0.5, -winH/2)
     wf.Visible = false
@@ -5727,11 +6098,12 @@ function MIDNIGHT:MakeWindow(config)
         wf.BackgroundTransparency = 1
         wf.Position = UDim2.new(0.5, -winW/2, 0.5, -winH/2 + 12)
         wfScale.Scale = 0.94
+        -- v7.3: smoother intro with Back easing for a springy feel
         TweenObject(wf, {
             BackgroundTransparency = 0,
             Position = openPosition,
-        }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(wfScale, {Scale = 1}, 0.34, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        }, 0.38, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(wfScale, {Scale = 1}, 0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         QueueWindowBorderPulse()
     end
 
@@ -5755,8 +6127,21 @@ function MIDNIGHT:MakeWindow(config)
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
+    -- v7.3: gradient on titlebar for depth
+    ApplyGradient(tb, Theme.Surface2, Theme.UtilityHeader, 90)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.UtilityHeader,BorderSizePixel=0,Parent=tb})
     Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=tb})
+    -- v7.3: glow behind logo
+    local logoGlow = Create("ImageLabel",{
+        Size=UDim2.new(0, 32, 0, 32),
+        Position=UDim2.new(0, 4, 0.5, -16),
+        BackgroundTransparency=1, Image="rbxassetid://6015897843",
+        ImageColor3=Theme.Accent, ImageTransparency=0.7,
+        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+        ZIndex=ZIndex.CONTENT, Parent=tb,
+    })
+    -- pulsing logo glow
+    PulseGlow(logoGlow, 0.5, 0.85, 1.6)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
     Create("TextLabel",{
         Text=windowName,Font=FontBold,TextSize=12,TextColor3=Theme.TextPrimary,
@@ -5765,7 +6150,7 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.CONTENT+1,Parent=tb,
     })
 
-    -- Minimize
+    -- Minimize — v7.3: cleaner icon + press feedback + hover scale
     local minBtn = Create("TextButton",{
         Name="MinBtn",Text="",Size=UDim2.new(0,24,0,18),
         Position=UDim2.new(1,-56,0,9),BackgroundColor3=Theme.MinNormal,
@@ -5774,8 +6159,9 @@ function MIDNIGHT:MakeWindow(config)
     ApplyCorner(minBtn,4)
     Create("Frame",{Size=UDim2.new(0,8,0,2),Position=UDim2.new(0.5,-4,0.5,-1),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Parent=minBtn})
     ApplyHoverEffect(minBtn,Theme.MinNormal,Theme.MinHover,false)
+    ApplyPressFeedback(minBtn, 0.92, 0.08)
 
-    -- Close
+    -- Close — v7.3: cleaner X icon + press feedback + hover scale
     local closeBtn = Create("TextButton",{
         Name="CloseBtn",Text="",Size=UDim2.new(0,24,0,18),
         Position=UDim2.new(1,-28,0,9),BackgroundColor3=Theme.CloseNormal,
@@ -5785,6 +6171,7 @@ function MIDNIGHT:MakeWindow(config)
     Create("Frame",{Size=UDim2.new(0,8,0,2),Position=UDim2.new(0.5,-4,0.5,-1),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=45,Parent=closeBtn})
     Create("Frame",{Size=UDim2.new(0,8,0,2),Position=UDim2.new(0.5,-4,0.5,-1),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=-45,Parent=closeBtn})
     ApplyHoverEffect(closeBtn,Theme.CloseNormal,Theme.CloseHover,false)
+    ApplyPressFeedback(closeBtn, 0.92, 0.08)
 
     closeBtn.MouseButton1Click:Connect(function()
         self._MenuOpen = false
@@ -6113,6 +6500,8 @@ function MIDNIGHT:MakeWindow(config)
             Parent=tabList,
         })
         ApplyCorner(btn,5)
+        -- v7.3: gradient on tab button for depth
+        ApplyGradient(btn, Theme.Surface3, Theme.Surface2, 90)
 
         local btnContent = Create("Frame",{Size=UDim2.new(1,-12,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Parent=btn})
         Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
@@ -6130,11 +6519,22 @@ function MIDNIGHT:MakeWindow(config)
             BackgroundTransparency=1,LayoutOrder=2,Parent=btnContent,
         })
 
+        -- v7.3: indicator with gradient instead of solid color
         local indicator = Create("Frame",{
             Size=UDim2.new(0,3,0,0),Position=UDim2.new(0,0,0.5,0),
             BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=btn,
         })
         ApplyCorner(indicator,1)
+        ApplyGradient(indicator, Theme.AccentGradient1, Theme.AccentGradient2, 90)
+        -- v7.3: glow on indicator when active
+        local indicatorGlow = Create("ImageLabel",{
+            Size=UDim2.new(0, 8, 0, 0),
+            Position=UDim2.new(0, -2, 0.5, 0),
+            BackgroundTransparency=1, Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Accent, ImageTransparency=1,
+            ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=ZIndex.CONTENT, Parent=btn,
+        })
 
         -- Active tab glow stroke
         local tabGlowStroke = Create("UIStroke",{
@@ -6200,7 +6600,7 @@ function MIDNIGHT:MakeWindow(config)
             end))
         end
 
-        -- Page (tab content) вЂ” uses a ClipsDescendants frame for slide animation
+        -- Page (tab content) — uses a ClipsDescendants frame for slide animation
         local pageClip = Create("Frame",{
             Name="TabClip_"..tabName,
             Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),
@@ -6210,6 +6610,9 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT,
             Parent=contentFrame,
         })
+        -- v7.3: pageClip has a UIScale for crossfade animation (not BackgroundTransparency,
+        -- which would paint a black opaque rectangle over content).
+        local pageClipScale = Create("UIScale", {Scale = 1, Parent = pageClip})
         local page = Create("ScrollingFrame",{
             Name="TabContent_"..tabName,
             Size=UDim2.new(1,-8,1,-8),Position=UDim2.new(0,4,0,4),
@@ -6223,7 +6626,7 @@ function MIDNIGHT:MakeWindow(config)
         ApplyPadding(page,2,2,6,6)
         setupScrollbarAutoHide(page)
 
-        -- Empty placeholder
+        -- Empty placeholder (v7.3: parented to page directly; resolveParent() not yet declared)
         local placeholder = Create("TextLabel",{
             Text="No items",Font=FontRegular,TextSize=12,
             TextColor3=Theme.TextMuted,
@@ -6232,14 +6635,14 @@ function MIDNIGHT:MakeWindow(config)
             TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=ZIndex.CONTENT+2,
-            Parent=resolveParent(),
+            Parent=page,
         })
 
         local td = {
             _Name=tabName,
             _Button=btn, _Page=page, _PageClip=pageClip,
             _Layout=nil, _Window=wd, _ItemCount=0,
-            _Indicator=indicator, _Label=tabLabel,
+            _Indicator=indicator, _IndicatorGlow=indicatorGlow, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
             _Placeholder=placeholder,
             _Select=nil,
@@ -6251,19 +6654,20 @@ function MIDNIGHT:MakeWindow(config)
                 return
             end
 
-            -- v7.2: animate outgoing + incoming page (crossfade + slide)
+            -- v7.3: crossfade via UIScale + position offset (pageClip stays fully transparent
+            -- so it never paints over content)
             local outgoing = self._ActiveTab
-            if outgoing and outgoing._PageClip then
-                local outPage = outgoing._Page
-                if outPage then
-                    outPage.Visible = true
-                    TweenObject(outPage, {Position = UDim2.new(0, 16, 0, 4), BackgroundTransparency = 1}, 0.18,
+            if outgoing and outgoing._PageClip and outgoing ~= td then
+                local outClip = outgoing._PageClip
+                local outScale = outClip:FindFirstChildWhichIsA("UIScale")
+                if outScale then
+                    TweenObject(outScale, {Scale = 0.96}, 0.18,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                 end
-                -- hide outgoing after the slide
                 task.delay(0.2, function()
                     if outgoing._PageClip and self._ActiveTab ~= outgoing then
                         outgoing._PageClip.Visible = false
+                        if outScale then outScale.Scale = 0.96 end
                     end
                 end)
             end
@@ -6277,7 +6681,15 @@ function MIDNIGHT:MakeWindow(config)
                 TweenObject(t._Indicator,{
                     Size = active and UDim2.new(0,3,0.62,0) or UDim2.new(0,3,0,0),
                     Position = active and UDim2.new(0,0,0.19,0) or UDim2.new(0,0,0.5,0),
-                },0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                },0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                -- v7.3: animate indicator glow
+                if t._IndicatorGlow then
+                    if active then
+                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0.62, 0), Position = UDim2.new(0, -2, 0.19, 0), ImageTransparency = 0.45}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    else
+                        TweenObject(t._IndicatorGlow, {Size = UDim2.new(0, 8, 0, 0), Position = UDim2.new(0, -2, 0.5, 0), ImageTransparency = 1}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    end
+                end
                 if t._Label then
                     TweenObject(t._Label,{TextColor3 = active and Theme.TextAccent or Theme.TextSecondary},0.18)
                 end
@@ -6293,22 +6705,13 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            -- v7.2: incoming page — start off-screen left + transparent, slide in
+            -- v7.3: incoming page — scale-in via UIScale (page stays transparent)
             pageClip.Visible = true
-            page.Position = UDim2.new(0, -16, 0, 4)
-            page.BackgroundTransparency = 1
-            TweenObject(page, {Position = UDim2.new(0, 4, 0, 4), BackgroundTransparency = 0}, 0.26,
-                Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            pageClipScale.Scale = 0.96
+            TweenObject(pageClipScale, {Scale = 1}, 0.30,
+                Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
             self._ActiveTab = td
-
-            -- v7.2: stagger-reveal the widgets inside the incoming page (first time only)
-            if not td._RevealedOnce then
-                td._RevealedOnce = true
-                task.delay(0.06, function()
-                    StaggerReveal(page, 0.018, 0.24)
-                end)
-            end
         end
         td._Select = selectTab
 
@@ -6324,6 +6727,7 @@ function MIDNIGHT:MakeWindow(config)
         })
         if #self._Tabs == 1 then
             pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
+            pageClipScale.Scale = 1
             TweenObject(btn,{BackgroundColor3=Theme.TabActiveBg},0.18)
             TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
@@ -6405,12 +6809,14 @@ function MIDNIGHT:MakeWindow(config)
             local collapsible = sc.Collapsible ~= false  -- default true (v7.2)
             local startCollapsed = sc.DefaultCollapsed or false
             local sectionIcon = sc.Icon
+
+            -- Section root: holds header + content. We measure content height
+            -- dynamically because AutomaticSize + ClipsDescendants + tween conflict.
             local sf = Create("Frame",{
                 Size=UDim2.new(1,0,0,CompactStyle.SectionHeight),
                 BackgroundTransparency=1,
                 LayoutOrder=nextOrder(),
                 Parent=resolveParent(),
-                AutomaticSize = collapsible and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
             })
 
             -- Header frame (clickable when collapsible)
@@ -6429,12 +6835,12 @@ function MIDNIGHT:MakeWindow(config)
                 })
             end
 
-            -- Chevron (rotates when collapsed)
+            -- Chevron (rotates when collapsed) — v7.3: use a proper arrow character
             local chevron = nil
             if collapsible then
                 chevron = Create("TextLabel",{
-                    Text = "в–ѕ",
-                    Font = FontBold, TextSize = 9,
+                    Text = ">",
+                    Font = FontBold, TextSize = 10,
                     TextColor3 = Theme.TextMuted,
                     Size = UDim2.new(0, 12, 0, 12),
                     Position = UDim2.new(1, -14, 0.5, -6),
@@ -6462,48 +6868,84 @@ function MIDNIGHT:MakeWindow(config)
             })
             Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-3),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=header})
 
-            -- Content container (collapsible). Holds subsequent widgets.
+            -- v7.3: Content container with explicit height (no AutomaticSize.Y to avoid
+            -- conflict with size tweens). We compute height by reading UIListLayout
+            -- AbsoluteContentSize after children are added.
             local contentHolder = Create("Frame",{
                 Name = "SectionContent",
                 Size = UDim2.new(1, 0, 0, 0),
                 Position = UDim2.new(0, 0, 0, CompactStyle.SectionHeight),
                 BackgroundTransparency = 1,
-                AutomaticSize = Enum.AutomaticSize.Y,
                 ClipsDescendants = true,
                 Parent = sf,
             })
-            -- Add a UIListLayout so widgets stack vertically inside the holder
-            Create("UIListLayout",{
+            local contentLayout = Create("UIListLayout",{
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 Padding = UDim.new(0, CompactStyle.SectionGap or 4),
                 Parent = contentHolder,
             })
             ApplyPadding(contentHolder, 4, 4, 0, 0)
 
+            -- v7.3: function to compute content height from layout
+            local function getContentHeight()
+                local h = contentLayout.AbsoluteContentSize.Y
+                return h + 8  -- padding top+bottom
+            end
+
+            -- v7.3: function to update section height based on content + collapse state
+            local function updateSectionHeight()
+                if collapsed or not collapsible then
+                    sf.Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight)
+                else
+                    local ch = getContentHeight()
+                    sf.Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight + ch)
+                end
+            end
+
             -- Collapsed state
-            local collapsed = startCollapsed
+            collapsed = startCollapsed
             local function applyCollapsed(animate)
-                if not collapsible then return end
+                if not collapsible then
+                    contentHolder.Size = UDim2.new(1, 0, 0, getContentHeight())
+                    updateSectionHeight()
+                    return
+                end
                 if collapsed then
                     if chevron then
                         TweenObject(chevron, {Rotation = -90}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
+                    local targetH = getContentHeight()
                     if animate then
                         TweenObject(contentHolder, {Size = UDim2.new(1, 0, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                        TweenObject(sf, {Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
                     else
                         contentHolder.Size = UDim2.new(1, 0, 0, 0)
+                        sf.Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight)
                     end
                 else
                     if chevron then
                         TweenObject(chevron, {Rotation = 0}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
+                    local targetH = getContentHeight()
                     if animate then
-                        -- Tween to natural size by temporarily enabling AutomaticSize-driven growth via size 1
-                        TweenObject(contentHolder, {Size = UDim2.new(1, 0, 0, 0)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                        -- but keep AutomaticSize.Y on so it grows
+                        TweenObject(contentHolder, {Size = UDim2.new(1, 0, 0, targetH)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        TweenObject(sf, {Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight + targetH)}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    else
+                        contentHolder.Size = UDim2.new(1, 0, 0, targetH)
+                        sf.Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight + targetH)
                     end
                 end
             end
+
+            -- v7.3: listen to content layout changes to update section height
+            RegConn(contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if not collapsed and collapsible then
+                    local targetH = getContentHeight()
+                    contentHolder.Size = UDim2.new(1, 0, 0, targetH)
+                    sf.Size = UDim2.new(1, 0, 0, CompactStyle.SectionHeight + targetH)
+                end
+            end))
+
             applyCollapsed(false)
 
             if headerBtn then
@@ -6616,12 +7058,39 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,Parent=keyBadge,
             })
 
-            local sw = Create("Frame",{Size=UDim2.new(0,rowToggleW,0,18),Position=UDim2.new(1,-rowToggleW,0.5,-9),BackgroundColor3=Theme.ToggleOff,BorderSizePixel=0,ClipsDescendants=false,Parent=ic})
-            ApplyCorner(sw,8)
-            -- v7.2: glow around toggle switch when on
+            -- v7.3: toggle switch with gradient when on, larger knob, glow on knob
+            local sw = Create("Frame",{
+                Size=UDim2.new(0,rowToggleW,0,20),Position=UDim2.new(1,-rowToggleW,0.5,-10),
+                BackgroundColor3=Theme.ToggleOff,BorderSizePixel=0,ClipsDescendants=false,Parent=ic,
+            })
+            ApplyCorner(sw,10)
+            ApplyStroke(sw, Theme.BorderSoft, 1, 0.4)
+            -- gradient on switch (visible when on)
+            local swGradient = Create("UIGradient",{
+                Color=ColorSequence.new(Theme.Accent, Theme.AccentGradient2),
+                Rotation=0, Parent=sw,
+            })
+            -- glow around toggle switch when on
             local toggleGlow = ApplyGlow(sw, Theme.Accent, 0.7)
-            local knob = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Theme.ToggleKnob,BorderSizePixel=0,Parent=sw})
-            ApplyCorner(knob,7)
+            -- knob with shadow + glow
+            local knob = Create("Frame",{
+                Size=UDim2.new(0,16,0,16),Position=UDim2.new(0,2,0.5,-8),
+                BackgroundColor3=Theme.ToggleKnob,BorderSizePixel=0,Parent=sw,
+            })
+            ApplyCorner(knob,8)
+            -- knob drop shadow
+            Create("UIStroke",{
+                Color=Color3.fromRGB(0,0,0),Thickness=1,Transparency=0.5,Parent=knob,
+            })
+            -- knob glow when on (subtle)
+            local knobGlow = Create("ImageLabel",{
+                Size=UDim2.new(0, 24, 0, 24),
+                Position=UDim2.new(0, -4, 0.5, -12),
+                BackgroundTransparency=1, Image="rbxassetid://6015897843",
+                ImageColor3=Theme.Accent, ImageTransparency=1,
+                ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+                ZIndex=sw.ZIndex-1, Parent=sw,
+            })
 
             local on = def
             local data = {_Value=on,_Key=bindKey,_Mode=bindMode,_KeyBadge=keyBadgeLabel}
@@ -6652,27 +7121,35 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             local function update(anim)
+                -- v7.3: track is 34px wide, knob is 16px, padding 2px
+                -- ON: knob at X = 34 - 16 - 2 = 16
+                -- OFF: knob at X = 2
+                local onX = rowToggleW - 16 - 2
+                local offX = 2
                 if on then
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=col},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        TweenObject(knob,{Position=UDim2.new(0,18,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=0.55},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                        -- v7.3: spring-y transition with Back easing on knob
+                        TweenObject(sw,{BackgroundColor3=col},0.20,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,onX,0.5,-8),Size=UDim2.new(0,16,0,16)},0.24,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+                        if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=0.45},0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                        if knobGlow then TweenObject(knobGlow,{ImageTransparency=0.55, Position=UDim2.new(0, onX-4, 0.5, -12)},0.26,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
                     else
                         sw.BackgroundColor3=col
-                        knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,18,0.5,-7)
-                        knob.BackgroundColor3=Theme.ToggleKnob
-                        if toggleGlow then toggleGlow.ImageTransparency=0.55 end
+                        knob.Size=UDim2.new(0,16,0,16); knob.Position=UDim2.new(0,onX,0.5,-8)
+                        if toggleGlow then toggleGlow.ImageTransparency=0.45 end
+                        if knobGlow then knobGlow.ImageTransparency=0.55; knobGlow.Position=UDim2.new(0, onX-4, 0.5, -12) end
                     end
                 else
                     if anim then
-                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-                        TweenObject(knob,{Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Theme.ToggleKnob},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(sw,{BackgroundColor3=Theme.ToggleOff},0.20,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+                        TweenObject(knob,{Position=UDim2.new(0,offX,0.5,-8),Size=UDim2.new(0,16,0,16)},0.22,Enum.EasingStyle.Back,Enum.EasingDirection.Out)
                         if toggleGlow then TweenObject(toggleGlow,{ImageTransparency=1},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                        if knobGlow then TweenObject(knobGlow,{ImageTransparency=1, Position=UDim2.new(0, offX-4, 0.5, -12)},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
                     else
                         sw.BackgroundColor3=Theme.ToggleOff
-                        knob.Size=UDim2.new(0,14,0,14); knob.Position=UDim2.new(0,2,0.5,-7)
-                        knob.BackgroundColor3=Theme.ToggleKnob
+                        knob.Size=UDim2.new(0,16,0,16); knob.Position=UDim2.new(0,offX,0.5,-8)
                         if toggleGlow then toggleGlow.ImageTransparency=1 end
+                        if knobGlow then knobGlow.ImageTransparency=1; knobGlow.Position=UDim2.new(0, offX-4, 0.5, -12) end
                     end
                 end
             end
@@ -6835,11 +7312,18 @@ function MIDNIGHT:MakeWindow(config)
                 BackgroundTransparency=1,Parent=valueWrap,
             })
 
-            local track = Create("Frame",{Size=UDim2.new(1,0,0,4),Position=UDim2.new(0,0,0,27),BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic})
-            ApplyCorner(track,2)
+            -- v7.3: thicker track (6px instead of 4) for easier interaction + gradient fill
+            local track = Create("Frame",{
+                Size=UDim2.new(1,0,0,6),Position=UDim2.new(0,0,0,26),
+                BackgroundColor3=Theme.SliderTrack,BorderSizePixel=0,Parent=ic,
+            })
+            ApplyCorner(track,3)
+            ApplyStroke(track, Theme.BorderSoft, 1, 0.4)
             local r0 = (def-mn)/range
             local fill = Create("Frame",{Size=UDim2.new(r0,0,1,0),BackgroundColor3=Theme.SliderFill,BorderSizePixel=0,Parent=track})
-            ApplyCorner(fill,2)
+            ApplyCorner(fill,3)
+            -- v7.3: gradient on fill for richness
+            ApplyGradient(fill, Theme.AccentGradient2, Theme.AccentGradient1, 0)
             local k = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(r0,-7,0.5,-7),BackgroundColor3=Theme.SliderKnob,BorderSizePixel=0,Parent=track})
             ApplyCorner(k,7); Create("UIStroke",{Color=Theme.Accent,Thickness=1.2,Transparency=0.08,Parent=k})
             -- v7.2: glow around slider knob
@@ -7526,23 +8010,27 @@ function MIDNIGHT:MakeWindow(config)
             local loading = bc.Loading or false
 
             -- Variant color mapping
-            local vNormal, vHover, vText, vStroke
+            local vNormal, vHover, vText, vStroke, vGrad1, vGrad2
             if variant == "primary" then
-                vNormal, vHover = AccentTint(Theme.Accent, 0.18), AccentTint(Theme.Accent, 0.32)
+                vNormal, vHover = AccentTint(Theme.Accent, 0.22), AccentTint(Theme.Accent, 0.36)
                 vText = Theme.TextPrimary
                 vStroke = Theme.Accent
+                vGrad1, vGrad2 = Theme.AccentGradient1, Theme.AccentGradient2
             elseif variant == "danger" then
-                vNormal, vHover = AccentTint(Theme.Error, 0.16), AccentTint(Theme.Error, 0.30)
+                vNormal, vHover = AccentTint(Theme.Error, 0.20), AccentTint(Theme.Error, 0.34)
                 vText = Theme.TextPrimary
                 vStroke = Theme.Error
+                vGrad1, vGrad2 = Theme.Error, Color3.fromRGB(220, 60, 60)
             elseif variant == "ghost" then
                 vNormal, vHover = Theme.Surface2, Theme.Surface3
                 vText = Theme.TextPrimary
                 vStroke = Theme.BorderSoft
+                vGrad1, vGrad2 = nil, nil
             else  -- secondary
                 vNormal, vHover = Theme.Surface2, Theme.Surface3
                 vText = Theme.TextPrimary
                 vStroke = Theme.BorderSoft
+                vGrad1, vGrad2 = Theme.Surface3, Theme.Surface2
             end
 
             local item = Create("Frame",{
@@ -7553,13 +8041,36 @@ function MIDNIGHT:MakeWindow(config)
                 Parent=resolveParent(),
             })
             ApplyCorner(item,6); ApplyStroke(item,vStroke,1,0.24); ApplyPadding(item,0,0,10,10)
+            -- v7.3: gradient on button bg for depth
+            if vGrad1 and vGrad2 then
+                ApplyGradient(item, vGrad1, vGrad2, 90)
+            end
+            -- v7.3: inner highlight for primary variant (glass edge)
+            if variant == "primary" or variant == "danger" then
+                ApplyInnerHighlight(item, Color3.fromRGB(255, 255, 255), 0.08)
+            end
+            -- v7.3: glow on primary/danger variant
+            local btnGlow
+            if variant == "primary" then
+                btnGlow = ApplyGlow(item, Theme.Accent, 0.7)
+                if btnGlow then btnGlow.ImageTransparency = 0.9 end
+            elseif variant == "danger" then
+                btnGlow = ApplyGlow(item, Theme.Error, 0.7)
+                if btnGlow then btnGlow.ImageTransparency = 0.9 end
+            end
 
-            -- override hover effect with variant colors
+            -- override hover effect with variant colors + glow
             item.MouseEnter:Connect(function()
-                if not loading then TweenObject(item,{BackgroundColor3=vHover},0.15) end
+                if not loading then
+                    TweenObject(item,{BackgroundColor3=vHover},0.15)
+                    if btnGlow then TweenObject(btnGlow,{ImageTransparency=0.55},0.22,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                end
             end)
             item.MouseLeave:Connect(function()
-                if not loading then TweenObject(item,{BackgroundColor3=vNormal},0.18) end
+                if not loading then
+                    TweenObject(item,{BackgroundColor3=vNormal},0.18)
+                    if btnGlow then TweenObject(btnGlow,{ImageTransparency=0.9},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out) end
+                end
             end)
 
             local ic = Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Parent=item})
@@ -8387,6 +8898,17 @@ function MIDNIGHT:MakeWindow(config)
             Visible=false,ZIndex=ZIndex.POPUP,Parent=MIDNIGHT._ScreenGui,
         })
         StyleUtilityOverlay(fw, Theme.Accent)
+        -- v7.3: gradient + glow for floating window
+        ApplyGradient(fw, Theme.Surface1, Theme.OverlayBg, 90)
+        local fwGlow = Create("ImageLabel",{
+            Size=UDim2.new(1,20,1,20),Position=UDim2.new(0,-10,0,-10),
+            BackgroundTransparency=1, Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Accent, ImageTransparency=0.82,
+            ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=ZIndex.POPUP-1, Parent=fw,
+        })
+        -- v7.3: scale for open/close animation
+        local fwScale = Create("UIScale", {Scale = 0.96, Parent = fw})
 
         local ftb=StyleQuietHeader(fw, CompactStyle.OverlayHeaderHeight, ZIndex.POPUP+1)
         Create("TextLabel",{Text=nm,Font=FontBold,TextSize=CompactStyle.FloatingTitleSize,TextColor3=Theme.TextPrimary,Size=UDim2.new(1,-46,1,0),Position=UDim2.new(0,10,0,0),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,ZIndex=ZIndex.POPUP+2,Parent=ftb})
@@ -8396,6 +8918,7 @@ function MIDNIGHT:MakeWindow(config)
         Create("Frame",{Size=UDim2.new(0,7,0,1),Position=UDim2.new(0.5,-3,0.5,0),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=45,Parent=fwClose})
         Create("Frame",{Size=UDim2.new(0,7,0,1),Position=UDim2.new(0.5,-3,0.5,0),BackgroundColor3=Theme.TextMuted,BorderSizePixel=0,Rotation=-45,Parent=fwClose})
         ApplyHoverEffect(fwClose,Theme.CloseNormal,Theme.CloseHover,false)
+        ApplyPressFeedback(fwClose, 0.92, 0.08)
 
         local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
         Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=fScroll})
@@ -8435,8 +8958,11 @@ function MIDNIGHT:MakeWindow(config)
             end
             fw.Visible = true
             fw.BackgroundTransparency = 1
+            fwScale.Scale = 0.96
             TweenMotion(fw,{Size=UDim2.new(0,curFW,0,curFH)},"Panel")
             TweenMotion(fw,{BackgroundTransparency=0},"Soft")
+            -- v7.3: scale-in with Back easing for springy feel
+            TweenObject(fwScale, {Scale = 1}, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
             task.defer(function()
                 if self._Destroyed or self._Frame ~= fw then return end
                 fw.Visible = true
@@ -8449,6 +8975,8 @@ function MIDNIGHT:MakeWindow(config)
             visibilityToken = visibilityToken + 1
             local token = visibilityToken
             self._Visible = false
+            -- v7.3: scale-out
+            TweenObject(fwScale, {Scale = 0.96}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
             TweenObject(fw,{Size=UDim2.new(0,0,0,0)},Motion.OverlayOut.Duration,Motion.OverlayOut.Style,Motion.OverlayOut.Direction)
             TweenMotion(fw,{BackgroundTransparency=1},"OverlayOut")
             task.delay(0.25,function()
@@ -8740,6 +9268,8 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.OVERLAY + 10,
             Parent=MIDNIGHT._ScreenGui,
         })
+        -- v7.3: scrim blur for command palette (glassmorphism)
+        local paletteBlur = ApplyGlassBlur(20)
         local pf = Create("Frame",{
             Name=_RandomGuiName(),
             Size=UDim2.new(0,paletteW,0,paletteH),
@@ -8752,6 +9282,16 @@ function MIDNIGHT:MakeWindow(config)
             Parent=MIDNIGHT._ScreenGui,
         })
         StyleUtilityOverlay(pf, Theme.Accent)
+        -- v7.3: gradient on palette bg for depth
+        ApplyGradient(pf, Theme.Surface1, Theme.OverlayBg, 90)
+        -- v7.3: glow around palette
+        local pfGlow = Create("ImageLabel",{
+            Size=UDim2.new(1,28,1,28),Position=UDim2.new(0,-14,0,-14),
+            BackgroundTransparency=1, Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Accent, ImageTransparency=0.78,
+            ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=ZIndex.OVERLAY+11, Parent=pf,
+        })
         local pfScale = Create("UIScale",{Scale=0.985,Parent=pf})
 
         local header = StyleQuietHeader(pf, CompactStyle.OverlayHeaderHeight, ZIndex.OVERLAY + 13)
@@ -8992,6 +9532,8 @@ function MIDNIGHT:MakeWindow(config)
                 scrim.Visible = true
                 scrim.BackgroundTransparency = 1
             end
+            -- v7.3: show blur
+            if paletteBlur then paletteBlur.Show(20, 0.22) end
             pf.Visible = true
             pf.BackgroundTransparency = 1
             pfScale.Scale = 0.985
@@ -9028,13 +9570,11 @@ function MIDNIGHT:MakeWindow(config)
                     self:Close()
                     if cmd.Action then cmd.Action() end
                 elseif input.KeyCode == Enum.KeyCode.Down and UserInputService:GetFocusedTextBox() == searchBox then
-                    -- v7.2: Arrow Down navigation
                     if #self._Matches > 0 then
                         self._SelectedIndex = math.min(#self._Matches, self._SelectedIndex + 1)
                         self:_UpdateSelectionHighlight()
                     end
                 elseif input.KeyCode == Enum.KeyCode.Up and UserInputService:GetFocusedTextBox() == searchBox then
-                    -- v7.2: Arrow Up navigation
                     if #self._Matches > 0 then
                         self._SelectedIndex = math.max(1, self._SelectedIndex - 1)
                         self:_UpdateSelectionHighlight()
@@ -9048,6 +9588,8 @@ function MIDNIGHT:MakeWindow(config)
             self._Visible = false
             SafeDisconnect(self._OutsideConn)
             self._OutsideConn = nil
+            -- v7.3: hide blur
+            if paletteBlur then paletteBlur.Hide(0.18) end
             if scrim then
                 TweenObject(scrim,{BackgroundTransparency=1},0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
             end
@@ -9162,16 +9704,30 @@ function MIDNIGHT:MakeWindow(config)
             Parent = MIDNIGHT._ScreenGui,
         })
         ApplyCorner(wf, 10)
+        -- v7.3: gradient on admin presence widget bg
+        ApplyGradient(wf, Theme.Surface1, Theme.WindowBg, 90)
         local wfStroke = ApplyStroke(wf, Theme.Border, 1, 1)
         local wfScale = Create("UIScale",{Scale=0.97,Parent=wf})
 
         local shadow = Create("ImageLabel",{
-            Size=UDim2.new(1,26,1,26),
-            Position=UDim2.new(0,-13,0,-11),
+            Size=UDim2.new(1,32,1,32),
+            Position=UDim2.new(0,-16,0,-14),
             BackgroundTransparency=1,
             Image="rbxassetid://6015897843",
             ImageColor3=Theme.Shadow,
             ImageTransparency=1,
+            ScaleType=Enum.ScaleType.Slice,
+            SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=wf.ZIndex-1,
+            Parent=wf,
+        })
+        -- v7.3: accent glow behind widget
+        local adminGlow = Create("ImageLabel",{
+            Size=UDim2.new(1,20,1,20),
+            Position=UDim2.new(0,-10,0,-10),
+            BackgroundTransparency=1,
+            Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Accent, ImageTransparency=0.92,
             ScaleType=Enum.ScaleType.Slice,
             SliceCenter=Rect.new(49,49,450,450),
             ZIndex=wf.ZIndex-1,
@@ -10925,7 +11481,8 @@ function MIDNIGHT:MakeWindow(config)
                     local cam = workspace.CurrentCamera or camera
                     if not cam then
                         hud:ClearTarget()
-                        continue
+                        -- skip to next iteration
+                        goto __skip_outer__
                     end
 
                     local mousePos = UIS:GetMouseLocation()
@@ -10939,13 +11496,13 @@ function MIDNIGHT:MakeWindow(config)
                         if not entry then
                             local char = p.Character
                             if not char then
-                                continue
+                                goto __skip_inner__
                             end
 
                             local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
                             local hum = char:FindFirstChildOfClass("Humanoid")
                             if not root then
-                                continue
+                                goto __skip_inner__
                             end
 
                             entry = { char = char, root = root, hum = hum }
@@ -10955,17 +11512,17 @@ function MIDNIGHT:MakeWindow(config)
                         local hum = entry.hum
                         if hum and hum.Health <= 0 then
                             charCache[p] = nil
-                            continue
+                            goto __skip_inner__
                         end
 
                         if not entry.root or not entry.root.Parent then
                             charCache[p] = nil
-                            continue
+                            goto __skip_inner__
                         end
 
                         local sp, onScreen = cam:WorldToViewportPoint(entry.root.Position)
                         if not onScreen then
-                            continue
+                            goto __skip_inner__
                         end
 
                         local dx, dy = sp.X - mX, sp.Y - mY
@@ -10974,6 +11531,8 @@ function MIDNIGHT:MakeWindow(config)
                             bestDistSq = dSq
                             bestPlayer = p
                         end
+
+                        :: __skip_inner__ ::
                     end
 
                     if bestPlayer then
@@ -10985,6 +11544,8 @@ function MIDNIGHT:MakeWindow(config)
                     else
                         hud:ClearTarget()
                     end
+
+                    :: __skip_outer__ ::
                 end
             end)
         end
