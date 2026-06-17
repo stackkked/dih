@@ -271,6 +271,58 @@ local task = task or {
 }
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+
+--// ============================================================
+--// v7.5 OPTIMIZATION: Safe executor function wrappers
+--// ============================================================
+-- All executor functions are wrapped in pcall to prevent crashes
+local _safe_writefile = function(path, content)
+    if type(writefile) ~= "function" then return false end
+    local ok, err = pcall(writefile, path, content)
+    if not ok then return false, err end
+    return true
+end
+
+local _safe_readfile = function(path)
+    if type(readfile) ~= "function" then return nil end
+    local ok, content = pcall(readfile, path)
+    if ok then return content end
+    return nil
+end
+
+local _safe_isfile = function(path)
+    if type(isfile) ~= "function" then return false end
+    local ok, result = pcall(isfile, path)
+    if ok then return result end
+    return false
+end
+
+local _safe_makefolder = function(path)
+    if type(makefolder) ~= "function" then return end
+    pcall(makefolder, path)
+end
+
+local _safe_listfiles = function(path)
+    if type(listfiles) ~= "function" then return {} end
+    local ok, result = pcall(listfiles, path)
+    if ok and type(result) == "table" then return result end
+    return {}
+end
+
+local _safe_gethui = function()
+    if type(gethui) ~= "function" then return nil end
+    local ok, hui = pcall(gethui)
+    if ok then return hui end
+    return nil
+end
+
+-- Override global executor functions with safe versions
+writefile = _safe_writefile
+readfile = _safe_readfile
+isfile = _safe_isfile
+makefolder = _safe_makefolder
+listfiles = _safe_listfiles
+
 --// SERVICES
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Players          = game:GetService("Players")
@@ -870,7 +922,7 @@ local function CreateGradientSeparator(parent, layoutOrder)
     })
     Create("UIGradient", {
         Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0,   Color3.fromRGB(0,0,0)),
+            ColorSequenceKeypoint.new(0,   Theme.Shadow),
             ColorSequenceKeypoint.new(0.2, Theme.Border),
             ColorSequenceKeypoint.new(0.8, Theme.Border),
             ColorSequenceKeypoint.new(1,   Color3.fromRGB(0,0,0)),
@@ -1627,6 +1679,9 @@ local function StartScalePulseLoop(scaleObject, lowScale, highScale, duration)
     end
 end
 
+-- v7.5: forward declaration of SafeDelay (defined later, used in loading intro)
+local SafeDelay
+
 local function _PlayLoadingIntroImpl(self, config)
     config = config or {}
     local parent = config.Parent or self._ScreenGui
@@ -1934,7 +1989,7 @@ local function _PlayLoadingIntroImpl(self, config)
     TweenObject(vignette, {ImageTransparency = 0.5}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
     -- Phase 2: Card scale-in (0.05 - 0.5s)
-    task.delay(0.05, function()
+    SafeDelay(0.05, function()
         TweenObject(card, {BackgroundTransparency = 0}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         TweenObject(cardStroke, {Transparency = 0.15}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         TweenObject(cardScale, {Scale = 1}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
@@ -1942,21 +1997,21 @@ local function _PlayLoadingIntroImpl(self, config)
     end)
 
     -- Phase 3: Brand text + glow (0.15 - 0.65s)
-    task.delay(0.15, function()
+    SafeDelay(0.15, function()
         TweenObject(brandScale, {Scale = 1}, 0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         TweenObject(brandText, {TextTransparency = 0}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         TweenObject(brandGlow, {ImageTransparency = 0.75}, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     end)
 
     -- Phase 4: Underline grows from center (0.35 - 0.75s)
-    task.delay(0.35, function()
+    SafeDelay(0.35, function()
         TweenObject(underline, {Size = UDim2.new(0, 180, 0, 2), BackgroundTransparency = 0.15}, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end)
 
     -- Phase 5: Orbit dots staggered fade-in (0.3 - 0.65s)
-    task.delay(0.3, function()
+    SafeDelay(0.3, function()
         for i, od in ipairs(orbitDots) do
-            task.delay(i * 0.12, function()
+            SafeDelay(i * 0.12, function()
                 if od.frame and od.frame.Parent then
                     TweenObject(od.frame, {BackgroundTransparency = od.targetT}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     if od.glow then
@@ -1968,13 +2023,13 @@ local function _PlayLoadingIntroImpl(self, config)
     end)
 
     -- Phase 6: Subtitle appears (0.45 - 0.75s)
-    task.delay(0.45, function()
+    SafeDelay(0.45, function()
         TweenObject(subtitleLabel, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     end)
 
     -- Phase 7: Progress segments + status (0.6 - holdTime)
     local statusMessages = {"Initializing...", "Loading modules...", "Preparing interface...", "Ready!"}
-    task.delay(0.6, function()
+    SafeDelay(0.6, function()
         -- Show segment containers
         for _, seg in ipairs(segments) do
             TweenObject(seg.container, {BackgroundTransparency = 0.35}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -1985,7 +2040,7 @@ local function _PlayLoadingIntroImpl(self, config)
         -- Fill segments sequentially
         local segFillTime = (holdTime - 0.8) / 3
         for i, seg in ipairs(segments) do
-            task.delay(0.1 + (i-1) * segFillTime, function()
+            SafeDelay(0.1 + (i-1) * segFillTime, function()
                 if seg.fill and seg.fill.Parent then
                     TweenObject(seg.fill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, segFillTime * 0.85, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
                 end
@@ -2035,7 +2090,7 @@ local function _PlayLoadingIntroImpl(self, config)
         -- Status → "Ready!" in green
         if statusLabel and statusLabel.Parent then
             TweenObject(statusLabel, {TextTransparency = 1}, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            task.delay(0.12, function()
+            SafeDelay(0.12, function()
                 if statusLabel and statusLabel.Parent then
                     statusLabel.Text = statusMessages[#statusMessages]
                     TweenObject(statusLabel, {TextTransparency = 0, TextColor3 = Theme.Success}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -2044,7 +2099,7 @@ local function _PlayLoadingIntroImpl(self, config)
         end
 
         -- Fade out everything (after 0.4s hold in "Ready" state)
-        task.delay(outTime, function()
+        SafeDelay(outTime, function()
             if not overlay or not overlay.Parent then return end
 
             -- Content fade
@@ -2077,7 +2132,7 @@ local function _PlayLoadingIntroImpl(self, config)
             TweenObject(overlay, {BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
             -- Cleanup
-            task.delay(0.25, function()
+            SafeDelay(0.25, function()
                 if orbitConn then orbitConn:Disconnect() end
                 if pulseConn then pulseConn:Disconnect() end
                 if overlay and overlay.Parent then
@@ -2094,7 +2149,7 @@ local function _PlayLoadingIntroImpl(self, config)
     end
 
     self._LoadingOverlayStop = finishIntro
-    task.delay(holdTime, finishIntro)
+    SafeDelay(holdTime, finishIntro)
     return holdTime + outTime + 0.25
 end
 
@@ -2742,7 +2797,7 @@ end
 --// MIDNIGHT LIBRARY
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local MIDNIGHT = {
-    Version = "7.3.0",
+    Version = "7.5.0",
 
     _ScreenGui  = nil,
     _Windows    = {},
@@ -2750,6 +2805,7 @@ local MIDNIGHT = {
     _Keybinds   = {},
     _KeybindsMap = {},  -- [name] = kd, for O(1) lookup instead of ipairs scan
     _Connections = {},   -- ALL connections stored here for Destroy()
+    _PendingDelays = {},  -- v7.5: track all task.delay threads for cleanup
 
     _NotificationPosition = "TopRight",
     _NotificationMaxStack = 5,
@@ -2822,6 +2878,36 @@ RegConn = function(conn)
     return conn
 end
 
+-- v7.5: Safe task.delay that tracks threads for cleanup
+SafeDelay = function(time, fn)
+    local thread
+    thread = task.delay(time, function()
+        -- Remove from pending list
+        if MIDNIGHT._PendingDelays then
+            for i, t in ipairs(MIDNIGHT._PendingDelays) do
+                if t == thread then
+                    table.remove(MIDNIGHT._PendingDelays, i)
+                    break
+                end
+            end
+        end
+        fn()
+    end)
+    if MIDNIGHT._PendingDelays then
+        table.insert(MIDNIGHT._PendingDelays, thread)
+    end
+    return thread
+end
+
+--// v7.5: Cancel all pending delays
+local function CancelAllDelays()
+    if not MIDNIGHT._PendingDelays then return end
+    for _, thread in ipairs(MIDNIGHT._PendingDelays) do
+        pcall(function() task.cancel(thread) end)
+    end
+    MIDNIGHT._PendingDelays = {}
+end
+
 local function SafeDisconnect(conn)
     if conn then
         pcall(function() conn:Disconnect() end)
@@ -2847,15 +2933,12 @@ _RandomGuiName = function()
 end
 
 local function _ResolveGuiParent()
-    local ok, hui = pcall(function()
-        if type(gethui) == "function" then
-            return gethui()
-        end
-    end)
-    if ok and hui then
-        return hui
-    end
-    return CoreGui
+    -- v7.5: uses safe gethui wrapper (already pcalled in override)
+    local hui = _safe_gethui and _safe_gethui() or nil
+    if hui then return hui end
+    local ok, result = pcall(function() return CoreGui end)
+    if ok and result then return result end
+    return LocalPlayer:WaitForChild("PlayerGui")
 end
 
 --// FIX #2: Global slider input dispatcher
@@ -3156,6 +3239,7 @@ end
 --// RESET
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Reset()
+    CancelAllDelays()
     if self._TargetHUD and self._TargetHUD.StopTracking then
         pcall(function() self._TargetHUD:StopTracking() end)
     elseif self._TargetHUD and self._TargetHUD._DisconnectHPConn then
@@ -3495,7 +3579,7 @@ function MIDNIGHT:_ShowKeybindSettings(config)
     local visKnob = Create("Frame", {
         Size = UDim2.new(0,10,0,10),
         Position = UDim2.new(0, currentVisible and 18 or 2, 0.5,-5),
-        BackgroundColor3 = Color3.fromRGB(230,230,240),
+        BackgroundColor3 = Theme.ToggleKnob,
         BorderSizePixel = 0, ZIndex = ZIndex.POPUP+4, Parent = visToggle,
     })
     ApplyCorner(visKnob, 5)
@@ -4602,20 +4686,19 @@ function MIDNIGHT:_UpdateWatermark()
     local c = wf:FindFirstChild("Content"); if not c then return end
     local needsResize = false
 
-    -- v7.5: re-find labels every call (more robust than caching)
-    -- Caching can fail if labels are recreated or parented differently
-    local fpsL  = c:FindFirstChild("FPSLabel")
-    local pingL = c:FindFirstChild("PingLabel")
-    local lagL  = c:FindFirstChild("LagspikeLabel")
-    local cusL  = c:FindFirstChild("CustomLabel")
-
-    -- Also cache for other code that expects _WatermarkLabels
-    self._WatermarkLabels = {
-        fps  = fpsL,
-        ping = pingL,
-        lag  = lagL,
-        cus  = cusL,
-    }
+    -- v7.5: use cached labels with fallback to FindFirstChild
+    if not self._WatermarkLabels or not self._WatermarkLabels.fps then
+        self._WatermarkLabels = {
+            fps  = c:FindFirstChild("FPSLabel"),
+            ping = c:FindFirstChild("PingLabel"),
+            lag  = c:FindFirstChild("LagspikeLabel"),
+            cus  = c:FindFirstChild("CustomLabel"),
+        }
+    end
+    local fpsL  = self._WatermarkLabels.fps
+    local pingL = self._WatermarkLabels.ping
+    local lagL  = self._WatermarkLabels.lag
+    local cusL  = self._WatermarkLabels.cus
 
     if fpsL  then fpsL.Text  = self._FPS.." fps";  fpsL.TextColor3  = self._Lagspike and Theme.Error or Theme.TextSecondary end
     if pingL then pingL.Text = self._Ping.." ms";  pingL.TextColor3 = self._Ping>150 and Theme.Warning or Theme.TextSecondary end
@@ -7492,7 +7575,7 @@ function MIDNIGHT:MakeWindow(config)
             ApplyCorner(knob,7)
             -- knob subtle shadow ring (dark border)
             Create("UIStroke",{
-                Color=Color3.fromRGB(20, 22, 28),Thickness=1,Transparency=0.2,Parent=knob,
+                Color=Theme.Surface0,Thickness=1,Transparency=0.2,Parent=knob,
             })
 
             local on = def
@@ -8451,7 +8534,7 @@ function MIDNIGHT:MakeWindow(config)
                 vNormal, vHover = AccentTint(Theme.Error, 0.20), AccentTint(Theme.Error, 0.34)
                 vText = Theme.TextPrimary
                 vStroke = Theme.Error
-                vGrad1, vGrad2 = Theme.Error, Color3.fromRGB(220, 60, 60)
+                vGrad1, vGrad2 = Theme.Error, Theme.CloseHover
             elseif variant == "ghost" then
                 vNormal, vHover = Theme.Surface2, Theme.Surface3
                 vText = Theme.TextPrimary
@@ -12455,6 +12538,18 @@ end
 --// DESTROY
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Destroy()
+    -- v7.5: cancel all pending delayed threads
+    if self._PendingDelays then
+        for _, thread in ipairs(self._PendingDelays) do
+            pcall(function() task.cancel(thread) end)
+        end
+        self._PendingDelays = {}
+    end
+    -- v7.5: disconnect FPS tracker
+    if self._FPSConn then
+        pcall(function() self._FPSConn:Disconnect() end)
+        self._FPSConn = nil
+    end
     if self._TargetHUD and self._TargetHUD.StopTracking then
         pcall(function() self._TargetHUD:StopTracking() end)
     elseif self._TargetHUD and self._TargetHUD._DisconnectHPConn then
