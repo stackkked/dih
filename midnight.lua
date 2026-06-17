@@ -3474,7 +3474,7 @@ function MIDNIGHT:_CloseDropdown()
     end
     -- v7.2: hide blur on close
     if self._ActiveDropdownBlur then
-        self._ActiveDropdownBlur:Hide(0.18)
+        self._ActiveDropdownBlur.Hide(0.18)
         self._ActiveDropdownBlur = nil
     end
 end
@@ -3788,7 +3788,7 @@ function MIDNIGHT:_CloseColorPicker()
     end
     -- v7.2: hide blur on close
     if self._ActiveColorPickerBlur then
-        self._ActiveColorPickerBlur:Hide(0.18)
+        self._ActiveColorPickerBlur.Hide(0.18)
         self._ActiveColorPickerBlur = nil
     end
 end
@@ -4192,13 +4192,46 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         end)
                         table.insert(self._MenuCloseThreads, th1)
                     else
-                        local scale = w._Frame:FindFirstChildWhichIsA("UIScale")
-                        if scale then
-                            TweenObject(scale, {Scale = 0.97}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                        end
-                        TweenObject(w._Frame, {BackgroundTransparency=1}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                        local th = task.delay(0.25, function() if not self._MenuOpen then w._Frame.Visible=false end end)
-                        table.insert(self._MenuCloseThreads, th)
+                        -- v7.5: close via MenuKey — same 2-phase animation as close button
+                        local frame = w._Frame
+                        local tbH2 = CompactStyle.TitleBarHeight
+                        local origW2 = frame.Size.X.Offset
+                        local origH2 = frame.Size.Y.Offset
+                        local centerX2 = frame.Position.X.Scale
+                        local centerY2 = frame.Position.Y.Scale
+                        local centerOffsetX2 = frame.Position.X.Offset + origW2/2
+                        local centerOffsetY2 = frame.Position.Y.Offset + origH2/2
+
+                        -- Phase 1: collapse height to tbH (vertical shrink to center)
+                        TweenObject(frame, {
+                            Size = UDim2.new(0, origW2, 0, tbH2),
+                            Position = UDim2.new(centerX2, centerOffsetX2 - origW2/2, centerY2, centerOffsetY2 - tbH2/2),
+                        }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+                        -- Phase 2: collapse width to 0 (after phase 1 completes)
+                        local th_p1 = task.delay(0.28, function()
+                            if not self._MenuOpen and frame and frame.Parent then
+                                TweenObject(frame, {
+                                    Size = UDim2.new(0, 0, 0, tbH2),
+                                    Position = UDim2.new(centerX2, centerOffsetX2, centerY2, centerOffsetY2 - tbH2/2),
+                                    BackgroundTransparency = 1,
+                                }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                            end
+                        end)
+                        table.insert(self._MenuCloseThreads, th_p1)
+
+                        -- Phase 3: hide + restore
+                        local th_p2 = task.delay(0.58, function()
+                            if not self._MenuOpen and frame and frame.Parent then
+                                frame.Visible = false
+                                frame.Size = UDim2.new(0, origW2, 0, origH2)
+                                frame.Position = UDim2.new(0.5, -origW2/2, 0.5, -origH2/2)
+                                frame.BackgroundTransparency = 0
+                                local scale = frame:FindFirstChildWhichIsA("UIScale")
+                                if scale then scale.Scale = 1 end
+                            end
+                        end)
+                        table.insert(self._MenuCloseThreads, th_p2)
                     end
                 end
             end
@@ -6011,9 +6044,9 @@ function MIDNIGHT:CreateKeybindList(config)
                 ApplyStroke(row, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.15 or 0.35)
                 local activeBar = Create("Frame",{Size=UDim2.new(0,2,0.66,0),Position=UDim2.new(0,0,0.17,0),BackgroundColor3=Theme.UtilityAccent,BackgroundTransparency=isActive and 0 or 1,BorderSizePixel=0,Parent=row})
                 ApplyCorner(activeBar,2)
-                -- v7.5: larger font (11px instead of 9px) + better contrast
+                -- v7.5: slightly smaller text (10px instead of 11px)
                 Create("TextLabel",{
-                    Text=kb._Name, Font=Font, TextSize=11,
+                    Text=kb._Name, Font=Font, TextSize=10,
                     TextColor3=isActive and Theme.TextPrimary or Theme.TextSecondary,
                     TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,
                     Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,10,0,0),
@@ -6030,9 +6063,9 @@ function MIDNIGHT:CreateKeybindList(config)
                 ApplyCorner(badge,5)
                 ApplyStroke(badge, isActive and Theme.AccentMuted or Theme.BorderSoft, 1, isActive and 0.2 or 0.35)
                 ApplyPadding(badge,0,0,6,6)
-                -- v7.5: larger badge text (10px instead of 8px)
+                -- v7.5: badge text 9px (was 10px)
                 Create("TextLabel",{
-                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=10,
+                    Text=KeyCodeToName(kb._Key), Font=FontBold, TextSize=9,
                     TextColor3=isActive and Theme.TextAccent or Theme.TextSecondary,
                     Size=UDim2.new(0,0,1,0), AutomaticSize=Enum.AutomaticSize.X,
                     TextYAlignment=Enum.TextYAlignment.Center,
@@ -6246,8 +6279,7 @@ function MIDNIGHT:MakeWindow(config)
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
-    -- v7.4: removed the bottom border line (was looking like a dark strip)
-    Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.HeaderRadius),Position=UDim2.new(0,0,1,-CompactStyle.HeaderRadius),BackgroundColor3=Theme.WindowBg,BorderSizePixel=0,Parent=tb})
+    -- v7.5: removed the mask frame (was making bottom corners square when minimized)
     -- v7.5: removed logo glow (was looking bad as a square/circle behind moon icon)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
     Create("TextLabel",{
