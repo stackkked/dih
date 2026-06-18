@@ -1663,13 +1663,22 @@ end
 -- v7.5: forward declaration of SafeDelay (defined later, used in loading intro)
 local SafeDelay
 
+--[[
+    v7.5 LOADING INTRO — "Minimal Boot"
+    Design principles:
+    - Single centered card, perfectly aligned
+    - Brand name as hero element
+    - Thin gradient progress bar (single bar, not segments)
+    - Cycling status text below
+    - Everything fades in staggered, fades out together
+    - Total duration ~2.8s
+]]
 local function _PlayLoadingIntroImpl(self, config)
     config = config or {}
     local parent = config.Parent or self._ScreenGui
-    if not parent then
-        return 0
-    end
+    if not parent then return 0 end
 
+    -- Cleanup previous
     if self._LoadingOverlayFrame and self._LoadingOverlayFrame.Parent then
         pcall(function() self._LoadingOverlayFrame:Destroy() end)
     end
@@ -1678,15 +1687,13 @@ local function _PlayLoadingIntroImpl(self, config)
         self._LoadingOverlayStop = nil
     end
 
-    local titleText = tostring(config.Title or "MIDNIGHT")
-    local holdTime = math.max(2.2, tonumber(config.HoldTime) or 2.4)
-    local outTime = 0.4
+    local brandName = tostring(config.Title or "MIDNIGHT")
+    local holdTime = 2.2
+    local outTime = 0.35
 
     -- ============================================================
-    -- v7.5: CINEMATIC BOOT v2 — polished, perfectly aligned
+    -- OVERLAY — full screen, dark
     -- ============================================================
-
-    -- Full-screen overlay
     local overlay = Create("Frame", {
         Name = "LoadingOverlay",
         Size = UDim2.new(1, 0, 1, 0),
@@ -1698,41 +1705,28 @@ local function _PlayLoadingIntroImpl(self, config)
     })
     self._LoadingOverlayFrame = overlay
 
-    -- Vignette
-    local vignette = Create("ImageLabel", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://6971867573",
-        ImageColor3 = Color3.fromRGB(0, 0, 0),
-        ImageTransparency = 1,
-        ScaleType = Enum.ScaleType.Stretch,
-        ZIndex = ZIndex.TOP,
-        Parent = overlay,
-    })
-
     -- ============================================================
-    -- CARD — wider, better proportions (400 × 280)
+    -- CARD — 360×200, centered, rounded
     -- ============================================================
-    local cardW, cardH = 400, 280
+    local cardW, cardH = 360, 200
     local card = Create("Frame", {
         Name = "BootCard",
         Size = UDim2.new(0, cardW, 0, cardH),
-        Position = UDim2.new(0.5, -cardW/2, 0.5, -cardH/2),
+        Position = UDim2.new(0.5, -cardW / 2, 0.5, -cardH / 2),
         BackgroundColor3 = Theme.Surface1,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        ClipsDescendants = false,
         ZIndex = ZIndex.TOP + 1,
         Parent = overlay,
     })
-    ApplyCorner(card, 18)
+    ApplyCorner(card, 14)
     local cardStroke = ApplyStroke(card, Theme.Border, 1, 1)
-    local cardScale = Create("UIScale", {Scale = 0.85, Parent = card})
+    local cardScale = Create("UIScale", { Scale = 0.92, Parent = card })
 
     -- Card shadow
     Create("ImageLabel", {
-        Size = UDim2.new(1, 40, 1, 40),
-        Position = UDim2.new(0, -20, 0, -20),
+        Size = UDim2.new(1, 30, 1, 30),
+        Position = UDim2.new(0, -15, 0, -15),
         BackgroundTransparency = 1,
         Image = "rbxassetid://6015897843",
         ImageColor3 = Color3.fromRGB(0, 0, 0),
@@ -1743,308 +1737,162 @@ local function _PlayLoadingIntroImpl(self, config)
         Parent = card,
     })
 
-    -- Inner highlight (glass edge)
-    local innerHL = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 1),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ZIndex = ZIndex.TOP + 2,
-        Parent = card,
-    })
-
     -- ============================================================
-    -- BRAND SECTION — centered, large title (Y: 40-120)
+    -- BRAND TEXT — centered, Y=50, 28px
     -- ============================================================
-    local brandSection = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 80),
-        Position = UDim2.new(0, 0, 0, 40),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ZIndex = ZIndex.TOP + 2,
-        Parent = card,
-    })
-    local brandScale = Create("UIScale", {Scale = 0.6, Parent = brandSection})
-
-    -- Glow behind brand text
-    local brandGlow = Create("ImageLabel", {
-        Size = UDim2.new(0, 240, 0, 70),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://266543268",
-        ImageColor3 = Theme.Accent,
-        ImageTransparency = 1,
-        ScaleType = Enum.ScaleType.Stretch,
-        ZIndex = ZIndex.TOP + 1,
-        Parent = brandSection,
-    })
-
-    -- Brand title (the UI name)
     local brandText = Create("TextLabel", {
-        Text = titleText,
+        Text = brandName,
         Font = FontBold,
-        TextSize = 28,
+        TextSize = 26,
         TextColor3 = Theme.TextPrimary,
         TextTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Center,
         TextYAlignment = Enum.TextYAlignment.Center,
-        Size = UDim2.new(1, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 30),
+        Position = UDim2.new(0, 0, 0, 50),
         BackgroundTransparency = 1,
-        ZIndex = ZIndex.TOP + 3,
-        Parent = brandSection,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+    local brandScale = Create("UIScale", { Scale = 0.85, Parent = brandText })
+
+    -- ============================================================
+    -- ACCENT LINE — under brand, centered, grows from 0
+    -- ============================================================
+    local accentLine = Create("Frame", {
+        Size = UDim2.new(0, 0, 0, 2),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 88),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+    ApplyCorner(accentLine, 1)
+    Create("UIGradient", {
+        Color = ColorSequence.new(Theme.Accent, Theme.AccentGradient2 or Theme.Accent),
+        Transparency = NumberSequence.new(0, 0.5),
+        Parent = accentLine,
     })
 
-    -- Accent underline — grows from center
-    local underline = Create("Frame", {
-        Size = UDim2.new(0, 0, 0, 2),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 1, -4),
+    -- ============================================================
+    -- PROGRESS BAR — single thin bar, Y=120, width 240
+    -- ============================================================
+    local barW = 240
+    local barTrack = Create("Frame", {
+        Size = UDim2.new(0, barW, 0, 3),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 120),
+        BackgroundColor3 = Theme.Surface3,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 2,
+        Parent = card,
+    })
+    ApplyCorner(barTrack, 2)
+
+    local barFill = Create("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
         BackgroundColor3 = Theme.Accent,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = ZIndex.TOP + 3,
-        Parent = brandSection,
+        Parent = barTrack,
     })
-    ApplyCorner(underline, 1)
-    Create("UIGradient", {
-        Color = ColorSequence.new(Theme.Accent, Theme.AccentGradient2 or Theme.Accent),
-        Transparency = NumberSequence.new(0, 0.6),
-        Parent = underline,
-    })
+    ApplyCorner(barFill, 2)
 
     -- ============================================================
-    -- ORBITING DOTS — elliptical orbits around brand text
+    -- STATUS TEXT — Y=140, cycling
     -- ============================================================
-    local orbitDots = {}
-    local orbitConfigs = {
-        {radius = 90, speed = 0.9, size = 5, offset = 0,    transparency = 0.1},
-        {radius = 110, speed = 0.6, size = 4, offset = 2.094, transparency = 0.25},
-        {radius = 75, speed = 1.2, size = 3, offset = 4.188, transparency = 0.4},
-    }
-    for i, cfg in ipairs(orbitConfigs) do
-        local dot = Create("Frame", {
-            Size = UDim2.new(0, cfg.size, 0, cfg.size),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundColor3 = Theme.Accent,
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ZIndex = ZIndex.TOP + 2,
-            Parent = brandSection,
-        })
-        Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = dot})
-        local dotGlow = Create("ImageLabel", {
-            Size = UDim2.new(0, cfg.size * 4, 0, cfg.size * 4),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 1,
-            Image = "rbxassetid://266543268",
-            ImageColor3 = Theme.Accent,
-            ImageTransparency = 1,
-            ScaleType = Enum.ScaleType.Stretch,
-            ZIndex = ZIndex.TOP + 1,
-            Parent = dot,
-        })
-        orbitDots[i] = {frame = dot, glow = dotGlow, radius = cfg.radius, speed = cfg.speed, offset = cfg.offset, targetT = cfg.transparency}
-    end
-
-    -- Orbit + pulse loops
-    local orbitConn, pulseConn
-    local startTime = os.clock()
-    orbitConn = RunService.RenderStepped:Connect(function()
-        if not brandSection or not brandSection.Parent then
-            if orbitConn then orbitConn:Disconnect() end
-            return
-        end
-        local t = os.clock() - startTime
-        for _, od in ipairs(orbitDots) do
-            if od.frame and od.frame.Parent then
-                local angle = od.offset + t * od.speed
-                local x = math.cos(angle) * od.radius
-                local y = math.sin(angle) * od.radius * 0.5  -- elliptical
-                od.frame.Position = UDim2.new(0.5, x, 0.5, y)
-            end
-        end
-    end)
-    RegConn(orbitConn)
-
-    pulseConn = RunService.RenderStepped:Connect(function()
-        if not brandGlow or not brandGlow.Parent then
-            if pulseConn then pulseConn:Disconnect() end
-            return
-        end
-        local t = os.clock() - startTime
-        brandGlow.ImageTransparency = 0.75 + math.sin(t * 2.0) * 0.10
-    end)
-    RegConn(pulseConn)
-
-    -- ============================================================
-    -- SUBTITLE (Y: 130)
-    -- ============================================================
-    local subtitleLabel = Create("TextLabel", {
-        Text = "Loading interface...",
-        Font = FontRegular,
-        TextSize = 12,
-        TextColor3 = Theme.TextSecondary,
-        TextTransparency = 1,
-        BackgroundTransparency = 1,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        Size = UDim2.new(1, -40, 0, 18),
-        Position = UDim2.new(0, 20, 0, 130),
-        ZIndex = ZIndex.TOP + 2,
-        Parent = card,
-    })
-
-    -- ============================================================
-    -- PROGRESS — wider, 3 segments (Y: 170)
-    -- ============================================================
-    local progY = 175
-    local progSegW = 100
-    local progGap = 8
-    local progTotalW = progSegW * 3 + progGap * 2
-    local progStartX = (cardW - progTotalW) / 2
-
-    local segments = {}
-    for i = 1, 3 do
-        local segContainer = Create("Frame", {
-            Size = UDim2.new(0, progSegW, 0, 4),
-            Position = UDim2.new(0, progStartX + (i-1) * (progSegW + progGap), 0, progY),
-            BackgroundColor3 = Theme.Surface3,
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ZIndex = ZIndex.TOP + 1,
-            Parent = card,
-        })
-        ApplyCorner(segContainer, 2)
-        local segFill = Create("Frame", {
-            Size = UDim2.new(0, 0, 1, 0),
-            BackgroundColor3 = Theme.Accent,
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ZIndex = ZIndex.TOP + 2,
-            Parent = segContainer,
-        })
-        ApplyCorner(segFill, 2)
-        segments[i] = {container = segContainer, fill = segFill}
-    end
-
-    -- ============================================================
-    -- STATUS TEXT (Y: 195)
-    -- ============================================================
-    local statusLabel = Create("TextLabel", {
+    local statusText = Create("TextLabel", {
         Text = "Initializing...",
         Font = FontRegular,
         TextSize = 11,
         TextColor3 = Theme.TextMuted,
         TextTransparency = 1,
-        BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Center,
-        Size = UDim2.new(1, -40, 0, 16),
-        Position = UDim2.new(0, 20, 0, 196),
+        Size = UDim2.new(1, 0, 0, 16),
+        Position = UDim2.new(0, 0, 0, 140),
+        BackgroundTransparency = 1,
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
 
-    -- Version label (bottom-right corner)
-    local versionLabel = Create("TextLabel", {
+    -- Version (bottom-right)
+    local versionText = Create("TextLabel", {
         Text = "v" .. tostring(self.Version or ""),
         Font = FontRegular,
-        TextSize = 10,
+        TextSize = 9,
         TextColor3 = Theme.TextMuted,
         TextTransparency = 1,
-        BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Right,
-        Size = UDim2.new(0, 80, 0, 14),
-        Position = UDim2.new(1, -88, 1, -20),
+        Size = UDim2.new(0, 60, 0, 12),
+        Position = UDim2.new(1, -68, 1, -18),
+        BackgroundTransparency = 1,
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
 
     -- ============================================================
-    -- ANIMATION SEQUENCE — perfectly timed, staggered, smooth
+    -- ANIMATION SEQUENCE
     -- ============================================================
 
-    -- Phase 1: Overlay fade in (0.0 - 0.3s)
-    TweenObject(overlay, {BackgroundTransparency = 0.02}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    TweenObject(vignette, {ImageTransparency = 0.5}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-    -- Phase 2: Card scale-in (0.05 - 0.5s)
+    -- Phase 1: Overlay + card appear (0.0 - 0.35s)
+    TweenObject(overlay, { BackgroundTransparency = 0.01 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     SafeDelay(0.05, function()
-        TweenObject(card, {BackgroundTransparency = 0}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(cardStroke, {Transparency = 0.15}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(cardScale, {Scale = 1}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        TweenObject(innerHL, {BackgroundTransparency = 0.08}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(card, { BackgroundTransparency = 0 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(cardStroke, { Transparency = 0.15 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(cardScale, { Scale = 1 }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 3: Brand text + glow (0.15 - 0.65s)
+    -- Phase 2: Brand text (0.15 - 0.5s)
     SafeDelay(0.15, function()
-        TweenObject(brandScale, {Scale = 1}, 0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        TweenObject(brandText, {TextTransparency = 0}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(brandGlow, {ImageTransparency = 0.75}, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(brandText, { TextTransparency = 0 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(brandScale, { Scale = 1 }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 4: Underline grows from center (0.35 - 0.75s)
-    SafeDelay(0.35, function()
-        TweenObject(underline, {Size = UDim2.new(0, 180, 0, 2), BackgroundTransparency = 0.15}, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    end)
-
-    -- Phase 5: Orbit dots staggered fade-in (0.3 - 0.65s)
+    -- Phase 3: Accent line grows (0.3 - 0.65s)
     SafeDelay(0.3, function()
-        for i, od in ipairs(orbitDots) do
-            SafeDelay(i * 0.12, function()
-                if od.frame and od.frame.Parent then
-                    TweenObject(od.frame, {BackgroundTransparency = od.targetT}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    if od.glow then
-                        TweenObject(od.glow, {ImageTransparency = 0.82}, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    end
-                end
-            end)
-        end
+        TweenObject(accentLine, {
+            Size = UDim2.new(0, 120, 0, 2),
+            BackgroundTransparency = 0.1,
+        }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 6: Subtitle appears (0.45 - 0.75s)
+    -- Phase 4: Progress bar + status (0.45 - holdTime)
     SafeDelay(0.45, function()
-        TweenObject(subtitleLabel, {TextTransparency = 0}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    end)
+        TweenObject(barTrack, { BackgroundTransparency = 0.3 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(statusText, { TextTransparency = 0 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(versionText, { TextTransparency = 0.4 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-    -- Phase 7: Progress segments + status (0.6 - holdTime)
-    local statusMessages = {"Initializing...", "Loading modules...", "Preparing interface...", "Ready!"}
-    SafeDelay(0.6, function()
-        -- Show segment containers
-        for _, seg in ipairs(segments) do
-            TweenObject(seg.container, {BackgroundTransparency = 0.35}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        end
-        TweenObject(statusLabel, {TextTransparency = 0}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(versionLabel, {TextTransparency = 0.4}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        -- Fill progress bar smoothly over remaining time
+        local fillDuration = holdTime - 0.6
+        TweenObject(barFill, {
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 0,
+        }, fillDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-        -- Fill segments sequentially
-        local segFillTime = (holdTime - 0.8) / 3
-        for i, seg in ipairs(segments) do
-            SafeDelay(0.1 + (i-1) * segFillTime, function()
-                if seg.fill and seg.fill.Parent then
-                    TweenObject(seg.fill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, segFillTime * 0.85, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-                end
+        -- Cycle status text
+        local messages = { "Initializing...", "Loading modules...", "Preparing interface..." }
+        SafeDelay(fillDuration / 3, function()
+            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            SafeDelay(0.12, function()
+                statusText.Text = messages[2]
+                TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             end)
-        end
-
-        -- Cycle status text with smooth fade
-        local statusIdx = 1
-        task.spawn(function()
-            for i = 2, #statusMessages - 1 do
-                task.wait((holdTime - 0.6) / (#statusMessages - 1))
-                if statusLabel and statusLabel.Parent then
-                    TweenObject(statusLabel, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                    task.wait(0.13)
-                    statusLabel.Text = statusMessages[i]
-                    TweenObject(statusLabel, {TextTransparency = 0}, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                end
-            end
+        end)
+        SafeDelay(fillDuration * 2 / 3, function()
+            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            SafeDelay(0.12, function()
+                statusText.Text = messages[3]
+                TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            end)
         end)
     end)
 
     -- ============================================================
-    -- COMPLETION SEQUENCE
+    -- COMPLETION
     -- ============================================================
     local finished = false
     local function finishIntro()
@@ -2052,70 +1900,35 @@ local function _PlayLoadingIntroImpl(self, config)
         finished = true
 
         -- Everything turns success green
-        TweenObject(brandGlow, {ImageColor3 = Theme.Success}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(underline, {BackgroundColor3 = Theme.Success}, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        for _, od in ipairs(orbitDots) do
-            if od.frame and od.frame.Parent then
-                TweenObject(od.frame, {BackgroundColor3 = Theme.Success}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                if od.glow then
-                    TweenObject(od.glow, {ImageColor3 = Theme.Success}, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                end
-            end
-        end
-        for _, seg in ipairs(segments) do
-            if seg.fill and seg.fill.Parent then
-                TweenObject(seg.fill, {BackgroundColor3 = Theme.Success}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            end
-        end
+        TweenObject(barFill, { BackgroundColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(accentLine, { BackgroundColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+        SafeDelay(0.12, function()
+            statusText.Text = "Ready!"
+            TweenObject(statusText, { TextTransparency = 0, TextColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        end)
 
-        -- Status → "Ready!" in green
-        if statusLabel and statusLabel.Parent then
-            TweenObject(statusLabel, {TextTransparency = 1}, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            SafeDelay(0.12, function()
-                if statusLabel and statusLabel.Parent then
-                    statusLabel.Text = statusMessages[#statusMessages]
-                    TweenObject(statusLabel, {TextTransparency = 0, TextColor3 = Theme.Success}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                end
-            end)
-        end
-
-        -- Fade out everything (after 0.4s hold in "Ready" state)
+        -- Fade out everything after short hold
         SafeDelay(outTime, function()
             if not overlay or not overlay.Parent then return end
 
             -- Content fade
-            TweenObject(brandText, {TextTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(brandGlow, {ImageTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(underline, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2)}, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(subtitleLabel, {TextTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(statusLabel, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(versionLabel, {TextTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            for _, od in ipairs(orbitDots) do
-                if od.frame and od.frame.Parent then
-                    TweenObject(od.frame, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                    if od.glow then
-                        TweenObject(od.glow, {ImageTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                    end
-                end
-            end
-            for _, seg in ipairs(segments) do
-                TweenObject(seg.container, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                TweenObject(seg.fill, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            end
+            TweenObject(brandText, { TextTransparency = 1 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(brandScale, { Scale = 0.92 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(accentLine, { BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2) }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(barTrack, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(barFill, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(statusText, { TextTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(versionText, { TextTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
             -- Card + overlay fade
-            TweenObject(innerHL, {BackgroundTransparency = 1}, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(cardStroke, {Transparency = 1}, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(brandScale, {Scale = 0.9}, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(card, {BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(cardScale, {Scale = 0.93}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(vignette, {ImageTransparency = 1}, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(overlay, {BackgroundTransparency = 1}, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(cardStroke, { Transparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(card, { BackgroundTransparency = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(cardScale, { Scale = 0.95 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            TweenObject(overlay, { BackgroundTransparency = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
             -- Cleanup
             SafeDelay(0.25, function()
-                if orbitConn then orbitConn:Disconnect() end
-                if pulseConn then pulseConn:Disconnect() end
                 if overlay and overlay.Parent then
                     pcall(function() overlay:Destroy() end)
                 end
@@ -6672,7 +6485,7 @@ function MIDNIGHT:MakeWindow(config)
     Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=sidebar})
 
     local tabList = Create("ScrollingFrame",{
-        Name="TabList",Size=UDim2.new(1,0,1,-32),Position=UDim2.new(0,0,0,28),
+        Name="TabList",Size=UDim2.new(1,0,1,-8),Position=UDim2.new(0,0,0,4),
         BackgroundTransparency=1,BorderSizePixel=0,
         ScrollBarThickness=2,ScrollBarImageColor3=Theme.ScrollBarColor,
         AutomaticCanvasSize=Enum.AutomaticSize.Y,
@@ -6680,60 +6493,6 @@ function MIDNIGHT:MakeWindow(config)
     })
     Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=tabList})
     ApplyPadding(tabList,4,4,CompactStyle.SidebarPadding,CompactStyle.SidebarPadding)
-
-    -- v7.4: tab search box at top of sidebar — searches both tab names AND widget names
-    local tabSearchBox = Create("TextBox",{
-        Text="", PlaceholderText="Search func...",
-        Font=Font, TextSize=10, TextColor3=Theme.TextPrimary,
-        PlaceholderColor3=Theme.TextMuted,
-        Size=UDim2.new(1,-8,0,22),
-        Position=UDim2.new(0,4,0,4),
-        BackgroundColor3=Theme.Surface2, BorderSizePixel=0,
-        ClearTextOnFocus=false,
-        ZIndex=ZIndex.CONTENT+1, Parent=sidebar,
-    })
-    ApplyCorner(tabSearchBox,4); ApplyStroke(tabSearchBox,Theme.BorderSoft,1,0.3)
-    ApplyPadding(tabSearchBox,0,0,8,8)
-    CreateIconOrText(tabSearchBox,"search",nil,
-        UDim2.new(0,10,0,10),UDim2.new(0,6,0.5,-5),
-        Theme.TextMuted,FontBold,8)
-
-    -- v7.5: search by tab name OR by widget names within each tab
-    -- Simpler approach: each tab stores _WidgetNames array, search checks it directly
-    local filterTabs
-    filterTabs = function(query)
-        if not wd then return end
-        local q = string.lower(query or "")
-        local tabsList = wd._Tabs or {}
-        for _, t in ipairs(tabsList) do
-            if t._Button then
-                if q == "" then
-                    t._Button.Visible = true
-                else
-                    -- Check tab name
-                    local tabNameLower = string.lower(t._Name or "")
-                    if string.find(tabNameLower, q, 1, true) then
-                        t._Button.Visible = true
-                    else
-                        -- Check widget names stored on the tab
-                        local found = false
-                        if t._WidgetNames and type(t._WidgetNames) == "table" then
-                            for _, wname in ipairs(t._WidgetNames) do
-                                if string.find(string.lower(wname), q, 1, true) then
-                                    found = true
-                                    break
-                                end
-                            end
-                        end
-                        t._Button.Visible = found
-                    end
-                end
-            end
-        end
-    end
-    tabSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        filterTabs(tabSearchBox.Text)
-    end)
 
     -- Sidebar footer: version + fps/ping
     -- Uses UICorner with CornerRadiusMode to only round the bottom-left corner
@@ -7073,7 +6832,6 @@ function MIDNIGHT:MakeWindow(config)
             _Layout=nil, _Window=wd, _ItemCount=0,
             _Indicator=indicator, _IndicatorGlow=indicatorGlow, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
-            _WidgetNames={},  -- v7.5: widget names for search
             _Placeholder=placeholder,
             _Select=nil,
         }
@@ -7248,10 +7006,6 @@ function MIDNIGHT:MakeWindow(config)
         end
 
         local function registerCommand(title, kind, action, extraSearch)
-            -- v7.5: store widget name on tab for search
-            if title and td._WidgetNames then
-                td._WidgetNames[#td._WidgetNames + 1] = title
-            end
             return wd:_RegisterCommand({
                 Title = title,
                 Subtitle = tabName .. " / " .. (kind or "Action"),
