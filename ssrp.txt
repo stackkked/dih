@@ -1,0 +1,1728 @@
+-- full script: Facility Hub (Updated)
+-- env: Roblox Executor (Luau)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ScriptContext = game:GetService("ScriptContext")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CollectionService = game:GetService("CollectionService")
+local Teams = game:GetService("Teams")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+local MIDNIGHT
+
+-- UI setup for Code Reader
+local CodeReaderGui = Instance.new("ScreenGui")
+CodeReaderGui.Name = "CodeReaderOverlay"
+CodeReaderGui.Enabled = false
+CodeReaderGui.Parent = CoreGui
+
+local ReaderLabel = Instance.new("TextLabel")
+ReaderLabel.Size = UDim2.new(0, 300, 0, 60)
+ReaderLabel.Position = UDim2.new(0.5, -150, 0.15, 0)
+ReaderLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ReaderLabel.BackgroundTransparency = 0.3
+ReaderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ReaderLabel.TextSize = 28
+ReaderLabel.Font = Enum.Font.Code
+ReaderLabel.Text = "Reading..."
+ReaderLabel.Parent = CodeReaderGui
+
+-- Dragging logic for Code Reader
+local dragToggle, dragStart, startPos
+ReaderLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = ReaderLabel.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragToggle and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        ReaderLabel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = false
+    end
+end)
+
+local interactionState = {
+    Enabled = false,
+    Applied = false,
+    WatcherRunning = false,
+    OriginalGetConfig = nil,
+    OriginalShowHUD = nil,
+}
+
+local weaponState = {
+    NoRecoil = false,
+    NoSpread = false,
+    InstantReload = false,
+    SilentAim = false,
+    AimParts = {
+        Head = true,
+        UpperTorso = false,
+        LowerTorso = false
+    },
+    ShowFOV = false,
+    FOVRadius = 100,
+    InstantMinigame = false,
+    SubstationHelper = false,
+    KeypadAutohacker = false,
+    EOTarget = nil
+}
+
+local farmState = {
+    LaundryHelper = false,
+    AutoEscape = false,
+    AutoPipe = false,
+    AutoMail = false,
+    AutoGym = false
+}
+
+local osirisState = {
+    AutoPrestige = false,
+    AutoPrestigeRunning = false,
+    AutoPrestigeActionIsInteract = true,
+    AutoPrestigeNeedsTeleport = false,
+}
+
+local espState = {
+    Chams = false,
+    PowerBoxESP = false
+}
+
+local espObjects = {}
+local powerboxESPObjects = {}
+local hitHistory = {}
+
+if getconnections then
+    for _, conn in ipairs(getconnections(ScriptContext.Error)) do
+        conn:Disable()
+    end
+end
+
+local Knit
+do
+    local ok, result = pcall(require, ReplicatedStorage.Packages.Knit)
+    if ok then
+        Knit = result
+    end
+end
+
+local function safeCall(fn, ...)
+    if type(fn) ~= "function" then
+        return nil
+    end
+    local ok, result = pcall(fn, ...)
+    if ok then
+        return result
+    end
+    return nil
+end
+
+local MAIL_DELIVERY_BASE_CFRAME = CFrame.new(-163, 297, 199)
+
+local function moveCharacterToMailBase(char)
+    if char and char.PrimaryPart then
+        char.PrimaryPart.CFrame = MAIL_DELIVERY_BASE_CFRAME
+        return true
+    end
+    return false
+end
+
+local function teleportCharacterToCFrame(targetCFrame)
+    local character = LocalPlayer.Character
+    if not character then
+        return false
+    end
+    if character:IsA("Model") then
+        character:PivotTo(targetCFrame)
+        return true
+    end
+    local root = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
+    if root then
+        root.CFrame = targetCFrame
+        return true
+    end
+    return false
+end
+
+local function getMailDeliveryCart()
+    return workspace:FindFirstChild("MailDeliveryCart")
+end
+
+local AUTO_PRESTIGE_TELEPORT_CFRAME = CFrame.new(40, 198, -41)
+local AUTO_PRESTIGE_SAMPLE_BOX_CFRAME = CFrame.new(34.5102386, 184.214706, -31.6506615, 0.808997452, -0, -0.587812185, 0, 1, -0, 0.587812185, 0, 0.808997452)
+
+local function getKnitRemote(serviceName, remoteName)
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if not packages then
+        return nil
+    end
+    local index = packages:FindFirstChild("_Index")
+    if not index then
+        return nil
+    end
+    for _, child in ipairs(index:GetChildren()) do
+        local knitFolder = child:FindFirstChild("knit")
+        local services = knitFolder and knitFolder:FindFirstChild("Services")
+        local service = services and services:FindFirstChild(serviceName)
+        local rfFolder = service and service:FindFirstChild("RF")
+        local remote = rfFolder and rfFolder:FindFirstChild(remoteName)
+        if remote then
+            return remote
+        end
+    end
+    return nil
+end
+
+local function getInteractionRF()
+    return getKnitRemote("InteractionService", "Interact")
+end
+
+local function getSellRF()
+    return getKnitRemote("DeliveryService", "Sell")
+end
+
+local function getPrestigeRF()
+    return getKnitRemote("ProgressionService", "Prestige")
+end
+
+local function getAutoPrestigeRemotes()
+    return getInteractionRF(), getSellRF(), getPrestigeRF()
+end
+
+local function resolveSampleInteractTarget()
+    local character = LocalPlayer.Character
+    local overlapParams = OverlapParams.new()
+    overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+    overlapParams.FilterDescendantsInstances = character and { character } or {}
+
+    local parts = workspace:GetPartBoundsInBox(AUTO_PRESTIGE_SAMPLE_BOX_CFRAME, Vector3.new(3, 3, 3), overlapParams)
+    for _, part in ipairs(parts) do
+        if part.Name == "Meshes/freezer2" then
+            return part
+        end
+    end
+
+    return nil
+end
+
+local function getTeamPrestigeGoal()
+    local team = LocalPlayer.Team
+    local osirisTeam = Teams:FindFirstChild("Osiris Collective")
+    local researchSubjectTeam = Teams:FindFirstChild("Research Subject")
+
+    if team and osirisTeam and team == osirisTeam then
+        return 1920
+    end
+
+    if team and researchSubjectTeam and team == researchSubjectTeam then
+        return 960
+    end
+
+    if team and team.Name == "Osiris Collective" then
+        return 1920
+    end
+
+    return 960
+end
+
+local function readTeamXPValue()
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+    local mainUi = playerGui and playerGui:FindFirstChild("MainUI")
+    local teamXP = mainUi and mainUi:FindFirstChild("TeamXP")
+    local xpLabel = teamXP and teamXP:FindFirstChild("XP")
+    if not xpLabel then
+        return nil
+    end
+
+    local rawText = tostring(xpLabel.Text or xpLabel:GetAttribute("Text") or "")
+    local currentText = rawText:match("^(%d+)%s*/")
+    if currentText then
+        return tonumber(currentText) or nil, rawText
+    end
+
+    currentText = rawText:match("^(%d+)")
+    if currentText then
+        return tonumber(currentText) or nil, rawText
+    end
+
+    return nil, rawText
+end
+
+local function startAutoPrestigeLoop()
+    if osirisState.AutoPrestigeRunning then
+        return
+    end
+
+    osirisState.AutoPrestigeRunning = true
+    osirisState.AutoPrestigeNeedsTeleport = true
+    task.spawn(function()
+        task.spawn(function()
+            while osirisState.AutoPrestige do
+                local interactRF, sellRF = getAutoPrestigeRemotes()
+
+                if not interactRF or not sellRF then
+                    task.wait(0.5)
+                elseif osirisState.AutoPrestigeNeedsTeleport then
+                    teleportCharacterToCFrame(AUTO_PRESTIGE_TELEPORT_CFRAME)
+                    osirisState.AutoPrestigeNeedsTeleport = false
+                    task.wait(0.1)
+                elseif osirisState.AutoPrestigeActionIsInteract then
+                    local sampleTarget = resolveSampleInteractTarget()
+                    if sampleTarget then
+                        pcall(function()
+                            interactRF:InvokeServer(sampleTarget)
+                        end)
+                        osirisState.AutoPrestigeActionIsInteract = false
+                    else
+                        task.wait(0.05)
+                    end
+                else
+                    pcall(function()
+                        sellRF:InvokeServer()
+                    end)
+                    osirisState.AutoPrestigeActionIsInteract = true
+                end
+            end
+        end)
+
+        while osirisState.AutoPrestige do
+            local _, _, prestigeRF = getAutoPrestigeRemotes()
+            if not prestigeRF then
+                task.wait(0.5)
+            else
+                local teamGoal = getTeamPrestigeGoal()
+                local currentXP = readTeamXPValue()
+                if currentXP and currentXP >= teamGoal then
+                    pcall(function()
+                        prestigeRF:InvokeServer()
+                    end)
+                    osirisState.AutoPrestigeActionIsInteract = true
+                    osirisState.AutoPrestigeNeedsTeleport = true
+                    task.wait(2.5)
+                end
+
+                task.wait(0.2)
+            end
+        end
+
+        osirisState.AutoPrestigeRunning = false
+    end)
+end
+
+if Knit then
+    local CharacterService = safeCall(Knit.GetService, "CharacterService")
+    if CharacterService then
+        CharacterService.ExNotify = function(...) end
+    end
+
+    local MovementController = safeCall(Knit.GetController, "MovementController")
+    if MovementController then
+        MovementController.SpeedHardLimit = math.huge
+        MovementController.FallDamageFactor = 0
+    end
+
+    local GymController = safeCall(Knit.GetController, "GymController")
+    if GymController then
+        task.spawn(function()
+            while task.wait(0.2) do
+                if GymController.Tiredness > 5 then
+                    GymController.Tiredness = 1
+                end
+            end
+        end)
+    end
+end
+
+do
+    local doorPunchOk, DoorPunch = pcall(require, ReplicatedStorage.Shared.DoorPunchDetection)
+    local glassPunchOk, GlassPunch = pcall(require, ReplicatedStorage.Shared.GlassPunchDetection)
+
+    if doorPunchOk and DoorPunch and type(DoorPunch.check) == "function" then
+        DoorPunch.check = function() return nil, nil end
+    end
+
+    if glassPunchOk and GlassPunch and type(GlassPunch.check) == "function" then
+        GlassPunch.check = function() return nil, nil end
+    end
+end
+
+do
+    local mt = getrawmetatable and getrawmetatable(game)
+    if mt and setreadonly and newcclosure and getnamecallmethod then
+        local oldNamecall = mt.__namecall
+        setreadonly(mt, false)
+
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            local args = { ... }
+
+            if method == "FireServer" then
+                if self.Name == "SentryRemote" then
+                    return
+                end
+
+                if self.Name == "ReplicateHit" then
+                    local now = os.clock()
+                    for i = #hitHistory, 1, -1 do
+                        if now - hitHistory[i] > 3 then
+                            table.remove(hitHistory, i)
+                        end
+                    end
+                    if #hitHistory >= 30 then
+                        return
+                    end
+                    table.insert(hitHistory, now)
+                end
+            end
+
+            if method == "GetAttribute" then
+                local attr = args[1]
+
+                if attr == "Oxygen" then return 5000 end
+                if attr == "Integrity" then return 100 end
+                if attr == "RunBlocked" then return false end
+                if attr == "IsRagdoll" then return false end
+                if attr == "Cuffed" then return false end
+                if attr == "Tased" then return false end
+                if attr == "Trespassing" then return false end
+            end
+
+            return oldNamecall(self, ...)
+        end)
+
+        setreadonly(mt, true)
+    end
+end
+
+MIDNIGHT = loadstring(game:HttpGet("https://raw.githubusercontent.com/stackkked/dih/refs/heads/main/midnight.lua"))()
+if not MIDNIGHT then return end
+
+pcall(function()
+    MIDNIGHT:SetNotificationPosition("Center")
+end)
+
+pcall(function()
+    MIDNIGHT:SetupConfig("default")
+end)
+
+local window = MIDNIGHT:MakeWindow({
+    Name = "Facility Roleplay",
+    Width = 720,
+    Height = 460,
+    MenuKey = "RightShift",
+})
+
+local keybindList = nil
+pcall(function()
+    keybindList = MIDNIGHT:CreateKeybindList({ Name = "Keybinds" })
+end)
+
+local function toggleFloatingWindow(win)
+    if not win then
+        return
+    end
+    if win.Show and win.Hide and win._Visible ~= nil then
+        pcall(function()
+            if win._Visible then
+                win:Hide()
+            else
+                win:Show()
+            end
+        end)
+        return
+    end
+    if win.Toggle then
+        pcall(function()
+            win:Toggle()
+        end)
+        return
+    end
+    if win._Frame then
+        win._Frame.Visible = not win._Frame.Visible
+    end
+end
+
+local playerTab = window:MakeTab({ Name = "Player", Icon = "user" })
+local weaponTab = window:MakeTab({ Name = "Weapon", Icon = "swords" })
+local farmTab = window:MakeTab({ Name = "Farm", Icon = "box" })
+local osirisTab = window:MakeTab({ Name = "Osiris Collective", Icon = "skull" })
+local espTab = window:MakeTab({ Name = "ESP", Icon = "eye" })
+
+pcall(function()
+    window:CreateConfigManager({ Name = "Configs", Icon = "folder" })
+end)
+
+local function getInteractionController()
+    if not Knit or type(Knit.GetController) ~= "function" then return nil end
+    return safeCall(Knit.GetController, "InteractionController")
+end
+
+local function restoreInstantInteract()
+    local controller = getInteractionController()
+    if controller then
+        if interactionState.OriginalGetConfig then
+            controller._getInteractConfig = interactionState.OriginalGetConfig
+        end
+        if interactionState.OriginalShowHUD then
+            controller.ShowHUD = interactionState.OriginalShowHUD
+        end
+        if type(controller._configCache) == "table" then
+            table.clear(controller._configCache)
+        end
+    end
+    interactionState.Applied = false
+end
+
+local function applyInstantInteract()
+    if not interactionState.Enabled then return false end
+    local controller = getInteractionController()
+    if not controller then return false end
+
+    if interactionState.OriginalGetConfig == nil then
+        interactionState.OriginalGetConfig = controller._getInteractConfig
+    end
+    if interactionState.OriginalShowHUD == nil then
+        interactionState.OriginalShowHUD = controller.ShowHUD
+    end
+
+    if type(controller._configCache) == "table" then
+        table.clear(controller._configCache)
+    end
+
+    if type(interactionState.OriginalGetConfig) == "function" then
+        controller._getInteractConfig = function(self, interactablePart)
+            local config = interactionState.OriginalGetConfig(self, interactablePart)
+            if config and type(config) == "table" then
+                config.Duration = 0
+            end
+            return config
+        end
+    end
+
+    if type(interactionState.OriginalShowHUD) == "function" then
+        controller.ShowHUD = function(self, key, part, callback, topText, bottomText, duration, disabled, keysOverride, isInteractingCallback)
+            return interactionState.OriginalShowHUD(self, key, part, callback, topText, bottomText, 0, disabled, keysOverride, isInteractingCallback)
+        end
+    end
+
+    interactionState.Applied = true
+    return true
+end
+
+local function setInstantInteract(enabled)
+    interactionState.Enabled = enabled and true or false
+    if interactionState.Enabled then
+        applyInstantInteract()
+        if not interactionState.WatcherRunning then
+            interactionState.WatcherRunning = true
+            task.spawn(function()
+                while interactionState.Enabled do
+                    applyInstantInteract()
+                    task.wait(0.25)
+                end
+                restoreInstantInteract()
+                interactionState.WatcherRunning = false
+            end)
+        end
+    else
+        restoreInstantInteract()
+    end
+end
+
+playerTab:AddSection({ Name = "Interaction" })
+playerTab:AddToggle({
+    Name = "Instant Interact",
+    Default = false,
+    Flag = "InstantInteract",
+    Callback = setInstantInteract,
+})
+
+playerTab:AddSection({ Name = "Logs" })
+playerTab:AddButton({
+    Name = "Chat Logs",
+    Callback = function()
+        toggleFloatingWindow(chatLogWd)
+    end
+})
+
+weaponTab:AddSection({ Name = "Combat Enhancements" })
+weaponTab:AddToggle({
+    Name = "No Recoil & No Shake",
+    Default = false,
+    Flag = "NoRecoil",
+    Callback = function(val) weaponState.NoRecoil = val end
+})
+weaponTab:AddToggle({
+    Name = "No Spread",
+    Default = false,
+    Flag = "NoSpread",
+    Callback = function(val) weaponState.NoSpread = val end
+})
+weaponTab:AddToggle({
+    Name = "Instant Reload",
+    Default = false,
+    Flag = "InstantReload",
+    Callback = function(val) weaponState.InstantReload = val end
+})
+weaponTab:AddToggle({
+    Name = "Silent Aim",
+    Default = false,
+    Flag = "SilentAim",
+    Callback = function(val) weaponState.SilentAim = val end
+})
+weaponTab:AddSection({ Name = "Silent Aim Hitboxes" })
+weaponTab:AddToggle({ Name = "Target Head", Default = true, Flag = "AimPart_Head", Callback = function(val) weaponState.AimParts.Head = val end })
+weaponTab:AddToggle({ Name = "Target Upper Torso", Default = false, Flag = "AimPart_UpperTorso", Callback = function(val) weaponState.AimParts.UpperTorso = val end })
+weaponTab:AddToggle({ Name = "Target Lower Torso", Default = false, Flag = "AimPart_LowerTorso", Callback = function(val) weaponState.AimParts.LowerTorso = val end })
+weaponTab:AddSection({ Name = "Silent Aim FOV Settings" })
+weaponTab:AddToggle({ Name = "Show FOV Circle", Default = false, Flag = "ShowFOV", Callback = function(val) weaponState.ShowFOV = val end })
+weaponTab:AddSlider({ Name = "FOV Radius", Min = 10, Max = 800, Default = 100, Step = 5, Flag = "FOVRadius", Callback = function(val) weaponState.FOVRadius = val end })
+
+local function getInteractRF()
+    local pkgs = ReplicatedStorage:FindFirstChild("Packages")
+    if not pkgs then return nil end
+    local index = pkgs:FindFirstChild("_Index")
+    if not index then return nil end
+    for _, child in ipairs(index:GetChildren()) do
+        if child.Name:match("knit") then
+            local rf = child:FindFirstChild("knit") 
+                and child.knit:FindFirstChild("Services") 
+                and child.knit.Services:FindFirstChild("InteractionService")
+                and child.knit.Services.InteractionService:FindFirstChild("RF")
+                and child.knit.Services.InteractionService.RF:FindFirstChild("Interact")
+            if rf then return rf end
+        end
+    end
+    return nil
+end
+
+local function getSetTeamRF()
+    local pkgs = ReplicatedStorage:FindFirstChild("Packages")
+    if not pkgs then return nil end
+    local index = pkgs:FindFirstChild("_Index")
+    if not index then return nil end
+    for _, child in ipairs(index:GetChildren()) do
+        if child.Name:match("knit") then
+            local rf = child:FindFirstChild("knit") 
+                and child.knit:FindFirstChild("Services") 
+                and child.knit.Services:FindFirstChild("CharacterService")
+                and child.knit.Services.CharacterService:FindFirstChild("RF")
+                and child.knit.Services.CharacterService.RF:FindFirstChild("SetTeamAndSpawn")
+            if rf then return rf end
+        end
+    end
+    return nil
+end
+
+farmTab:AddSection({ Name = "Helpers" })
+farmTab:AddToggle({
+    Name = "Laundry Helper (Auto Take/Put)",
+    Default = false,
+    Flag = "LaundryHelper",
+    Callback = function(val) farmState.LaundryHelper = val end
+})
+
+task.spawn(function()
+    local tags = {"TakeDirtyClothing", "WashingMachine", "Dryer", "PutCleanClothing"}
+    local interactDebounce = {}
+    while task.wait(0.2) do
+        if farmState.LaundryHelper and LocalPlayer.Character and LocalPlayer.Character.PrimaryPart then
+            local myPos = LocalPlayer.Character.PrimaryPart.Position
+            local InteractRF = getInteractRF()
+            if InteractRF then
+                for _, tag in ipairs(tags) do
+                    for _, inst in ipairs(CollectionService:GetTagged(tag)) do
+                        local targetPart = inst
+                        if inst:IsA("Model") and inst:FindFirstChild("Interaction") then
+                            targetPart = inst.Interaction
+                        end
+                        local partPos = targetPart:IsA("BasePart") and targetPart.Position or (targetPart:IsA("Model") and targetPart.PrimaryPart and targetPart.PrimaryPart.Position)
+                        if partPos and (myPos - partPos).Magnitude < 12 then
+                            local canInteract = true
+                            if tag == "WashingMachine" then
+                                local status = inst:GetAttribute("StatusText")
+                                if status == "WASHING" then canInteract = false end
+                                if status == "WASH" and not LocalPlayer.Character:FindFirstChild("Dirty Clothing") then canInteract = false end
+                                if status == "TAKE" and inst:GetAttribute("WashingID") ~= LocalPlayer.UserId then canInteract = false end
+                            elseif tag == "Dryer" then
+                                local status = inst:GetAttribute("StatusText")
+                                if status == "DRYING" then canInteract = false end
+                                if status == "DRY" and not LocalPlayer.Character:FindFirstChild("Wet Clothing") then canInteract = false end
+                                if status == "TAKE" and inst:GetAttribute("DryingID") ~= LocalPlayer.UserId then canInteract = false end
+                            elseif tag == "PutCleanClothing" then
+                                if not LocalPlayer.Character:FindFirstChild("Clean Clothing") then canInteract = false end
+                            elseif tag == "TakeDirtyClothing" then
+                                if LocalPlayer.Character:FindFirstChild("Dirty Clothing") or LocalPlayer.Character:FindFirstChild("Wet Clothing") or LocalPlayer.Character:FindFirstChild("Clean Clothing") then
+                                    canInteract = false
+                                end
+                            end
+                            if canInteract then
+                                if not interactDebounce[targetPart] or (os.clock() - interactDebounce[targetPart] > 1) then
+                                    interactDebounce[targetPart] = os.clock()
+                                    task.spawn(function()
+                                        pcall(function() InteractRF:InvokeServer(targetPart) end)
+                                    end)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+farmTab:AddSection({ Name = "Auto Farm" })
+farmTab:AddToggle({
+    Name = "Auto Gym (AFK)",
+    Default = false,
+    Flag = "AutoGym",
+    Callback = function(val)
+        farmState.AutoGym = val
+        if val then
+            task.spawn(function()
+                while farmState.AutoGym do
+                    local GymController = safeCall(Knit.GetController, "GymController")
+                    if GymController and GymController.UI and GymController.UI.Enabled then
+                        GymController.Tiredness = 1
+                        GymController._progress = 1
+                        if GymController.UI.Progress.title.Text == "BARBELL" and not GymController._barbellDown then
+                            GymController._barbellDown = true
+                            safeCall(GymController.BarbellOffRack, GymController)
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+farmTab:AddToggle({
+    Name = "Auto Escape (RS Farm)",
+    Default = false,
+    Flag = "AutoEscape",
+    Callback = function(val)
+        farmState.AutoEscape = val
+        if val then
+            task.spawn(function()
+                local SetTeamRF = getSetTeamRF()
+                while farmState.AutoEscape do
+                    local char = LocalPlayer.Character
+                    if char and char.PrimaryPart then
+                        char.PrimaryPart.CFrame = CFrame.new(542, 17, 878)
+                        task.wait(0.15)
+                        if SetTeamRF and farmState.AutoEscape then
+                            pcall(function() SetTeamRF:InvokeServer("BR", "BR") end)
+                            pcall(function() SetTeamRF:InvokeServer("RS", "RS") end)
+                        end
+                        task.wait(0.2)
+                    else
+                        task.wait(0.1)
+                    end
+                end
+            end)
+        end
+    end
+})
+
+farmTab:AddToggle({
+    Name = "Auto Pipe (RS Farm)",
+    Default = false,
+    Flag = "AutoPipe",
+    Callback = function(val)
+        farmState.AutoPipe = val
+        if val then
+            task.spawn(function()
+                while farmState.AutoPipe do
+                    local RSTaskService = safeCall(Knit.GetService, "RSTaskService")
+                    local RSTaskController = safeCall(Knit.GetController, "RSTaskController")
+                    
+                    if RSTaskService and RSTaskController then
+                        local tasks = safeCall(RSTaskService.GetOpenTasks, RSTaskService)
+                        local myTask = RSTaskController.CurrentTask
+
+                        if not myTask then
+                            if tasks then
+                                for _, t in pairs(tasks) do
+                                    if t.name == "FIX RSHB PIPE" then
+                                        safeCall(RSTaskService.ChooseTask, RSTaskService, t.id)
+                                        task.wait(0.5)
+                                        myTask = RSTaskController.CurrentTask
+                                        break
+                                    end
+                                end
+                            end
+                        end
+
+                        if myTask and myTask.name == "FIX RSHB PIPE" and myTask.pipeArea then
+                            local pipeAreaName = myTask.pipeAreaName
+                            local pipeAreaModel = workspace:FindFirstChild("RSTasks") and workspace.RSTasks:FindFirstChild("PipeAreas") and workspace.RSTasks.PipeAreas:FindFirstChild(myTask.pipeArea)
+                            local char = LocalPlayer.Character
+                            
+                            if pipeAreaModel and char and char.PrimaryPart then
+                                local cp = pipeAreaModel:FindFirstChild("ControlPanel")
+                                local pP = cp and cp:FindFirstChild("InteractionPart")
+                                if pP then
+                                    char.PrimaryPart.CFrame = pP.CFrame * CFrame.new(0,0,3)
+                                end
+
+                                local step = safeCall(RSTaskService.GetCurrentClientStep, RSTaskService, pipeAreaName)
+                                
+                                if step == 1 then
+                                    safeCall(RSTaskService.UpdateClientStep, RSTaskService, pipeAreaName, 2)
+                                    task.wait(0.1)
+                                elseif step == 2 then
+                                    safeCall(RSTaskService.UpdateClientStep, RSTaskService, pipeAreaName, 3)
+                                    task.wait(0.1)
+                                elseif step == 3 then
+                                    safeCall(RSTaskService.ToggleValveKnob, RSTaskService, pipeAreaName, "Supply")
+                                    safeCall(RSTaskService.ToggleValveKnob, RSTaskService, pipeAreaName, "Outlet")
+                                    task.wait(0.1)
+                                    safeCall(RSTaskService.UpdateClientStep, RSTaskService, pipeAreaName, 4)
+                                    task.wait(0.1)
+                                elseif step == 4 then
+                                    safeCall(RSTaskService.CompleteTask, RSTaskService, myTask.id, true)
+                                    task.wait(0.5)
+                                else
+                                    safeCall(RSTaskService.UpdateClientStep, RSTaskService, pipeAreaName, 1)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+farmTab:AddToggle({
+    Name = "Auto Mail Delivery (Cart)",
+    Default = false,
+    Flag = "AutoMailCart",
+    Callback = function(val)
+        farmState.AutoMail = val
+        if val then
+            task.spawn(function()
+                local InteractRF = getInteractRF()
+                local wasTaskActive = false
+                local pickedMailCart = false
+                local mailCompleted = false
+                local lastTaskId = nil
+                local noObjectiveSince = nil
+                local deliveredBoxes = 0
+                local awaitingDeliveryConfirm = false
+                
+                while farmState.AutoMail do
+                    local RSTaskService = safeCall(Knit.GetService, "RSTaskService")
+                    local RSTaskController = safeCall(Knit.GetController, "RSTaskController")
+                    local MailController = safeCall(Knit.GetController, "MailDeliveryController")
+                    local char = LocalPlayer.Character
+                    
+                    if RSTaskService and RSTaskController and MailController and char and char.PrimaryPart and InteractRF then
+                        local myTask = RSTaskController.CurrentTask
+                        if myTask and myTask.id ~= lastTaskId then
+                            lastTaskId = myTask.id
+                            pickedMailCart = false
+                            mailCompleted = false
+                            wasTaskActive = false
+                            noObjectiveSince = nil
+                            deliveredBoxes = 0
+                            awaitingDeliveryConfirm = false
+                        end
+
+                        if not myTask then
+                            if wasTaskActive then
+                                wasTaskActive = false
+                                pickedMailCart = false
+                                mailCompleted = false
+                                lastTaskId = nil
+                                noObjectiveSince = nil
+                                deliveredBoxes = 0
+                                awaitingDeliveryConfirm = false
+                                moveCharacterToMailBase(char)
+                                task.wait(0.5)
+                            end
+
+                            local tasks = safeCall(RSTaskService.GetOpenTasks, RSTaskService)
+                            if tasks then
+                                for _, t in pairs(tasks) do
+                                    if t.name == "MAIL DELIVERY" then
+                                        safeCall(RSTaskService.ChooseTask, RSTaskService, t.id)
+                                        task.wait(0.5)
+                                        break
+                                    end
+                                end
+                            end
+                        elseif myTask.name == "MAIL DELIVERY" and not mailCompleted then
+                            wasTaskActive = true
+                            
+                            if awaitingDeliveryConfirm and not char:GetAttribute("PushingMailCart") and not MailController.Objective then
+                                deliveredBoxes = deliveredBoxes + 1
+                                awaitingDeliveryConfirm = false
+                                noObjectiveSince = nil
+                                if deliveredBoxes >= 3 then
+                                    mailCompleted = true
+                                    moveCharacterToMailBase(char)
+                                    task.wait(0.5)
+                                end
+                            end
+
+                            if char:GetAttribute("PushingMailCart") then
+                                pickedMailCart = true
+                                noObjectiveSince = nil
+                                local objective = MailController.Objective
+                                if objective then
+                                    local targetPart = objective:IsA("Model") and objective.PrimaryPart or objective
+                                    if targetPart then
+                                        char.PrimaryPart.CFrame = targetPart.CFrame * CFrame.new(0, 0, 3)
+                                        task.wait(0.2)
+                                        pcall(function() InteractRF:InvokeServer(objective) end)
+                                        awaitingDeliveryConfirm = true
+                                        task.wait(0.35)
+                                    end
+                                end
+                            else
+                                if deliveredBoxes >= 3 then
+                                    mailCompleted = true
+                                    awaitingDeliveryConfirm = false
+                                    noObjectiveSince = nil
+                                    moveCharacterToMailBase(char)
+                                    task.wait(0.5)
+                                elseif pickedMailCart and not char:GetAttribute("PushingMailCart") and not MailController.Objective then
+                                    if not noObjectiveSince then
+                                        noObjectiveSince = os.clock()
+                                    elseif (os.clock() - noObjectiveSince) >= 2 then
+                                        mailCompleted = true
+                                        noObjectiveSince = nil
+                                        moveCharacterToMailBase(char)
+                                        task.wait(0.5)
+                                    end
+                                else
+                                    noObjectiveSince = nil
+                                    moveCharacterToMailBase(char)
+                                    task.wait(0.25)
+
+                                    local cartObject = workspace:FindFirstChild("MailDeliveryCart")
+                                    if cartObject then
+                                        pcall(function()
+                                            InteractRF:InvokeServer(cartObject)
+                                        end)
+                                        pickedMailCart = true
+                                        task.wait(0.25)
+                                    end
+
+                                    local cartFound = false
+                                    local possibleTags = {"MailCart", "MailDeliveryCart", "MailcartDispenser", "MailDispenser"}
+                                    if not pickedMailCart then
+                                        for _, tag in ipairs(possibleTags) do
+                                            for _, inst in ipairs(CollectionService:GetTagged(tag)) do
+                                                local p = inst:IsA("Model") and inst.PrimaryPart or inst
+                                                if p then
+                                                    char.PrimaryPart.CFrame = p.CFrame * CFrame.new(0, 0, 3)
+                                                    task.wait(0.2)
+                                                    pcall(function() InteractRF:InvokeServer(inst:FindFirstChild("Interaction") or inst) end)
+                                                    pickedMailCart = true
+                                                    cartFound = true
+                                                    break
+                                                end
+                                            end
+                                            if cartFound then break end
+                                        end
+                                    end
+                                    task.wait(0.5)
+                                end
+                            end
+                        elseif myTask.name ~= "MAIL DELIVERY" then
+                            mailCompleted = false
+                            pickedMailCart = false
+                            wasTaskActive = false
+                            lastTaskId = nil
+                            noObjectiveSince = nil
+                            deliveredBoxes = 0
+                            awaitingDeliveryConfirm = false
+                        end
+                    end
+                    task.wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+osirisTab:AddSection({ Name = "Automation" })
+osirisTab:AddToggle({
+    Name = "Instant Minigame (Turret)",
+    Default = false,
+    Flag = "InstantMinigame",
+    Callback = function(val)
+        weaponState.InstantMinigame = val
+    end
+})
+
+osirisTab:AddToggle({
+    Name = "Substation Helper (Code Reader)",
+    Default = false,
+    Flag = "SubstationHelper",
+    Callback = function(val)
+        weaponState.SubstationHelper = val
+        CodeReaderGui.Enabled = val
+        if val then
+            task.spawn(function()
+                while weaponState.SubstationHelper do
+                    local success, val = pcall(function() return workspace.Screen.Part.SurfaceGui.code.Text end)
+                    ReaderLabel.Text = success and ("Code: " .. val) or "Searching..."
+                    task.wait(0.3)
+                end
+            end)
+        end
+    end
+})
+
+osirisTab:AddToggle({
+    Name = "Keypad Autohacker",
+    Default = false,
+    Flag = "KeypadAutohacker",
+    Callback = function(val)
+        weaponState.KeypadAutohacker = val
+    end
+})
+
+osirisTab:AddSection({ Name = "Teleports" })
+osirisTab:AddButton({
+    Name = "Teleport to samples",
+    Callback = function()
+        teleportCharacterToCFrame(AUTO_PRESTIGE_TELEPORT_CFRAME)
+    end
+})
+osirisTab:AddButton({
+    Name = "Teleport to Base",
+    Callback = function()
+        teleportCharacterToCFrame(CFrame.new(654, 285, 931))
+    end
+})
+
+osirisTab:AddSection({ Name = "Progression" })
+osirisTab:AddToggle({
+    Name = "Auto Prestige (Money farm)",
+    Default = false,
+    Flag = "AutoPrestige",
+    Callback = function(val)
+        osirisState.AutoPrestige = val
+        if val then
+            osirisState.AutoPrestigeActionIsInteract = true
+            startAutoPrestigeLoop()
+        else
+            osirisState.AutoPrestigeActionIsInteract = true
+            osirisState.AutoPrestigeNeedsTeleport = false
+        end
+    end
+})
+
+espTab:AddSection({ Name = "Wallhack Visuals" })
+espTab:AddToggle({
+    Name = "Enemy Chams (Highlight)",
+    Default = false,
+    Flag = "EnemyChams",
+    Callback = function(val)
+        espState.Chams = val
+        if not val then
+            for player, highlight in pairs(espObjects) do
+                if highlight and highlight.Parent then 
+                    highlight:Destroy() 
+                end
+            end
+            table.clear(espObjects)
+        end
+    end
+})
+
+local function updatePowerboxESP()
+    if not espState.PowerBoxESP then
+        for _, folder in pairs(powerboxESPObjects) do
+            if folder then folder:Destroy() end
+        end
+        table.clear(powerboxESPObjects)
+        return
+    end
+
+    local function applyESP(pb, isTurret)
+        if not pb or not pb.Parent then return end
+        if powerboxESPObjects[pb] then return end
+
+        local folder = Instance.new("Folder")
+        folder.Name = "PowerboxESP_Folder"
+        folder.Parent = pb
+
+        local hl = Instance.new("Highlight")
+        hl.FillColor = isTurret and Color3.fromRGB(255, 100, 0) or Color3.fromRGB(0, 255, 255)
+        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+        hl.FillTransparency = 0.5
+        hl.OutlineTransparency = 0.1
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Adornee = pb
+        hl.Parent = folder
+
+        local billboard = Instance.new("BillboardGui")
+        billboard.Size = UDim2.new(0, 150, 0, 30)
+        billboard.AlwaysOnTop = true
+        billboard.Adornee = pb.PrimaryPart or pb:FindFirstChildWhichIsA("BasePart")
+        billboard.Parent = folder
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextColor3 = isTurret and Color3.fromRGB(255, 100, 0) or Color3.fromRGB(0, 255, 255)
+        label.TextStrokeTransparency = 0.2
+        label.TextSize = 12
+        label.Font = Enum.Font.SourceSansBold
+        label.Text = isTurret and "[Powerbox: Turret]" or "[Powerbox: Substation]"
+        label.Parent = billboard
+
+        powerboxESPObjects[pb] = folder
+    end
+
+    for _, pb in ipairs(CollectionService:GetTagged("SubstationPowerbox")) do applyESP(pb, false) end
+    for _, pb in ipairs(CollectionService:GetTagged("TurretPowerbox")) do applyESP(pb, true) end
+end
+
+espTab:AddToggle({
+    Name = "PowerBox ESP",
+    Default = false,
+    Flag = "PowerBoxESP",
+    Callback = function(val)
+        espState.PowerBoxESP = val
+        updatePowerboxESP()
+    end
+})
+
+local targetHUD = MIDNIGHT:CreateTargetHUD({ Position = "BottomRight" })
+
+local adminLogs = nil
+local chatLogWd = nil
+pcall(function()
+    adminLogs = window:CreateAdminLogs({
+        GroupId = 9665726,
+        Ranks = {
+            [2] = "Quality Assurance",
+            [4] = "Game Moderator",
+            [5] = "Administrator",
+            [6] = "Community Manager",
+            [7] = "Studio Contractors",
+            [8] = "ConX Studios",
+            [255] = "Chief Executive Officer"
+        },
+        WidgetEnabled = true,
+        AutoOpenLogs = true
+    })
+end)
+
+pcall(function()
+    chatLogWd = window:CreateChatLogger()
+end)
+
+local FOVCircle = Drawing and Drawing.new("Circle")
+if FOVCircle then
+    FOVCircle.Thickness = 1.5
+    FOVCircle.NumSides = 64
+    FOVCircle.Radius = weaponState.FOVRadius
+    FOVCircle.Filled = false
+    FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+    FOVCircle.Transparency = 1
+    FOVCircle.Visible = false
+
+    RunService.RenderStepped:Connect(function()
+        if weaponState.ShowFOV then
+            local mousePos = UserInputService:GetMouseLocation()
+            FOVCircle.Position = mousePos
+            FOVCircle.Radius = weaponState.FOVRadius
+            FOVCircle.Visible = true
+        else
+            FOVCircle.Visible = false
+        end
+    end)
+end
+
+local function cleanCodeString(str)
+    if not str then return nil end
+    return tostring(str):gsub("%s+", ""):gsub("%-", ""):upper()
+end
+
+local function parseTargetConnections(page)
+    local connections = {}
+    local function isTerminalString(val) return type(val) == "string" and val:sub(1, 4) == "Wire" end
+    local function search(tbl)
+        for k, v in pairs(tbl) do
+            if isTerminalString(k) and isTerminalString(v) then
+                connections[k] = v
+            elseif type(k) == "string" and type(v) == "string" and k:sub(1, 4) == "Wire" and v:sub(1, 4) == "Wire" then
+                local top = k:match("Top$") and k or (k .. "Top")
+                local bot = v:match("Bottom$") and v or (v .. "Bottom")
+                connections[top] = bot
+            elseif (type(k) == "number" or tonumber(k)) and (type(v) == "number" or tonumber(v)) then
+                local numKey = tonumber(k)
+                local numVal = tonumber(v)
+                if numKey >= 1 and numKey <= 4 and numVal >= 1 and numVal <= 4 then
+                    connections["Wire" .. numKey .. "Top"] = "Wire" .. numVal .. "Bottom"
+                end
+            elseif type(v) == "table" and k ~= "Parent" then
+                search(v)
+            end
+        end
+    end
+    search(page)
+    return connections
+end
+
+local POWERBOX_TURRET_GOOD_COLOR = Color3.fromRGB(39, 70, 45)
+local POWERBOX_TURRET_BAD_COLOR = Color3.fromRGB(52, 142, 64)
+local POWERBOX_TURRET_SWITCH_NAMES = {"Switch1", "Switch2", "Switch3", "Switch4"}
+local POWERBOX_TURRET_ACTION_DELAY = 0.5
+
+local function readAppearanceColorValue(switchPart)
+    if not switchPart then
+        return nil
+    end
+    return switchPart.Color
+end
+
+local function colorClose(a, b)
+    if not (a and b) then
+        return false
+    end
+    return math.abs(a.R - b.R) <= 0.01
+        and math.abs(a.G - b.G) <= 0.01
+        and math.abs(a.B - b.B) <= 0.01
+end
+
+local function getNearestPowerboxTurret(originPosition)
+    local bestModel = nil
+    local bestDistance = math.huge
+    for _, inst in ipairs(workspace:GetDescendants()) do
+        if inst:IsA("Model") and inst.Name == "PowerboxTurret" then
+            local root = inst.PrimaryPart
+                or inst:FindFirstChild("Switch1")
+                or inst:FindFirstChildWhichIsA("BasePart")
+            if root and originPosition then
+                local distance = (root.Position - originPosition).Magnitude
+                if distance < bestDistance then
+                    bestDistance = distance
+                    bestModel = inst
+                end
+            elseif not bestModel then
+                bestModel = inst
+            end
+        end
+    end
+    return bestModel
+end
+
+local function getTurretSwitchSnapshot(turretModel)
+    local snapshot = {}
+    if not turretModel then
+        return snapshot
+    end
+    for _, switchName in ipairs(POWERBOX_TURRET_SWITCH_NAMES) do
+        local switchPart = turretModel:FindFirstChild(switchName, true)
+        if switchPart and switchPart:IsA("BasePart") then
+            snapshot[switchName] = readAppearanceColorValue(switchPart) or switchPart.Color
+        end
+    end
+    return snapshot
+end
+
+local function sawGoodColorTransition(beforeSnapshot, afterSnapshot)
+    for switchName, afterColor in pairs(afterSnapshot) do
+        if colorClose(afterColor, POWERBOX_TURRET_GOOD_COLOR) then
+            if not colorClose(beforeSnapshot[switchName], POWERBOX_TURRET_GOOD_COLOR) then
+                return true, switchName
+            end
+        end
+    end
+    return false
+end
+
+local function getCanonicalTurretConnectionKey(firstTerminal, secondTerminal)
+    firstTerminal = tostring(firstTerminal)
+    secondTerminal = tostring(secondTerminal)
+    if firstTerminal > secondTerminal then
+        firstTerminal, secondTerminal = secondTerminal, firstTerminal
+    end
+    return firstTerminal .. ">" .. secondTerminal
+end
+
+local function markTurretSolvedSwitches(snapshot, solvedSwitches)
+    for switchName, color in pairs(snapshot) do
+        if colorClose(color, POWERBOX_TURRET_GOOD_COLOR) then
+            solvedSwitches[switchName] = true
+        end
+    end
+end
+
+local function resetTurretWires(substationService, powerboxId, wireData)
+    if type(wireData) ~= "table" then
+        return false
+    end
+
+    local touched = {}
+    local resetAny = false
+
+    for wireName, connectedName in pairs(wireData) do
+        if type(wireName) == "string" and wireName:sub(1, 4) == "Wire" and type(connectedName) == "string" then
+            if not touched[wireName] and not touched[connectedName] then
+                safeCall(substationService.WireInteraction, substationService, powerboxId, wireName)
+                touched[wireName] = true
+                touched[connectedName] = true
+                resetAny = true
+                task.wait(POWERBOX_TURRET_ACTION_DELAY)
+            end
+        end
+    end
+
+    if resetAny then
+        task.wait(POWERBOX_TURRET_ACTION_DELAY)
+    end
+
+    return resetAny
+end
+
+local function fireSignal(signal)
+    if not signal then return end
+    if type(signal.Fire) == "function" then safeCall(signal.Fire, signal)
+    elseif type(signal.FireServer) == "function" then safeCall(signal.FireServer, signal) end
+end
+
+local function getExecutiveOrderTarget(payload)
+    if not payload then return nil end
+    if payload.TargetPlayer and payload.TargetPlayer:IsA("Player") then return payload.TargetPlayer end
+    if type(payload.TargetName) == "string" then
+        local p = Players:FindFirstChild(payload.TargetName)
+        if p then return p end
+    end
+    if type(payload.Target) == "string" then
+        local p = Players:FindFirstChild(payload.Target)
+        if p then return p end
+    end
+    if payload.Target and typeof(payload.Target) == "Instance" and payload.Target:IsA("Player") then
+        return payload.Target
+    end
+    local desc = tostring(payload.Description or ""):upper()
+    local title = tostring(payload.Name or ""):upper()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local name = player.Name:upper()
+            local displayName = player.DisplayName:upper()
+            if (#name >= 3 and (desc:find(name, 1, true) or title:find(name, 1, true))) or
+               (#displayName >= 3 and (desc:find(displayName, 1, true) or title:find(displayName, 1, true))) then
+                return player
+            end
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    local SubstationController = nil
+    while not SubstationController do
+        if Knit and type(Knit.GetController) == "function" then
+            SubstationController = safeCall(Knit.GetController, "SubstationController")
+        end
+        task.wait(0.5)
+    end
+
+    local SubstationService = Knit.GetService("SubstationService")
+
+    local oldStartKeypadHack = SubstationController.StartKeypadHack
+    SubstationController.StartKeypadHack = function(self)
+        oldStartKeypadHack(self)
+        if weaponState.KeypadAutohacker then
+            task.spawn(function()
+                task.wait(0.3)
+                local hackingUI = LocalPlayer.PlayerGui:FindFirstChild("HackingUI") or LocalPlayer.PlayerGui:FindFirstChild("HackingUI_Phone")
+                if hackingUI then hackingUI:Destroy() end
+                local flipperUI = LocalPlayer.PlayerGui:FindFirstChild("FlipperHackingUI")
+                if flipperUI then flipperUI:Destroy() end
+                if LocalPlayer.Character and LocalPlayer.Character.PrimaryPart then
+                    LocalPlayer.Character.PrimaryPart.Anchored = false
+                end
+                self.IsHacking = false
+                safeCall(SubstationService.KeyPadChallenge, SubstationService, LocalPlayer)
+            end)
+        end
+    end
+
+    local oldStartPowerboxHack = SubstationController.StartPowerboxHack
+    SubstationController.StartPowerboxHack = function(self, powerboxId)
+        oldStartPowerboxHack(self, powerboxId)
+        if weaponState.InstantMinigame then
+            task.spawn(function()
+                task.wait(POWERBOX_TURRET_ACTION_DELAY)
+                local powerboxModel = self.PowerboxHackModel
+                if not powerboxModel then return end
+                local confirmedTurretConnections = {}
+                local solvedTurretSwitches = {}
+
+                local helperReady = false
+                for _ = 1, 20 do
+                    if self.WireHelpersProcessed and self.WireData then
+                        helperReady = true
+                        break
+                    end
+                    task.wait(0.05)
+                end
+                if not helperReady then return end
+
+                local isTurret = CollectionService:HasTag(powerboxModel, "TurretPowerbox")
+                local targetData = safeCall(SubstationService.GetPowerboxTargetData, SubstationService, not isTurret, isTurret)
+                if type(targetData) ~= "table" then return end
+                local localCharacter = LocalPlayer.Character
+                local turretScanModel = getNearestPowerboxTurret(localCharacter and localCharacter.PrimaryPart and localCharacter.PrimaryPart.Position) or powerboxModel
+                resetTurretWires(SubstationService, powerboxId, self.WireData)
+                local turretSnapshot = getTurretSwitchSnapshot(turretScanModel)
+                markTurretSolvedSwitches(turretSnapshot, solvedTurretSwitches)
+
+                for _, page in ipairs(targetData) do
+                    if not self.IsHacking or powerboxModel:GetAttribute("Bypassed") then break end
+
+                    for i = 1, 4 do
+                        safeCall(SubstationService.WireInteraction, SubstationService, powerboxId, "S" .. i)
+                        task.wait(POWERBOX_TURRET_ACTION_DELAY)
+                    end
+
+                    local connections = parseTargetConnections(page)
+                    for top, bottom in pairs(connections) do
+                        if powerboxModel:GetAttribute("Bypassed") then break end
+                        local connectionKey = getCanonicalTurretConnectionKey(top, bottom)
+                        if not confirmedTurretConnections[connectionKey] and not solvedTurretSwitches[top] and not solvedTurretSwitches[bottom] then
+                            local beforeSnapshot = turretSnapshot
+                            safeCall(SubstationService.WireInteraction, SubstationService, powerboxId, top)
+                            task.wait(POWERBOX_TURRET_ACTION_DELAY)
+                            safeCall(SubstationService.WireInteraction, SubstationService, powerboxId, bottom)
+                            task.wait(POWERBOX_TURRET_ACTION_DELAY)
+                            local afterSnapshot = getTurretSwitchSnapshot(turretScanModel)
+                            markTurretSolvedSwitches(afterSnapshot, solvedTurretSwitches)
+                            local becameGood = sawGoodColorTransition(beforeSnapshot, afterSnapshot)
+                            turretSnapshot = afterSnapshot
+                            if becameGood then
+                                confirmedTurretConnections[connectionKey] = true
+                                solvedTurretSwitches[top] = true
+                                solvedTurretSwitches[bottom] = true
+                            end
+                        else
+                            confirmedTurretConnections[connectionKey] = true
+                        end
+                    end
+
+                    task.wait(POWERBOX_TURRET_ACTION_DELAY)
+                    if powerboxModel:GetAttribute("Bypassed") then break end
+                end
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    local ExecutiveUIController = nil
+    while not ExecutiveUIController do
+        if Knit and type(Knit.GetController) == "function" then
+            ExecutiveUIController = safeCall(Knit.GetController, "ExecutiveUIController")
+        end
+        task.wait(0.5)
+    end
+    local ExecutiveService = Knit.GetService("ExecutiveService")
+    local oldUpdateUI = ExecutiveUIController.UpdateCurrentExecutiveOrderUI
+    ExecutiveUIController.UpdateCurrentExecutiveOrderUI = function(self, payload)
+        oldUpdateUI(self, payload)
+        weaponState.EOTarget = getExecutiveOrderTarget(payload)
+    end
+    if ExecutiveService then
+        local ok, payload = pcall(function() return ExecutiveService:GetCurrentOrderPayload() end)
+        if ok and payload then weaponState.EOTarget = getExecutiveOrderTarget(payload) end
+    end
+end)
+
+local function isPartVisible(part, character)
+    local camera = workspace.CurrentCamera
+    if not camera then return false end
+    local origin = camera.CFrame.Position
+    local destination = part.Position
+    local direction = destination - origin
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    raycastParams.FilterDescendantsInstances = { LocalPlayer.Character, camera, character }
+    raycastParams.IgnoreWater = true
+    
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    return result == nil
+end
+
+local function getAnyVisiblePart(character)
+    local camera = workspace.CurrentCamera
+    if not camera then return nil end
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("BasePart") and child.Name ~= "HumanoidRootPart" then
+            local _, onScreen = camera:WorldToViewportPoint(child.Position)
+            if onScreen and isPartVisible(child, character) then return child end
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    local FirearmController = nil
+    while not FirearmController do
+        if Knit and type(Knit.GetController) == "function" then
+            FirearmController = safeCall(Knit.GetController, "FirearmController")
+        end
+        task.wait(0.5)
+    end
+
+    local oldGenRecoil = FirearmController.GenerateRecoilPattern
+    if type(oldGenRecoil) == "function" then
+        FirearmController.GenerateRecoilPattern = function(self, stats)
+            if weaponState.NoRecoil then return table.create(30, Vector3.new(0, 0, 0)) end
+            return oldGenRecoil(self, stats)
+        end
+    end
+
+    local oldPlayAnimation = FirearmController.PlayAnimation
+    FirearmController.PlayAnimation = function(self, animName, p1, p2, speed, ...)
+        if weaponState.InstantReload and (animName == "Reload" or animName == "TacticalReload") then
+            local animTrack = self.Animations and self.Animations[animName]
+            if animTrack then speed = animTrack.Length / 1.20 end
+        end
+        return oldPlayAnimation(self, animName, p1, p2, speed, ...)
+    end
+
+    local oldReload = FirearmController.Reload
+    local oldTime = time
+    FirearmController.Reload = function(self)
+        if weaponState.InstantReload then
+            local callCount = 0
+            local originalTime = oldTime()
+            getgenv().time = function()
+                callCount = callCount + 1
+                if callCount <= 2 then return originalTime - 10 end
+                return oldTime()
+            end
+            oldReload(self)
+            getgenv().time = oldTime
+        else
+            return oldReload(self)
+        end
+    end
+
+    local oldBindFirearm = FirearmController.BindFirearm
+    if type(oldBindFirearm) == "function" then
+        FirearmController.BindFirearm = function(self, tool)
+            local res = oldBindFirearm(self, tool)
+            if self.Stats then self.Stats.RangeLimit = 99999 end
+            self.RangeHardLimit = 99999
+            return res
+        end
+    end
+
+    if FirearmController.Stats then FirearmController.Stats.RangeLimit = 99999 end
+    FirearmController.RangeHardLimit = 99999
+
+    if FirearmController.BulletData then
+        for _, bullet in pairs(FirearmController.BulletData) do
+            if type(bullet) == "table" and bullet.Velocity then
+                bullet.Velocity = 999999
+            end
+        end
+    end
+
+    local function getClosestTargetInFOV()
+        local myChar = LocalPlayer.Character
+        if not myChar or not myChar.PrimaryPart then return nil end
+
+        local closestPart = nil
+        local shortestDist = weaponState.FOVRadius
+        local mousePos = UserInputService:GetMouseLocation()
+        local camera = workspace.CurrentCamera
+        if not camera then return nil end
+        
+        local maxRange = (FirearmController and FirearmController.Stats and FirearmController.Stats.RangeLimit) or 99999
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+                local canDamage = true
+                if type(FirearmController.CanDamage) == "function" then
+                    canDamage = FirearmController:CanDamage(player)
+                end
+                
+                if canDamage then
+                    if player.Team and player.Team.Name == "Health & Research" then
+                        continue
+                    end
+
+                    local char = player.Character
+                    local root = char.PrimaryPart or char:FindFirstChild("Head")
+                    if root then
+                        local distance3D = (root.Position - myChar.PrimaryPart.Position).Magnitude
+                        if distance3D <= maxRange then
+                            local rootPos, onScreen = camera:WorldToViewportPoint(root.Position)
+                            if onScreen then
+                                local rootDist = (Vector2.new(rootPos.X, rootPos.Y) - mousePos).Magnitude
+                                if rootDist < shortestDist + 150 then
+                                    local chosenPart = nil
+                                    local chosenDist = math.huge
+                                    
+                                    for partName, enabled in pairs(weaponState.AimParts) do
+                                        if enabled then
+                                            local part = char:FindFirstChild(partName)
+                                            if part then
+                                                local pos, partOnScreen = camera:WorldToViewportPoint(part.Position)
+                                                if partOnScreen and isPartVisible(part, char) then
+                                                    local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                                                    if dist < chosenDist then
+                                                        chosenDist = dist
+                                                        chosenPart = part
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    
+                                    if not chosenPart then
+                                        local fallbackPart = getAnyVisiblePart(char)
+                                        if fallbackPart then
+                                            local pos, fbOnScreen = camera:WorldToViewportPoint(fallbackPart.Position)
+                                            if fbOnScreen then
+                                                chosenPart = fallbackPart
+                                                chosenDist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                                            end
+                                        end
+                                    end
+                                    
+                                    if chosenPart and chosenDist < shortestDist then
+                                        shortestDist = chosenDist
+                                        closestPart = chosenPart
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return closestPart
+    end
+
+    local oldFire = FirearmController.Fire
+    if type(oldFire) == "function" then
+        FirearmController.Fire = function(self, arg1, arg2)
+            local origSpread = nil
+            local origCCF = nil
+            local origShakeOnce = nil
+            
+            if weaponState.NoSpread and self.Stats and self.Stats.Bullet then
+                origSpread = self.Stats.Bullet.BuckshotSpread
+                self.Stats.Bullet.BuckshotSpread = 0
+            end
+            
+            if weaponState.NoRecoil and self.CameraController and self.CameraController.CameraShaker then
+                origShakeOnce = self.CameraController.CameraShaker.ShakeOnce
+                self.CameraController.CameraShaker.ShakeOnce = function() end
+            end
+            
+            if weaponState.SilentAim then
+                local instantTarget = getClosestTargetInFOV()
+                if instantTarget then
+                    origCCF = self.CameraController.CCF
+                    self.CameraController.CCF = CFrame.lookAt(origCCF.Position, instantTarget.Position)
+                end
+            end
+            
+            local result = oldFire(self, arg1, arg2)
+            
+            if origCCF then self.CameraController.CCF = origCCF end
+            if origSpread then self.Stats.Bullet.BuckshotSpread = origSpread end
+            if origShakeOnce then self.CameraController.CameraShaker.ShakeOnce = origShakeOnce end
+            
+            return result
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if espState.PowerBoxESP then updatePowerboxESP() end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if not espState.Chams then continue end
+        
+        local FirearmController = nil
+        if Knit and type(Knit.GetController) == "function" then
+            FirearmController = safeCall(Knit.GetController, "FirearmController")
+        end
+        
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player == LocalPlayer then continue end
+            
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                local isEnemy = true
+                if FirearmController and type(FirearmController.CanDamage) == "function" then
+                    isEnemy = FirearmController:CanDamage(player)
+                end
+                
+                if isEnemy then
+                    local teamColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
+                    local isEOTarget = (player == weaponState.EOTarget)
+                    
+                    local fillColor = teamColor
+                    local outlineColor = Color3.fromRGB(255, 255, 255)
+                    local fillTrans = 0.5
+                    local outlineTrans = 0.2
+                    
+                    if isEOTarget then
+                        fillColor = Color3.fromRGB(255, 215, 0)
+                        outlineColor = Color3.fromRGB(255, 0, 0)
+                        fillTrans = 0.2
+                        outlineTrans = 0
+                    end
+
+                    local hl = espObjects[player]
+                    if not hl or hl.Parent ~= char then
+                        if hl then hl:Destroy() end
+                        hl = Instance.new("Highlight")
+                        hl.Name = "FrederikChams"
+                        hl.FillColor = fillColor
+                        hl.OutlineColor = outlineColor
+                        hl.FillTransparency = fillTrans
+                        hl.OutlineTransparency = outlineTrans
+                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                        hl.Parent = char
+                        espObjects[player] = hl
+                    else
+                        hl.FillColor = fillColor
+                        hl.OutlineColor = outlineColor
+                        hl.FillTransparency = fillTrans
+                        hl.OutlineTransparency = outlineTrans
+                    end
+                else
+                    local hl = espObjects[player]
+                    if hl then hl:Destroy(); espObjects[player] = nil end
+                end
+            else
+                local hl = espObjects[player]
+                if hl then hl:Destroy(); espObjects[player] = nil end
+            end
+        end
+    end
+end)
