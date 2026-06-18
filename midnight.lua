@@ -285,7 +285,7 @@ end
 
 local _safe_readfile = function(path)
     if type(readfile) ~= "function" then return nil end
-    local ok, content = pcall(readfile, path)
+    local ok, content = pcall(_safe_readfile, path)
     if ok then return content end
     return nil
 end
@@ -299,7 +299,7 @@ end
 
 local _safe_makefolder = function(path)
     if type(makefolder) ~= "function" then return end
-    pcall(makefolder, path)
+    pcall(_safe_makefolder, path)
 end
 
 local _safe_listfiles = function(path)
@@ -3113,6 +3113,7 @@ end
 --// RESET
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Reset()
+    if not self then return end
     CancelAllDelays()
     if self._TargetHUD and self._TargetHUD.StopTracking then
         pcall(function() self._TargetHUD:StopTracking() end)
@@ -4255,7 +4256,7 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
                         -- Phase 2: expand height from tbH to openH AFTER phase 1 completes (smoother)
-                        local th1 = task.delay(0.26, function()
+                        local th1 = SafeDelay(0.26, function()
                             if self._MenuOpen and w._Frame and w._Frame.Parent then
                                 TweenObject(w._Frame, {
                                     Size = UDim2.new(0, openW, 0, openH),
@@ -4282,7 +4283,7 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
                         -- Phase 2: collapse width to 0 (after phase 1 completes)
-                        local th_p1 = task.delay(0.28, function()
+                        local th_p1 = SafeDelay(0.28, function()
                             if not self._MenuOpen and frame and frame.Parent then
                                 TweenObject(frame, {
                                     Size = UDim2.new(0, 0, 0, tbH2),
@@ -4294,7 +4295,7 @@ function MIDNIGHT:_InitMenuToggle(menuKey, menuKeyStr)
                         table.insert(self._MenuCloseThreads, th_p1)
 
                         -- Phase 3: hide + restore
-                        local th_p2 = task.delay(0.58, function()
+                        local th_p2 = SafeDelay(0.58, function()
                             if not self._MenuOpen and frame and frame.Parent then
                                 frame.Visible = false
                                 frame.Size = UDim2.new(0, origW2, 0, origH2)
@@ -4357,16 +4358,7 @@ function MIDNIGHT:CreateWatermark(config)
     -- v7.5: solid opaque background (no tint overlay — was making it see-through)
     ApplyCorner(wmFrame, 8)
     ApplyStroke(wmFrame, Theme.BorderSoft, 1, 0.0)  -- fully opaque stroke
-    -- v7.3: gradient on watermark bg for depth
-    -- v7.4: removed gradient (solid bg looks cleaner)
-    -- v7.3: subtle glow behind watermark
-    local wmGlow = Create("ImageLabel",{
-        Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
-        BackgroundTransparency=1, Image="rbxassetid://6015897843",
-        ImageColor3=Theme.Accent, ImageTransparency=0.85,
-        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
-        ZIndex=ZIndex.NOTIFY-1, Parent=wmFrame,
-    })
+    -- v7.5: removed wmGlow (was making watermark look transparent/see-through)
 
     local content = Create("Frame",{
         Name="Content", Size=UDim2.new(1,-18,1,-6),
@@ -4495,6 +4487,12 @@ function MIDNIGHT:CreateWatermark(config)
         Position = wmTargetPos,
     }, 0.36, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     TweenObject(wmScale, {Scale = 1}, 0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    -- v7.5: force opaque after tween completes (prevents any transparency leak)
+    SafeDelay(0.4, function()
+        if wmFrame and wmFrame.Parent then
+            wmFrame.BackgroundTransparency = 0
+        end
+    end)
     local wmSweep = Create("Frame", {
         Size = UDim2.new(0, 54, 1, 0),
         Position = UDim2.new(-0.2, 0, 0, 0),
@@ -5790,7 +5788,7 @@ function MIDNIGHT:Notify(config)
             countScale.Scale = 0.9
             TweenObject(countScale,{Scale=1},0.16,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             TweenObject(countBadge,{BackgroundColor3=LightenColor(typeColor,5)},0.08)
-            task.delay(0.09,function()
+            SafeDelay(0.09,function()
                 if not dismissed and countBadge.Parent then
                     TweenObject(countBadge,{BackgroundColor3=typeColor},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
                 end
@@ -5817,7 +5815,7 @@ function MIDNIGHT:Notify(config)
         nd._Paused = false
         nd._StartTime = tick()
         progressTween = TweenObject(pFill,{Size=UDim2.new(0,0,1,0)},remaining,Enum.EasingStyle.Linear)
-        dismissThread = task.delay(remaining, function()
+        dismissThread = SafeDelay(remaining, function()
             dismiss(false)
         end)
     end
@@ -5850,21 +5848,21 @@ function MIDNIGHT:Notify(config)
     local function pulseNotification()
         if dismissed then return end
         TweenObject(nfScale,{Scale=compactMode and 1.008 or 1.015},0.1,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-        task.delay(0.13,function()
+        SafeDelay(0.13,function()
             if not dismissed and nfScale.Parent then
                 TweenObject(nfScale,{Scale=1},0.18,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             end
         end)
         if shadow then
             TweenObject(shadow,{ImageTransparency=compactMode and 0.82 or 0.72},0.1)
-            task.delay(0.13,function()
+            SafeDelay(0.13,function()
                 if not dismissed and shadow.Parent then
                     TweenObject(shadow,{ImageTransparency=compactMode and 0.9 or 0.8},0.18)
                 end
             end)
         end
         applyNotifHoverState(true)
-        task.delay(0.15,function()
+        SafeDelay(0.15,function()
             if not dismissed and nf.Parent then
                 applyNotifHoverState(nd._Hovered)
             end
@@ -5914,7 +5912,7 @@ function MIDNIGHT:Notify(config)
         TweenObject(countLabel,{TextTransparency=1},0.16)
         TweenObject(titleLabel,{TextTransparency=1},0.16)
         TweenObject(contentLabel,{TextTransparency=1},0.16)
-        task.delay(0.26,function()
+        SafeDelay(0.26,function()
             finalizeDismiss()
         end)
     end
@@ -6027,17 +6025,10 @@ function MIDNIGHT:CreateKeybindList(config)
         BorderSizePixel=0,
         ZIndex=ZIndex.WINDOW, Parent=self._ScreenGui,
     })
-    StyleUtilityOverlay(kf, Theme.Accent)
-    -- v7.3: gradient on keybind list bg for depth
-    -- v7.4: removed gradient (solid bg)
-    -- v7.3: subtle glow behind keybind list
-    local kfGlow = Create("ImageLabel",{
-        Size=UDim2.new(1,16,1,16),Position=UDim2.new(0,-8,0,-8),
-        BackgroundTransparency=1, Image="rbxassetid://6015897843",
-        ImageColor3=Theme.Accent, ImageTransparency=0.88,
-        ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
-        ZIndex=ZIndex.WINDOW-1, Parent=kf,
-    })
+    ApplyCorner(kf, 8)
+    ApplyStroke(kf, Theme.BorderSoft, 1, 0.2)
+    -- v7.5: removed StyleUtilityOverlay (was adding semi-transparent tint)
+    -- v7.5: removed kfGlow (was creating uneven rectangular glow, not on buttons)
 
     local tb2 = StyleQuietHeader(kf, 28, ZIndex.WINDOW + 1)
     local tc2 = Create("Frame",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,8,0,0),BackgroundTransparency=1,Parent=tb2})
@@ -6333,12 +6324,12 @@ function MIDNIGHT:MakeWindow(config)
     local function QueueWindowBorderPulse()
         windowPulseToken = windowPulseToken + 1
         local token = windowPulseToken
-        task.delay(0.1, function()
+        SafeDelay(0.1, function()
             if token ~= windowPulseToken or not wf or not wf.Parent or not wf.Visible or not self._MenuOpen then return end
             local stroke = wf:FindFirstChildWhichIsA("UIStroke")
             if stroke then
                 TweenObject(stroke, {Color = Theme.BorderAccent, Thickness = 1.2, Transparency = 0.1}, 0.16)
-                task.delay(0.22, function()
+                SafeDelay(0.22, function()
                     if token ~= windowPulseToken or not stroke or not stroke.Parent or not wf.Visible or not self._MenuOpen then return end
                     TweenObject(stroke, {Color = Theme.Border, Thickness = 1, Transparency = 0.22}, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end)
@@ -6374,7 +6365,7 @@ function MIDNIGHT:MakeWindow(config)
             Subtitle = "Loading interface...",
             DoneText = "Ready",
         })
-        task.delay(math.max(0, introDelay or 0), animateWindowOpen)
+        SafeDelay(math.max(0, introDelay or 0), animateWindowOpen)
     else
         animateWindowOpen()
     end
@@ -6456,7 +6447,7 @@ function MIDNIGHT:MakeWindow(config)
 
                 -- Phase 2: collapse width to 0 (horizontal shrink from sides to center)
                 -- Wait for phase 1 to fully complete (0.26s) before starting phase 2
-                local th1 = task.delay(0.28, function()
+                local th1 = SafeDelay(0.28, function()
                     if not self._MenuOpen and frame and frame.Parent then
                         TweenObject(frame, {
                             Size = UDim2.new(0, 0, 0, tbH),
@@ -6468,7 +6459,7 @@ function MIDNIGHT:MakeWindow(config)
                 table.insert(self._MenuCloseThreads, th1)
 
                 -- Phase 3: hide after both phases complete (0.28 + 0.24 = ~0.55s)
-                local th2 = task.delay(0.58, function()
+                local th2 = SafeDelay(0.58, function()
                     if not self._MenuOpen and frame and frame.Parent then
                         frame.Visible = false
                         -- Restore original size/position for next open
@@ -6679,14 +6670,14 @@ function MIDNIGHT:MakeWindow(config)
     if self._DeferredWatermark then
         local cfg = self._DeferredWatermark
         self._DeferredWatermark = nil
-        task.delay(wmDelay, function()
+        SafeDelay(wmDelay, function()
             pcall(function() self:CreateWatermark(cfg) end)
         end)
     end
     if self._DeferredKeybindList then
         local cfg = self._DeferredKeybindList
         self._DeferredKeybindList = nil
-        task.delay(klDelay, function()
+        SafeDelay(klDelay, function()
             pcall(function() self:CreateKeybindList(cfg) end)
         end)
     end
@@ -12364,6 +12355,7 @@ end
 --// DESTROY
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 function MIDNIGHT:Destroy()
+    if not self then return end
     -- v7.5: cancel all pending delayed threads
     if self._PendingDelays then
         for _, thread in ipairs(self._PendingDelays) do
