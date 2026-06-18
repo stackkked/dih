@@ -1664,21 +1664,15 @@ end
 local SafeDelay
 
 --[[
-    v7.5 LOADING INTRO — "Minimal Boot"
-    Design principles:
-    - Single centered card, perfectly aligned
-    - Brand name as hero element
-    - Thin gradient progress bar (single bar, not segments)
-    - Cycling status text below
-    - Everything fades in staggered, fades out together
-    - Total duration ~2.8s
+    v7.5 LOADING INTRO — "Unfold"
+    Card unfolds from a thin line → expands height → content reveals staggered.
+    On completion: content folds back → card collapses → overlay fades.
 ]]
 local function _PlayLoadingIntroImpl(self, config)
     config = config or {}
     local parent = config.Parent or self._ScreenGui
     if not parent then return 0 end
 
-    -- Cleanup previous
     if self._LoadingOverlayFrame and self._LoadingOverlayFrame.Parent then
         pcall(function() self._LoadingOverlayFrame:Destroy() end)
     end
@@ -1688,11 +1682,11 @@ local function _PlayLoadingIntroImpl(self, config)
     end
 
     local brandName = tostring(config.Title or "MIDNIGHT")
-    local holdTime = 2.2
-    local outTime = 0.35
+    local holdTime = 2.4
+    local outTime = 0.4
 
     -- ============================================================
-    -- OVERLAY — full screen, dark
+    -- OVERLAY
     -- ============================================================
     local overlay = Create("Frame", {
         Name = "LoadingOverlay",
@@ -1706,25 +1700,26 @@ local function _PlayLoadingIntroImpl(self, config)
     self._LoadingOverlayFrame = overlay
 
     -- ============================================================
-    -- CARD — 360×200, centered, rounded
+    -- CARD — starts as thin horizontal line, unfolds to full size
     -- ============================================================
-    local cardW, cardH = 360, 200
+    local cardW, cardH = 380, 220
+    local cardCenterY = 0.5
     local card = Create("Frame", {
         Name = "BootCard",
-        Size = UDim2.new(0, cardW, 0, cardH),
-        Position = UDim2.new(0.5, -cardW / 2, 0.5, -cardH / 2),
+        Size = UDim2.new(0, cardW, 0, 2),  -- Start as 2px line
+        Position = UDim2.new(0.5, -cardW / 2, cardCenterY, -1),  -- Centered on the line
         BackgroundColor3 = Theme.Surface1,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
+        ClipsDescendants = true,  -- Content clipped during unfold
         ZIndex = ZIndex.TOP + 1,
         Parent = overlay,
     })
     ApplyCorner(card, 14)
     local cardStroke = ApplyStroke(card, Theme.Border, 1, 1)
-    local cardScale = Create("UIScale", { Scale = 0.92, Parent = card })
 
-    -- Card shadow
-    Create("ImageLabel", {
+    -- Card shadow (appears during unfold)
+    local cardShadow = Create("ImageLabel", {
         Size = UDim2.new(1, 30, 1, 30),
         Position = UDim2.new(0, -15, 0, -15),
         BackgroundTransparency = 1,
@@ -1738,31 +1733,49 @@ local function _PlayLoadingIntroImpl(self, config)
     })
 
     -- ============================================================
-    -- BRAND TEXT — centered, Y=50, 28px
+    -- SCAN LINE — accent line that sweeps down during unfold
     -- ============================================================
+    local scanLine = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ZIndex = ZIndex.TOP + 5,
+        Parent = card,
+    })
+    Create("UIGradient", {
+        Color = ColorSequence.new(Theme.Accent, Theme.AccentGradient2 or Theme.Accent),
+        Transparency = NumberSequence.new(0.1, 0.3),
+        Parent = scanLine,
+    })
+
+    -- ============================================================
+    -- CONTENT — all positioned relative to final card size
+    -- Each element starts invisible + offset, reveals staggered
+    -- ============================================================
+
+    -- Brand text (Y: 45)
     local brandText = Create("TextLabel", {
         Text = brandName,
         Font = FontBold,
-        TextSize = 26,
+        TextSize = 28,
         TextColor3 = Theme.TextPrimary,
         TextTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Center,
         TextYAlignment = Enum.TextYAlignment.Center,
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0, 50),
+        Size = UDim2.new(1, 0, 0, 34),
+        Position = UDim2.new(0, 0, 0, 45),
         BackgroundTransparency = 1,
         ZIndex = ZIndex.TOP + 2,
         Parent = card,
     })
-    local brandScale = Create("UIScale", { Scale = 0.85, Parent = brandText })
 
-    -- ============================================================
-    -- ACCENT LINE — under brand, centered, grows from 0
-    -- ============================================================
+    -- Accent underline (Y: 85, grows from center)
     local accentLine = Create("Frame", {
         Size = UDim2.new(0, 0, 0, 2),
         AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 88),
+        Position = UDim2.new(0.5, 0, 0, 85),
         BackgroundColor3 = Theme.Accent,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -1776,10 +1789,8 @@ local function _PlayLoadingIntroImpl(self, config)
         Parent = accentLine,
     })
 
-    -- ============================================================
-    -- PROGRESS BAR — single thin bar, Y=120, width 240
-    -- ============================================================
-    local barW = 240
+    -- Progress bar track (Y: 120)
+    local barW = 260
     local barTrack = Create("Frame", {
         Size = UDim2.new(0, barW, 0, 3),
         AnchorPoint = Vector2.new(0.5, 0),
@@ -1802,9 +1813,7 @@ local function _PlayLoadingIntroImpl(self, config)
     })
     ApplyCorner(barFill, 2)
 
-    -- ============================================================
-    -- STATUS TEXT — Y=140, cycling
-    -- ============================================================
+    -- Status text (Y: 140)
     local statusText = Create("TextLabel", {
         Text = "Initializing...",
         Font = FontRegular,
@@ -1835,64 +1844,101 @@ local function _PlayLoadingIntroImpl(self, config)
     })
 
     -- ============================================================
-    -- ANIMATION SEQUENCE
+    -- ANIMATION: "UNFOLD" SEQUENCE
     -- ============================================================
 
-    -- Phase 1: Overlay + card appear (0.0 - 0.35s)
-    TweenObject(overlay, { BackgroundTransparency = 0.01 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    SafeDelay(0.05, function()
-        TweenObject(card, { BackgroundTransparency = 0 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(cardStroke, { Transparency = 0.15 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(cardScale, { Scale = 1 }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    -- Phase 1: Overlay fade in (0.0 - 0.25s)
+    TweenObject(overlay, { BackgroundTransparency = 0.01 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+    -- Phase 2: Card appears as thin line + scan line sweep (0.1 - 0.35s)
+    SafeDelay(0.1, function()
+        -- Card bg + stroke fade in (still 2px tall)
+        TweenObject(card, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(cardStroke, { Transparency = 0.15 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        -- Scan line visible at top
+        TweenObject(scanLine, { BackgroundTransparency = 0.1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 2: Brand text (0.15 - 0.5s)
-    SafeDelay(0.15, function()
-        TweenObject(brandText, { TextTransparency = 0 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(brandScale, { Scale = 1 }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    end)
-
-    -- Phase 3: Accent line grows (0.3 - 0.65s)
+    -- Phase 3: UNFOLD — card expands from 2px to full height (0.3 - 0.65s)
+    -- Scan line sweeps down as card unfolds
     SafeDelay(0.3, function()
-        TweenObject(accentLine, {
-            Size = UDim2.new(0, 120, 0, 2),
-            BackgroundTransparency = 0.1,
-        }, 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        -- Unfold height: 2px → 220px, reposition to stay centered
+        TweenObject(card, {
+            Size = UDim2.new(0, cardW, 0, cardH),
+            Position = UDim2.new(0.5, -cardW / 2, cardCenterY, -cardH / 2),
+        }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        -- Shadow appears during unfold
+        TweenObject(cardShadow, { ImageTransparency = 0.5 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        -- Scan line sweeps from top to bottom during unfold
+        TweenObject(scanLine, {
+            Position = UDim2.new(0, 0, 0, cardH - 2),
+            BackgroundTransparency = 1,
+        }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 4: Progress bar + status (0.45 - holdTime)
-    SafeDelay(0.45, function()
-        TweenObject(barTrack, { BackgroundTransparency = 0.3 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(statusText, { TextTransparency = 0 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(versionText, { TextTransparency = 0.4 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    -- Phase 4: Content reveals — staggered, each element slides up + fades in (0.6 - 1.2s)
+    SafeDelay(0.6, function()
+        -- Brand text: slides up from +10px
+        brandText.Position = UDim2.new(0, 0, 0, 55)
+        TweenObject(brandText, {
+            TextTransparency = 0,
+            Position = UDim2.new(0, 0, 0, 45),
+        }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    end)
 
-        -- Fill progress bar smoothly over remaining time
-        local fillDuration = holdTime - 0.6
+    SafeDelay(0.72, function()
+        -- Accent line grows from center
+        TweenObject(accentLine, {
+            Size = UDim2.new(0, 140, 0, 2),
+            BackgroundTransparency = 0.1,
+        }, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    end)
+
+    SafeDelay(0.85, function()
+        -- Progress bar track + fill start
+        TweenObject(barTrack, { BackgroundTransparency = 0.3 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        -- Fill progress bar over remaining time
+        local fillDuration = holdTime - 1.0
         TweenObject(barFill, {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 0,
         }, fillDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+    end)
+
+    SafeDelay(0.95, function()
+        -- Status text slides up from +5px
+        statusText.Position = UDim2.new(0, 0, 0, 145)
+        TweenObject(statusText, {
+            TextTransparency = 0,
+            Position = UDim2.new(0, 0, 0, 140),
+        }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        -- Version fades in
+        TweenObject(versionText, { TextTransparency = 0.4 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
         -- Cycle status text
         local messages = { "Initializing...", "Loading modules...", "Preparing interface..." }
-        SafeDelay(fillDuration / 3, function()
-            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            SafeDelay(0.12, function()
-                statusText.Text = messages[2]
-                TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        local cycleTime = (holdTime - 1.1) / 3
+        for i = 2, 3 do
+            SafeDelay(cycleTime * (i - 1), function()
+                if statusText and statusText.Parent then
+                    TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                    SafeDelay(0.12, function()
+                        if statusText and statusText.Parent then
+                            statusText.Text = messages[i]
+                            TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        end
+                    end)
+                end
             end)
-        end)
-        SafeDelay(fillDuration * 2 / 3, function()
-            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            SafeDelay(0.12, function()
-                statusText.Text = messages[3]
-                TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-            end)
-        end)
+        end
     end)
 
     -- ============================================================
-    -- COMPLETION
+    -- COMPLETION — "FOLD" SEQUENCE (reverse of unfold)
     -- ============================================================
     local finished = false
     local function finishIntro()
@@ -1902,33 +1948,71 @@ local function _PlayLoadingIntroImpl(self, config)
         -- Everything turns success green
         TweenObject(barFill, { BackgroundColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         TweenObject(accentLine, { BackgroundColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        -- Status → "Ready!"
         TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
         SafeDelay(0.12, function()
-            statusText.Text = "Ready!"
-            TweenObject(statusText, { TextTransparency = 0, TextColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            if statusText and statusText.Parent then
+                statusText.Text = "Ready!"
+                TweenObject(statusText, { TextTransparency = 0, TextColor3 = Theme.Success }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            end
         end)
 
-        -- Fade out everything after short hold
+        -- Phase: Content folds away (staggered, reverse order)
         SafeDelay(outTime, function()
             if not overlay or not overlay.Parent then return end
 
-            -- Content fade
-            TweenObject(brandText, { TextTransparency = 1 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(brandScale, { Scale = 0.92 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(accentLine, { BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2) }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(barTrack, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(barFill, { BackgroundTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(statusText, { TextTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(versionText, { TextTransparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            -- Version + status fade first
+            TweenObject(versionText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-            -- Card + overlay fade
-            TweenObject(cardStroke, { Transparency = 1 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(card, { BackgroundTransparency = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(cardScale, { Scale = 0.95 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-            TweenObject(overlay, { BackgroundTransparency = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            -- Progress bar fades
+            TweenObject(barFill, { BackgroundTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(barTrack, { BackgroundTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+            -- Accent line shrinks back to 0
+            TweenObject(accentLine, {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0, 0, 0, 2),
+            }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+            -- Brand text slides down + fades
+            SafeDelay(0.05, function()
+                TweenObject(brandText, {
+                    TextTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 55),
+                }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            end)
+
+            -- Card FOLDS back to thin line (reverse of unfold)
+            SafeDelay(0.15, function()
+                -- Scan line reappears at bottom, sweeps up
+                scanLine.Position = UDim2.new(0, 0, 0, cardH - 2)
+                scanLine.BackgroundTransparency = 0.1
+                TweenObject(scanLine, {
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+                -- Card collapses height: 220px → 2px
+                TweenObject(card, {
+                    Size = UDim2.new(0, cardW, 0, 2),
+                    Position = UDim2.new(0.5, -cardW / 2, cardCenterY, -1),
+                }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+
+                -- Shadow fades
+                TweenObject(cardShadow, { ImageTransparency = 1 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            end)
+
+            -- Card line fades + overlay fades
+            SafeDelay(0.35, function()
+                TweenObject(card, { BackgroundTransparency = 1 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                TweenObject(cardStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                TweenObject(overlay, { BackgroundTransparency = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            end)
 
             -- Cleanup
-            SafeDelay(0.25, function()
+            SafeDelay(0.6, function()
                 if overlay and overlay.Parent then
                     pcall(function() overlay:Destroy() end)
                 end
@@ -1944,7 +2028,7 @@ local function _PlayLoadingIntroImpl(self, config)
 
     self._LoadingOverlayStop = finishIntro
     SafeDelay(holdTime, finishIntro)
-    return holdTime + outTime + 0.25
+    return holdTime + outTime + 0.6
 end
 
 local function StylePanelShell(frame, radius, strokeColor, strokeTransparency)
