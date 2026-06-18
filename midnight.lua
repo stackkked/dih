@@ -1844,92 +1844,88 @@ local function _PlayLoadingIntroImpl(self, config)
     })
 
     -- ============================================================
-    -- ANIMATION: "UNFOLD" SEQUENCE
+    -- ANIMATION: "UNFOLD" SEQUENCE — smooth, unhurried
     -- ============================================================
 
-    -- Phase 1: Overlay fade in (0.0 - 0.25s)
-    TweenObject(overlay, { BackgroundTransparency = 0.01 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    -- Phase 1: Overlay fade in — slow, atmospheric (0.0 - 0.5s)
+    TweenObject(overlay, { BackgroundTransparency = 0.01 }, 0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-    -- Phase 2: Card appears as thin line + scan line sweep (0.1 - 0.35s)
-    SafeDelay(0.1, function()
-        -- Card bg + stroke fade in (still 2px tall)
-        TweenObject(card, { BackgroundTransparency = 0 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        TweenObject(cardStroke, { Transparency = 0.15 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-        -- Scan line visible at top
-        TweenObject(scanLine, { BackgroundTransparency = 0.1 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    -- Phase 2: Card thin line appears — gentle fade (0.2 - 0.6s)
+    SafeDelay(0.2, function()
+        TweenObject(card, { BackgroundTransparency = 0 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(cardStroke, { Transparency = 0.15 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        -- Scan line fades in gently
+        TweenObject(scanLine, { BackgroundTransparency = 0.1 }, 0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
     end)
 
-    -- Phase 3: UNFOLD — card expands from 2px to full height (0.3 - 0.65s)
-    -- Scan line sweeps down as card unfolds
-    SafeDelay(0.3, function()
-        -- Unfold height: 2px → 220px, reposition to stay centered
+    -- Phase 3: UNFOLD — card expands slowly, smoothly (0.5 - 1.0s)
+    SafeDelay(0.5, function()
         TweenObject(card, {
             Size = UDim2.new(0, cardW, 0, cardH),
             Position = UDim2.new(0.5, -cardW / 2, cardCenterY, -cardH / 2),
-        }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-        -- Shadow appears during unfold
-        TweenObject(cardShadow, { ImageTransparency = 0.5 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(cardShadow, { ImageTransparency = 0.5 }, 0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-        -- Scan line sweeps from top to bottom during unfold
+        -- Scan line sweeps down — slow, smooth
         TweenObject(scanLine, {
             Position = UDim2.new(0, 0, 0, cardH - 2),
             BackgroundTransparency = 1,
-        }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        }, 0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
     end)
 
-    -- Phase 4: Content reveals — staggered, each element slides up + fades in (0.6 - 1.2s)
-    SafeDelay(0.6, function()
-        -- Brand text: slides up from +10px
-        brandText.Position = UDim2.new(0, 0, 0, 55)
+    -- Phase 4: Content reveals — more stagger, slower fades (0.9 - 1.8s)
+    SafeDelay(0.9, function()
+        -- Brand text: slides up gently from +12px
+        brandText.Position = UDim2.new(0, 0, 0, 57)
         TweenObject(brandText, {
             TextTransparency = 0,
             Position = UDim2.new(0, 0, 0, 45),
-        }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        }, 0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     end)
 
-    SafeDelay(0.72, function()
-        -- Accent line grows from center
+    SafeDelay(1.1, function()
+        -- Accent line grows — slow spring
         TweenObject(accentLine, {
             Size = UDim2.new(0, 140, 0, 2),
             BackgroundTransparency = 0.1,
-        }, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        }, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end)
 
-    SafeDelay(0.85, function()
-        -- Progress bar track + fill start
-        TweenObject(barTrack, { BackgroundTransparency = 0.3 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    SafeDelay(1.25, function()
+        -- Progress bar track appears
+        TweenObject(barTrack, { BackgroundTransparency = 0.3 }, 0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-        -- Fill progress bar over remaining time
-        local fillDuration = holdTime - 1.0
+        -- Fill progress bar — smooth Sine over remaining time
+        local fillDuration = holdTime - 1.4
         TweenObject(barFill, {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 0,
-        }, fillDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        }, fillDuration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
     end)
 
-    SafeDelay(0.95, function()
-        -- Status text slides up from +5px
-        statusText.Position = UDim2.new(0, 0, 0, 145)
+    SafeDelay(1.4, function()
+        -- Status text slides up gently from +8px
+        statusText.Position = UDim2.new(0, 0, 0, 148)
         TweenObject(statusText, {
             TextTransparency = 0,
             Position = UDim2.new(0, 0, 0, 140),
-        }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
         -- Version fades in
-        TweenObject(versionText, { TextTransparency = 0.4 }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        TweenObject(versionText, { TextTransparency = 0.4 }, 0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-        -- Cycle status text
+        -- Cycle status text — smoother transitions
         local messages = { "Initializing...", "Loading modules...", "Preparing interface..." }
-        local cycleTime = (holdTime - 1.1) / 3
+        local cycleTime = (holdTime - 1.5) / 3
         for i = 2, 3 do
             SafeDelay(cycleTime * (i - 1), function()
                 if statusText and statusText.Parent then
-                    TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                    SafeDelay(0.12, function()
+                    TweenObject(statusText, { TextTransparency = 1 }, 0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+                    SafeDelay(0.14, function()
                         if statusText and statusText.Parent then
                             statusText.Text = messages[i]
-                            TweenObject(statusText, { TextTransparency = 0 }, 0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                            TweenObject(statusText, { TextTransparency = 0 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
                         end
                     end)
                 end
@@ -1958,61 +1954,61 @@ local function _PlayLoadingIntroImpl(self, config)
             end
         end)
 
-        -- Phase: Content folds away (staggered, reverse order)
+        -- Phase: Content folds away — smooth, staggered, reverse order
         SafeDelay(outTime, function()
             if not overlay or not overlay.Parent then return end
 
-            -- Version + status fade first
-            TweenObject(versionText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(statusText, { TextTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            -- Version + status fade — gentle
+            TweenObject(versionText, { TextTransparency = 1 }, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+            TweenObject(statusText, { TextTransparency = 1 }, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 
             -- Progress bar fades
-            TweenObject(barFill, { BackgroundTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            TweenObject(barTrack, { BackgroundTransparency = 1 }, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            TweenObject(barFill, { BackgroundTransparency = 1 }, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+            TweenObject(barTrack, { BackgroundTransparency = 1 }, 0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 
-            -- Accent line shrinks back to 0
+            -- Accent line shrinks back — smooth
             TweenObject(accentLine, {
                 BackgroundTransparency = 1,
                 Size = UDim2.new(0, 0, 0, 2),
-            }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            }, 0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
 
-            -- Brand text slides down + fades
-            SafeDelay(0.05, function()
+            -- Brand text slides down + fades — gentle
+            SafeDelay(0.08, function()
                 TweenObject(brandText, {
                     TextTransparency = 1,
-                    Position = UDim2.new(0, 0, 0, 55),
-                }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                    Position = UDim2.new(0, 0, 0, 57),
+                }, 0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
             end)
 
-            -- Card FOLDS back to thin line (reverse of unfold)
-            SafeDelay(0.15, function()
-                -- Scan line reappears at bottom, sweeps up
+            -- Card FOLDS back — slow, smooth, mirror of unfold
+            SafeDelay(0.2, function()
+                -- Scan line reappears at bottom, sweeps up — slow Sine
                 scanLine.Position = UDim2.new(0, 0, 0, cardH - 2)
                 scanLine.BackgroundTransparency = 0.1
                 TweenObject(scanLine, {
                     Position = UDim2.new(0, 0, 0, 0),
                     BackgroundTransparency = 1,
-                }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                }, 0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
-                -- Card collapses height: 220px → 2px
+                -- Card collapses height — slow Quint In
                 TweenObject(card, {
                     Size = UDim2.new(0, cardW, 0, 2),
                     Position = UDim2.new(0.5, -cardW / 2, cardCenterY, -1),
-                }, 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                }, 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
                 -- Shadow fades
-                TweenObject(cardShadow, { ImageTransparency = 1 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                TweenObject(cardShadow, { ImageTransparency = 1 }, 0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
             end)
 
-            -- Card line fades + overlay fades
-            SafeDelay(0.35, function()
-                TweenObject(card, { BackgroundTransparency = 1 }, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                TweenObject(cardStroke, { Transparency = 1 }, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-                TweenObject(overlay, { BackgroundTransparency = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            -- Card line fades + overlay fades — slow, atmospheric
+            SafeDelay(0.55, function()
+                TweenObject(card, { BackgroundTransparency = 1 }, 0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+                TweenObject(cardStroke, { Transparency = 1 }, 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+                TweenObject(overlay, { BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
             end)
 
             -- Cleanup
-            SafeDelay(0.6, function()
+            SafeDelay(0.9, function()
                 if overlay and overlay.Parent then
                     pcall(function() overlay:Destroy() end)
                 end
@@ -2028,7 +2024,7 @@ local function _PlayLoadingIntroImpl(self, config)
 
     self._LoadingOverlayStop = finishIntro
     SafeDelay(holdTime, finishIntro)
-    return holdTime + outTime + 0.6
+    return holdTime + outTime + 0.9
 end
 
 local function StylePanelShell(frame, radius, strokeColor, strokeTransparency)
