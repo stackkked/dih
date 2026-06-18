@@ -782,16 +782,21 @@ local function ApplyPadding(parent, top, bottom, left, right)
     })
 end
 
--- #2 OPT: cancel only overlapping property tweens on the same instance
--- so background/text/scale can animate together without fighting each other
-local _ActiveTweens = setmetatable({}, {__mode="k"})  -- weak keys: dead instances are GC'd
+-- ============================================================
+-- v7.5 REFACTOR: Clean, fast, leak-proof tween system
+-- ============================================================
+-- One active tween per instance (auto-cancel previous on new tween).
+-- Weak-key map: dead instances are GC'd automatically.
+-- TweenInfo cache: avoids allocations on hot path.
+-- Auto-destroy: every tween is :Destroy()'d on Completed.
+
+local _ActiveTweens = setmetatable({}, {__mode = "k"})
 local _TweenInfoCache = {}
+
 local function GetTweenInfo(duration, style, dir)
-    local d = duration or 0.3
+    local d = duration or 0.2
     local s = (style or Enum.EasingStyle.Quad).Value
-    local r = (dir   or Enum.EasingDirection.Out).Value
-    -- Numeric key: avoid string alloc on every call
-    -- d packed to int (ms), s and r are small ints from .Value
+    local r = (dir or Enum.EasingDirection.Out).Value
     local key = math.floor(d * 1000) * 10000 + s * 100 + r
     local ti = _TweenInfoCache[key]
     if not ti then
@@ -801,70 +806,46 @@ local function GetTweenInfo(duration, style, dir)
     return ti
 end
 
-local function CleanupTweenEntry(inst, tweenEntry)
-    local instTweens = _ActiveTweens[inst]
-    if not instTweens or not tweenEntry then return end
-    for prop in pairs(tweenEntry._Props or {}) do
-        if instTweens[prop] == tweenEntry then
-            instTweens[prop] = nil
-        end
-    end
-    if next(instTweens) == nil then
-        _ActiveTweens[inst] = nil
-    end
-end
-
 local function TweenObject(inst, props, duration, style, dir)
     if not inst or not inst.Parent then return nil end
     if not props or next(props) == nil then return nil end
+
+    -- Filter: only tween properties that actually differ
     local tweenProps = {}
-    local needsTween = false
+    local hasChanges = false
     for prop, targetValue in pairs(props) do
-        local ok, currentValue = pcall(function()
-            return inst[prop]
-        end)
+        local ok, currentValue = pcall(function() return inst[prop] end)
         if ok and currentValue ~= targetValue then
             tweenProps[prop] = targetValue
-            needsTween = true
+            hasChanges = true
         end
     end
-    if not needsTween then return nil end
-    local instTweens = _ActiveTweens[inst]
-    if not instTweens then
-        instTweens = {}
-        _ActiveTweens[inst] = instTweens
+    if not hasChanges then return nil end
+
+    -- Cancel previous tween on this instance (prevents overlap / visual glitches)
+    local prev = _ActiveTweens[inst]
+    if prev then
+        pcall(function() prev:Cancel() end)
+        _ActiveTweens[inst] = nil
     end
-    local canceled = {}
-    for prop in pairs(tweenProps) do
-        local prev = instTweens[prop]
-        if prev and prev._Tween and not canceled[prev] then
-            canceled[prev] = true
-            prev._Tween:Cancel()
-            CleanupTweenEntry(inst, prev)
+
+    -- Create and play new tween
+    local ti = GetTweenInfo(duration, style, dir)
+    local tween = TweenService:Create(inst, ti, tweenProps)
+    _ActiveTweens[inst] = tween
+
+    -- Auto-cleanup on completion: remove from map + destroy tween
+    local conn
+    conn = tween.Completed:Connect(function()
+        if _ActiveTweens[inst] == tween then
+            _ActiveTweens[inst] = nil
         end
-    end
-    local t = TweenService:Create(inst, GetTweenInfo(duration, style, dir), tweenProps)
-    if t then
-        local tweenEntry = {_Tween = t, _Props = {}}
-        for prop in pairs(tweenProps) do
-            tweenEntry._Props[prop] = true
-            instTweens[prop] = tweenEntry
-        end
-        t:Play()
-        if t.Completed.Once then
-            t.Completed:Once(function()
-                CleanupTweenEntry(inst, tweenEntry)
-            end)
-        else
-            local _c
-            _c = t.Completed:Connect(function()
-                CleanupTweenEntry(inst, tweenEntry)
-                _c:Disconnect()
-            end)
-        end
-        return t
-    end
-    return nil
+        pcall(function() tween:Destroy() end)
+        if conn then pcall(function() conn:Disconnect() end) end
+    end)
+
+    tween:Play()
+    return tween
 end
 
 -- Gradient accent line (dark edges в†’ bright center)
