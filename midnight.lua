@@ -381,18 +381,18 @@ local Theme = {
     -- being semi-transparent over the underlying black + sapphire accents.
     -- ============================================================
 
-    -- CORE BACKGROUNDS — all matte dark grey #1C1C1E
-    WindowBg       = Color3.fromRGB(28, 28, 30),
-    SidebarBg      = Color3.fromRGB(28, 28, 30),
-    ContentBg      = Color3.fromRGB(28, 28, 30),
-    TabBg          = Color3.fromRGB(28, 28, 30),
-    TabHoverBg     = Color3.fromRGB(28, 28, 30),
-    TabActiveBg    = Color3.fromRGB(28, 28, 30),
-    ItemBg         = Color3.fromRGB(28, 28, 30),
-    ItemHoverBg    = Color3.fromRGB(28, 28, 30),
-    InputBg        = Color3.fromRGB(28, 28, 30),
-    DropdownBg     = Color3.fromRGB(28, 28, 30),
-    TitleBarBg     = Color3.fromRGB(28, 28, 30),
+    -- CORE BACKGROUNDS — all matte dark #121212
+    WindowBg       = Color3.fromRGB(18, 18, 18),
+    SidebarBg      = Color3.fromRGB(18, 18, 18),
+    ContentBg      = Color3.fromRGB(18, 18, 18),
+    TabBg          = Color3.fromRGB(18, 18, 18),
+    TabHoverBg     = Color3.fromRGB(18, 18, 18),
+    TabActiveBg    = Color3.fromRGB(18, 18, 18),
+    ItemBg         = Color3.fromRGB(18, 18, 18),
+    ItemHoverBg    = Color3.fromRGB(18, 18, 18),
+    InputBg        = Color3.fromRGB(18, 18, 18),
+    DropdownBg     = Color3.fromRGB(18, 18, 18),
+    TitleBarBg     = Color3.fromRGB(18, 18, 18),
 
     -- ACCENT — Sapphire blue (#3B82F6 family) — the ONLY non-black/non-white color
     Accent         = Color3.fromRGB(59, 130, 246),  -- #3B82F6 main sapphire
@@ -410,17 +410,17 @@ local Theme = {
 
     -- BORDERS — sapphire-tinted for visibility on pure black
     -- (pure black borders would be invisible on pure black bg)
-    Border         = Color3.fromRGB(59, 130, 246),  -- sapphire border (subtle due to transparency)
-    BorderLight    = Color3.fromRGB(96, 165, 250),  -- lighter sapphire on hover
-    BorderAccent   = Color3.fromRGB(59, 130, 246),  -- sapphire border on focus
-    BorderSoft     = Color3.fromRGB(59, 130, 246),  -- sapphire soft divider
-    BorderStrong   = Color3.fromRGB(147, 197, 253), -- strong sapphire separator
+    Border         = Color3.fromRGB(18, 18, 18),  -- invisible border (matches bg, no stroke)
+    BorderLight    = Color3.fromRGB(18, 18, 18),  -- invisible border
+    BorderAccent   = Color3.fromRGB(18, 18, 18),  -- invisible border
+    BorderSoft     = Color3.fromRGB(18, 18, 18),  -- invisible border
+    BorderStrong   = Color3.fromRGB(18, 18, 18),  -- invisible border
 
     -- TOGGLE / SLIDER — sapphire on pure black
     ToggleOn       = Color3.fromRGB(59, 130, 246),  -- sapphire when ON
-    ToggleOff      = Color3.fromRGB(28, 28, 30),       -- matte dark grey when OFF
+    ToggleOff      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 when OFF
     ToggleKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
-    SliderTrack    = Color3.fromRGB(28, 28, 30),       -- matte dark grey track
+    SliderTrack    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 track
     SliderFill     = Color3.fromRGB(59, 130, 246),  -- sapphire fill
     SliderKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
 
@@ -431,39 +431,39 @@ local Theme = {
     Info           = Color3.fromRGB(59, 130, 246),  -- sapphire = info
 
     -- UTILITY BACKGROUNDS — pure black
-    WatermarkBg    = Color3.fromRGB(28, 28, 30),
-    KeybindBg      = Color3.fromRGB(28, 28, 30),
-    CloseNormal    = Color3.fromRGB(28, 28, 30),       -- matte dark grey, becomes red on hover
+    WatermarkBg    = Color3.fromRGB(18, 18, 18),
+    KeybindBg      = Color3.fromRGB(18, 18, 18),
+    CloseNormal    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes red on hover
     CloseHover     = Color3.fromRGB(220, 70, 70),
-    MinNormal      = Color3.fromRGB(28, 28, 30),       -- matte dark grey, becomes sapphire on hover
+    MinNormal      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes sapphire on hover
     MinHover       = Color3.fromRGB(59, 130, 246),
-    ScrollBarColor = Color3.fromRGB(59, 130, 246),  -- sapphire scrollbar on matte dark grey
-    ScrollBarBg    = Color3.fromRGB(28, 28, 30),
-    Shadow         = Color3.fromRGB(28, 28, 30),
-    SeparatorBg    = Color3.fromRGB(59, 130, 246),  -- sapphire separator
-    InputHoverBg   = Color3.fromRGB(28, 28, 30),       -- matte dark grey (no lift on hover)
-    OverlayBg      = Color3.fromRGB(28, 28, 30),
-    OverlayCard    = Color3.fromRGB(28, 28, 30),
-    OverlayStroke  = Color3.fromRGB(59, 130, 246),  -- sapphire stroke on overlays
-    UtilityBg      = Color3.fromRGB(28, 28, 30),
-    UtilityHeader  = Color3.fromRGB(28, 28, 30),
+    ScrollBarColor = Color3.fromRGB(80, 80, 84),  -- subtle grey scrollbar (visible on #121212)
+    ScrollBarBg    = Color3.fromRGB(18, 18, 18),
+    Shadow         = Color3.fromRGB(18, 18, 18),
+    SeparatorBg    = Color3.fromRGB(18, 18, 18),  -- invisible separator
+    InputHoverBg   = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 (no lift on hover)
+    OverlayBg      = Color3.fromRGB(18, 18, 18),
+    OverlayCard    = Color3.fromRGB(18, 18, 18),
+    OverlayStroke  = Color3.fromRGB(18, 18, 18),  -- invisible overlay stroke
+    UtilityBg      = Color3.fromRGB(18, 18, 18),
+    UtilityHeader  = Color3.fromRGB(18, 18, 18),
     UtilityAccent  = Color3.fromRGB(59, 130, 246),
 
     -- SURFACE LAYERS — ALL pure black (hierarchy via sapphire strokes only)
-    Surface0       = Color3.fromRGB(28, 28, 30),
-    Surface1       = Color3.fromRGB(28, 28, 30),
-    Surface2       = Color3.fromRGB(28, 28, 30),
-    Surface3       = Color3.fromRGB(28, 28, 30),
-    Surface4       = Color3.fromRGB(28, 28, 30),
-    Surface5       = Color3.fromRGB(28, 28, 30),
+    Surface0       = Color3.fromRGB(18, 18, 18),
+    Surface1       = Color3.fromRGB(18, 18, 18),
+    Surface2       = Color3.fromRGB(18, 18, 18),
+    Surface3       = Color3.fromRGB(18, 18, 18),
+    Surface4       = Color3.fromRGB(18, 18, 18),
+    Surface5       = Color3.fromRGB(18, 18, 18),
 
     -- ACCENT GRADIENTS — sapphire variants
     AccentGlow     = Color3.fromRGB(59, 130, 246),
     AccentGradient1 = Color3.fromRGB(59, 130, 246),  -- sapphire
     AccentGradient2 = Color3.fromRGB(30, 64, 175),   -- deep sapphire
     AccentGradient3 = Color3.fromRGB(96, 165, 250),  -- light sapphire
-    GradientStart  = Color3.fromRGB(28, 28, 30),        -- matte dark grey gradient start
-    GradientEnd    = Color3.fromRGB(28, 28, 30),        -- matte dark grey gradient end
+    GradientStart  = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient start
+    GradientEnd    = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient end
 
     -- OVERLAYS / EFFECTS
     HoverOverlay   = Color3.fromRGB(59, 130, 246),  -- sapphire tint on hover (4% opacity)
@@ -474,11 +474,11 @@ local Theme = {
     FocusRingT     = 0.55,
 
     -- SHADOWS — pure black (no visible shadow on pure black bg, just depth)
-    Shadow0        = Color3.fromRGB(28, 28, 30),
+    Shadow0        = Color3.fromRGB(18, 18, 18),
     Shadow0T       = 0.40,
-    Shadow1        = Color3.fromRGB(28, 28, 30),
+    Shadow1        = Color3.fromRGB(18, 18, 18),
     Shadow1T       = 0.60,
-    Shadow2        = Color3.fromRGB(28, 28, 30),
+    Shadow2        = Color3.fromRGB(18, 18, 18),
     Shadow2T       = 0.75,
 
     -- HIGHLIGHTS — white top edge
@@ -491,8 +491,8 @@ local Theme = {
     BadgeText      = Color3.fromRGB(255, 255, 255), -- pure white badge text
 
     -- DIVIDERS — sapphire (visible against pure black)
-    Divider        = Color3.fromRGB(59, 130, 246),
-    DividerSoft    = Color3.fromRGB(59, 130, 246),
+    Divider        = Color3.fromRGB(18, 18, 18),
+    DividerSoft    = Color3.fromRGB(18, 18, 18),
 
     -- GLOWS — sapphire accent
     Glow0          = Color3.fromRGB(59, 130, 246),
@@ -7420,8 +7420,9 @@ function MIDNIGHT:MakeWindow(config)
                     end
                 end
                 if t._GlowStroke then
+                    -- v8.0: no glow stroke on active tab (always transparent)
                     TweenObject(t._GlowStroke, {
-                        Transparency = active and 0.72 or 1,
+                        Transparency = 1,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
             end
@@ -7466,7 +7467,8 @@ function MIDNIGHT:MakeWindow(config)
             btn.BackgroundColor3 = Theme.TabActiveBg
             TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
-            if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
+            -- v8.0: no glow stroke on active tab (removed per "no borders" request)
+            -- if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
             self._ActiveTab=td
         end
 
@@ -8066,8 +8068,8 @@ function MIDNIGHT:MakeWindow(config)
             -- v7.4: solid color fill (no gradient — was looking washed out)
             local k = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(r0,-7,0.5,-7),BackgroundColor3=Theme.SliderKnob,BorderSizePixel=0,Parent=track})
             ApplyCorner(k,7)
-            -- knob border (subtle dark ring)
-            Create("UIStroke",{Color=Theme.Accent,Thickness=1.5,Transparency=0.0,Parent=k})
+            -- v8.0: knob has NO stroke (pure white circle on sapphire fill)
+            -- (was: UIStroke{Color=Theme.Accent, Thickness=1.5} — removed per "no borders" request)
             -- v7.4: glow around slider knob (only visible while dragging)
             local sliderGlow = ApplyGlow(k, Theme.Accent, 0.7)
             if sliderGlow then sliderGlow.ImageTransparency = 1 end
