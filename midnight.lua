@@ -482,14 +482,38 @@ local Theme = {
 --// To revert to legacy Enum.Font: MIDNIGHT:SetFont({Body = Enum.Font.GothamSemibold, Bold = Enum.Font.GothamBold, Regular = Enum.Font.Gotham})
 local _GothamFamily = "rbxasset://fonts/families/GothamSSm.json"
 local function _SafeFont(family, weight, fallbackEnum)
-    local ok, f = pcall(function() return Font.new(family, weight) end)
+    -- Try Font.new with the requested weight. If the executor doesn't support
+    -- Font.new at all OR doesn't expose the requested FontWeight enum item
+    -- (weight will be nil in that case), fall back to the legacy Enum.Font value.
+    -- Pass weight only if it's a valid EnumItem; Font.new(nil) crashes on some clients.
+    local ok, f
+    if weight ~= nil then
+        ok, f = pcall(function() return Font.new(family, weight) end)
+    else
+        -- weight unavailable on this executor — skip Font.new entirely,
+        -- go straight to legacy Enum.Font fallback.
+        ok = false
+    end
     if ok and f then return f end
     return fallbackEnum or Enum.Font.GothamBold
 end
 
-local Font        = _SafeFont(_GothamFamily, Enum.FontWeight.Bold,       Enum.Font.GothamBold)      -- main body
-local FontBold    = _SafeFont(_GothamFamily, Enum.FontWeight.ExtraBold,  Enum.Font.GothamBold)      -- headings (ExtraBold falls back to Bold if unavailable)
-local FontRegular = _SafeFont(_GothamFamily, Enum.FontWeight.SemiBold,   Enum.Font.GothamSemibold)  -- meta / fine print
+-- Resolve FontWeight enum items safely. Some executors don't expose all
+-- FontWeight values (e.g. Heavy/Black). Wrap in pcall and fall back to Bold.
+-- If even Bold is missing, fall back to nil (Font.new will use default weight).
+local function _ResolveWeight(weightName)
+    local ok, w = pcall(function() return Enum.FontWeight[weightName] end)
+    if ok and w then return w end
+    return nil  -- let Font.new use its own default
+end
+
+local _W_Bold       = _ResolveWeight("Bold")
+local _W_ExtraBold  = _ResolveWeight("ExtraBold")  -- may be nil if executor doesn't expose it
+local _W_SemiBold   = _ResolveWeight("SemiBold")   -- may be nil if executor doesn't expose it
+
+local Font        = _SafeFont(_GothamFamily, _W_Bold,       Enum.Font.GothamBold)      -- main body
+local FontBold    = _SafeFont(_GothamFamily, _W_ExtraBold,  Enum.Font.GothamBold)      -- headings (ExtraBold falls back to Bold if unavailable)
+local FontRegular = _SafeFont(_GothamFamily, _W_SemiBold,   Enum.Font.GothamSemibold)  -- meta / fine print
 
 local CompactStyle = {
     WindowRadius = 8,
@@ -751,18 +775,33 @@ local function Create(className, props, children)
                 -- (modern Roblox client supports it). This pcall is cheap.
                 local ok = pcall(function() inst.Font = f end)
                 if ok then return f end
-                -- Fallback: derive Enum.Font from FontWeight
-                local w = f.Weight
-                if w == Enum.FontWeight.Bold then
-                    return Enum.Font.GothamBold
-                elseif w == Enum.FontWeight.ExtraBold or w == Enum.FontWeight.Heavy or w == Enum.FontWeight.Black then
-                    return Enum.Font.GothamBold  -- GothamBlack is deprecated; Bold is closest
-                elseif w == Enum.FontWeight.SemiBold or w == Enum.FontWeight.Medium then
-                    return Enum.Font.GothamSemibold
-                elseif w == Enum.FontWeight.ExtraLight or w == Enum.FontWeight.Thin or w == Enum.FontWeight.Light then
-                    return Enum.Font.Gotham  -- lightest available Gotham
+                -- Fallback: derive Enum.Font from FontWeight.
+                -- Use the numeric weight value (0-900) instead of comparing
+                -- enum items directly — some executors don't expose all
+                -- FontWeight enum items (e.g. missing Black/Heavy).
+                local w
+                pcall(function() w = f.Weight end)
+                -- Extract numeric value safely. Standard Roblox FontWeight values:
+                --   Thin=100, ExtraLight=200, Light=300, Regular=400, Medium=500,
+                --   SemiBold=600, Bold=700, ExtraBold=800, Heavy=900
+                local wNum = 700  -- default Bold
+                pcall(function()
+                    if w and type(w) == "EnumItem" and type(w.Value) == "number" then
+                        wNum = w.Value
+                    end
+                end)
+                if wNum >= 750 then
+                    return Enum.Font.GothamBold  -- ExtraBold(800), Heavy(900) -> GothamBold (GothamBlack deprecated)
+                elseif wNum >= 650 then
+                    return Enum.Font.GothamBold  -- Bold(700) -> GothamBold
+                elseif wNum >= 550 then
+                    return Enum.Font.GothamSemibold  -- SemiBold(600) -> GothamSemibold
+                elseif wNum >= 450 then
+                    return Enum.Font.GothamSemibold  -- Medium(500) -> GothamSemibold (closest available)
+                elseif wNum >= 1 then
+                    return Enum.Font.Gotham  -- Light/ExtraLight/Thin/Regular -> Gotham (lightest available)
                 else
-                    return Enum.Font.GothamBold  -- Regular / default -> Bold (matches our v7.6 default)
+                    return Enum.Font.GothamBold  -- fallback default
                 end
             end
             for k, v in pairs(props) do
