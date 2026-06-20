@@ -557,25 +557,27 @@ local CompactStyle = {
     WidgetRadius = 5,
     InputRadius = 4,
     BadgeRadius = 4,
-    -- v8.1: landscape layout — wide window, narrow sidebar with 60x60 tiles
-    WindowWidth = 900,
-    WindowHeight = 500,
+    -- v8.2: more square window (was 900x500 landscape, now 800x600 squarish per reference)
+    WindowWidth = 800,
+    WindowHeight = 600,
     TitleBarHeight = 36,
     CollapsedWindowHeight = 36,
-    SidebarWidth = 80,            -- v8.1: was 122 — narrow vertical sidebar
+    SidebarWidth = 80,
     SidebarFooterHeight = 24,
-    SidebarTileSize = 60,         -- v8.1: square tile for sidebar buttons (icon+text)
-    SidebarTileIconSize = 22,     -- v8.1: bigger icon in tile
-    SidebarTileTextSize = 9,      -- v8.1: tiny label below icon
+    SidebarTileSize = 60,
+    SidebarTileIconSize = 22,
+    SidebarTileTextSize = 9,
     SidebarPadding = 6,
-    TabHeight = 28,               -- legacy, kept for backward compat (unused in v8.1)
+    TabHeight = 28,
     TabIconSize = 14,
     TabTextSize = 11,
-    CategoryBarHeight = 36,       -- v8.1: top pill-tabs bar inside content area
+    CategoryBarHeight = 36,
     CategoryPillHeight = 26,
+    CategoryPillRadius = 4,        -- v8.2: rectangular pills (was pillH/2 = round)
     CategoryPillPaddingX = 10,
     CategoryPillGap = 6,
     CategoryTextSize = 11,
+    DividerThickness = 1,          -- v8.2: thin sapphire separators between sections
     SectionHeight = 24,
     SectionTextSize = 10,
     SectionGap = 4,
@@ -599,8 +601,8 @@ local CompactStyle = {
 
 local DensityStyles = {
     Compact = {
-        WindowWidth = 900,
-        WindowHeight = 500,
+        WindowWidth = 800,
+        WindowHeight = 600,
         TitleBarHeight = 36,
         CollapsedWindowHeight = 36,
         SidebarWidth = 80,
@@ -614,9 +616,11 @@ local DensityStyles = {
         TabTextSize = 11,
         CategoryBarHeight = 36,
         CategoryPillHeight = 26,
+        CategoryPillRadius = 4,
         CategoryPillPaddingX = 10,
         CategoryPillGap = 6,
         CategoryTextSize = 11,
+        DividerThickness = 1,
         SectionHeight = 24,
         SectionTextSize = 10,
         SectionGap = 4,
@@ -638,8 +642,8 @@ local DensityStyles = {
         NotificationCompact = true,
     },
     Readable = {
-        WindowWidth = 1000,
-        WindowHeight = 540,
+        WindowWidth = 900,
+        WindowHeight = 660,
         TitleBarHeight = 38,
         CollapsedWindowHeight = 38,
         SidebarWidth = 88,
@@ -653,9 +657,11 @@ local DensityStyles = {
         TabTextSize = 12,
         CategoryBarHeight = 40,
         CategoryPillHeight = 30,
+        CategoryPillRadius = 5,
         CategoryPillPaddingX = 12,
         CategoryPillGap = 7,
         CategoryTextSize = 12,
+        DividerThickness = 1,
         SectionHeight = 26,
         SectionTextSize = 11,
         SectionGap = 5,
@@ -677,8 +683,8 @@ local DensityStyles = {
         NotificationCompact = false,
     },
     Streamer = {
-        WindowWidth = 1100,
-        WindowHeight = 580,
+        WindowWidth = 1000,
+        WindowHeight = 720,
         TitleBarHeight = 40,
         CollapsedWindowHeight = 40,
         SidebarWidth = 96,
@@ -692,9 +698,11 @@ local DensityStyles = {
         TabTextSize = 13,
         CategoryBarHeight = 44,
         CategoryPillHeight = 32,
+        CategoryPillRadius = 6,
         CategoryPillPaddingX = 14,
         CategoryPillGap = 8,
         CategoryTextSize = 13,
+        DividerThickness = 1,
         SectionHeight = 28,
         SectionTextSize = 12,
         SectionGap = 6,
@@ -7015,7 +7023,14 @@ function MIDNIGHT:MakeWindow(config)
         Name="Sidebar",Size=UDim2.new(0,sidebarW,1,-footerH),
         BackgroundColor3=Theme.Surface1,BorderSizePixel=0,Parent=body,
     })
-    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=sidebar})
+    -- v8.2: thin sapphire divider between sidebar and content (1px, ~30% opacity)
+    local sidebarDivider = Create("Frame",{
+        Size=UDim2.new(0,CompactStyle.DividerThickness,1,0),
+        Position=UDim2.new(1,-CompactStyle.DividerThickness,0,0),
+        BackgroundColor3=Theme.Accent,
+        BackgroundTransparency=0.70,  -- 30% visible sapphire
+        BorderSizePixel=0,Parent=sidebar,
+    })
 
     local tabList = Create("ScrollingFrame",{
         Name="TabList",Size=UDim2.new(1,0,1,-8),Position=UDim2.new(0,0,0,4),
@@ -7335,6 +7350,18 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
+        -- v8.2: thin sapphire divider BELOW category bar (only visible when categories exist)
+        local categoryDivider = Create("Frame",{
+            Name="CategoryDivider",
+            Size=UDim2.new(1,-8,0,CompactStyle.DividerThickness),
+            Position=UDim2.new(0,4,0,catBarH+4),
+            BackgroundColor3=Theme.Accent,
+            BackgroundTransparency=0.70,  -- 30% visible sapphire
+            BorderSizePixel=0,
+            Visible=false,  -- shown only when categories are added
+            ZIndex=ZIndex.CONTENT+1,
+            Parent=pageClip,
+        })
         local categoryPillsLayout = Create("UIListLayout",{
             FillDirection=Enum.FillDirection.Horizontal,
             SortOrder=Enum.SortOrder.LayoutOrder,
@@ -7581,6 +7608,8 @@ function MIDNIGHT:MakeWindow(config)
             -- First category: hide default page, show category bar, shrink default page slot
             if #categories == 0 then
                 categoryBar.Visible = true
+                -- v8.2: show the thin sapphire divider below the category bar
+                if categoryDivider then categoryDivider.Visible = true end
                 defaultPage.Size = UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12))
                 defaultPage.Position = UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8)
                 -- Hide placeholder (it lived on defaultPage which is now a fallback)
@@ -7615,7 +7644,7 @@ function MIDNIGHT:MakeWindow(config)
                 Parent=catPage,
             })
 
-            -- Pill button in the category bar
+            -- Pill button in the category bar (v8.2: rectangular, not round)
             local pillH = CompactStyle.CategoryPillHeight
             local pill = Create("TextButton",{
                 Name="Pill_"..cn,
@@ -7628,7 +7657,8 @@ function MIDNIGHT:MakeWindow(config)
                 ZIndex=ZIndex.CONTENT+2,
                 Parent=categoryBar,
             })
-            ApplyCorner(pill, pillH/2)
+            -- v8.2: rectangular pills with small radius (was pillH/2 = round pill)
+            ApplyCorner(pill, CompactStyle.CategoryPillRadius)
 
             -- Pill content: icon + label, horizontal
             local pillContent = Create("Frame",{
