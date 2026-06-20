@@ -7262,21 +7262,17 @@ function MIDNIGHT:MakeWindow(config)
             BackgroundTransparency=1,Parent=btn,
         })
 
-        -- v7.3: indicator (left vertical accent line, visible when active)
+        -- v8.5: REMOVED left vertical indicator (was the "blue stripe").
+        -- Active tab now uses purple bubble fill + bottom underline (like categories).
         local indicator = Create("Frame",{
-            Size=UDim2.new(0,3,0,0),Position=UDim2.new(0,0,0.5,0),
+            Name="TabUnderline",
+            Size=UDim2.new(1,-8,0,2),Position=UDim2.new(0,4,1,-3),
             BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=btn,
+            BackgroundTransparency=1,  -- hidden by default, shown when active
         })
         ApplyCorner(indicator,1)
-        ApplyGradient(indicator, Theme.AccentGradient1, Theme.AccentGradient2, 90)
-        local indicatorGlow = Create("ImageLabel",{
-            Size=UDim2.new(0, 8, 0, 0),
-            Position=UDim2.new(0, -2, 0.5, 0),
-            BackgroundTransparency=1, Image="rbxassetid://6015897843",
-            ImageColor3=Theme.Accent, ImageTransparency=1,
-            ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
-            ZIndex=ZIndex.CONTENT, Parent=btn,
-        })
+        -- indicatorGlow intentionally removed (was a left-side glow image)
+        local indicatorGlow = nil
 
         -- Active tab glow stroke (kept disabled per v8.0)
         local tabGlowStroke = Create("UIStroke",{
@@ -7471,42 +7467,33 @@ function MIDNIGHT:MakeWindow(config)
                         t._PageClip.Visible = false
                     end
                 end
+                -- v8.5: active tab = purple bubble (filled) + bottom underline
                 TweenObject(t._Button, {
-                    BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
-                    BackgroundTransparency = active and 0.4 or 1,
+                    BackgroundColor3 = active and Theme.Accent or Theme.ContentBg,
+                    BackgroundTransparency = active and 0 or 1,
                 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                TweenObject(t._Indicator, {
-                    Size = active and UDim2.new(0, 3, 0.62, 0) or UDim2.new(0, 3, 0, 0),
-                    Position = active and UDim2.new(0, 0, 0.19, 0) or UDim2.new(0, 0, 0.5, 0),
-                }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                if t._IndicatorGlow then
-                    if active then
-                        TweenObject(t._IndicatorGlow, {
-                            Size = UDim2.new(0, 8, 0.62, 0),
-                            Position = UDim2.new(0, -2, 0.19, 0),
-                            ImageTransparency = 0.45,
-                        }, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    else
-                        TweenObject(t._IndicatorGlow, {
-                            Size = UDim2.new(0, 8, 0, 0),
-                            Position = UDim2.new(0, -2, 0.5, 0),
-                            ImageTransparency = 1,
-                        }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                    end
+                -- v8.5: indicator is now a bottom underline (was left vertical stripe)
+                if t._Indicator then
+                    TweenObject(t._Indicator, {
+                        BackgroundTransparency = active and 0 or 1,
+                    }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
+                -- indicatorGlow removed in v8.5 (was left-side glow image)
                 if t._Label then
+                    -- v8.5: active label = white on purple bubble; inactive = secondary white
                     TweenObject(t._Label, {
-                        TextColor3 = active and Theme.TextAccent or Theme.TextSecondary,
+                        TextColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextSecondary,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
+                        -- v8.5: active icon = white on purple bubble; inactive = muted
                         TweenObject(t._IconEl, {
-                            ImageColor3 = active and Theme.Accent or Theme.TextMuted,
+                            ImageColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
                         TweenObject(t._IconEl, {
-                            TextColor3 = active and Theme.Accent or Theme.TextMuted,
+                            TextColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
@@ -7550,10 +7537,18 @@ function MIDNIGHT:MakeWindow(config)
         if #self._Tabs == 1 then
             pageClip.Visible=true; defaultPage.Position=UDim2.new(0,4,0,4)
             pageClipScale.Scale = 1
-            btn.BackgroundTransparency = 0.4
-            btn.BackgroundColor3 = Theme.TabActiveBg
-            TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-            if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
+            -- v8.5: first tab auto-active = purple bubble + white text + bottom underline
+            btn.BackgroundTransparency = 0
+            btn.BackgroundColor3 = Theme.Accent
+            if indicator then indicator.BackgroundTransparency = 0 end
+            if tabLabel then tabLabel.TextColor3 = Color3.fromRGB(255, 255, 255) end
+            if tabIconEl then
+                if tabIconEl:IsA("ImageLabel") then
+                    tabIconEl.ImageColor3 = Color3.fromRGB(255, 255, 255)
+                else
+                    tabIconEl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                end
+            end
             self._ActiveTab=td
         end
 
