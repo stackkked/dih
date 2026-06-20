@@ -557,16 +557,25 @@ local CompactStyle = {
     WidgetRadius = 5,
     InputRadius = 4,
     BadgeRadius = 4,
-    WindowWidth = 580,
-    WindowHeight = 420,
+    -- v8.1: landscape layout — wide window, narrow sidebar with 60x60 tiles
+    WindowWidth = 900,
+    WindowHeight = 500,
     TitleBarHeight = 36,
     CollapsedWindowHeight = 36,
-    SidebarWidth = 122,
+    SidebarWidth = 80,            -- v8.1: was 122 — narrow vertical sidebar
     SidebarFooterHeight = 24,
-    TabHeight = 28,
+    SidebarTileSize = 60,         -- v8.1: square tile for sidebar buttons (icon+text)
+    SidebarTileIconSize = 22,     -- v8.1: bigger icon in tile
+    SidebarTileTextSize = 9,      -- v8.1: tiny label below icon
     SidebarPadding = 6,
+    TabHeight = 28,               -- legacy, kept for backward compat (unused in v8.1)
     TabIconSize = 14,
     TabTextSize = 11,
+    CategoryBarHeight = 36,       -- v8.1: top pill-tabs bar inside content area
+    CategoryPillHeight = 26,
+    CategoryPillPaddingX = 10,
+    CategoryPillGap = 6,
+    CategoryTextSize = 11,
     SectionHeight = 24,
     SectionTextSize = 10,
     SectionGap = 4,
@@ -590,16 +599,24 @@ local CompactStyle = {
 
 local DensityStyles = {
     Compact = {
-        WindowWidth = 580,
-        WindowHeight = 420,
+        WindowWidth = 900,
+        WindowHeight = 500,
         TitleBarHeight = 36,
         CollapsedWindowHeight = 36,
-        SidebarWidth = 122,
+        SidebarWidth = 80,
         SidebarFooterHeight = 24,
-        TabHeight = 28,
+        SidebarTileSize = 60,
+        SidebarTileIconSize = 22,
+        SidebarTileTextSize = 9,
         SidebarPadding = 6,
+        TabHeight = 28,
         TabIconSize = 14,
         TabTextSize = 11,
+        CategoryBarHeight = 36,
+        CategoryPillHeight = 26,
+        CategoryPillPaddingX = 10,
+        CategoryPillGap = 6,
+        CategoryTextSize = 11,
         SectionHeight = 24,
         SectionTextSize = 10,
         SectionGap = 4,
@@ -621,16 +638,24 @@ local DensityStyles = {
         NotificationCompact = true,
     },
     Readable = {
-        WindowWidth = 620,
-        WindowHeight = 450,
+        WindowWidth = 1000,
+        WindowHeight = 540,
         TitleBarHeight = 38,
         CollapsedWindowHeight = 38,
-        SidebarWidth = 134,
+        SidebarWidth = 88,
         SidebarFooterHeight = 26,
-        TabHeight = 31,
+        SidebarTileSize = 68,
+        SidebarTileIconSize = 24,
+        SidebarTileTextSize = 10,
         SidebarPadding = 7,
+        TabHeight = 31,
         TabIconSize = 15,
         TabTextSize = 12,
+        CategoryBarHeight = 40,
+        CategoryPillHeight = 30,
+        CategoryPillPaddingX = 12,
+        CategoryPillGap = 7,
+        CategoryTextSize = 12,
         SectionHeight = 26,
         SectionTextSize = 11,
         SectionGap = 5,
@@ -652,16 +677,24 @@ local DensityStyles = {
         NotificationCompact = false,
     },
     Streamer = {
-        WindowWidth = 660,
-        WindowHeight = 470,
+        WindowWidth = 1100,
+        WindowHeight = 580,
         TitleBarHeight = 40,
         CollapsedWindowHeight = 40,
-        SidebarWidth = 142,
+        SidebarWidth = 96,
         SidebarFooterHeight = 28,
-        TabHeight = 34,
+        SidebarTileSize = 76,
+        SidebarTileIconSize = 26,
+        SidebarTileTextSize = 11,
         SidebarPadding = 8,
+        TabHeight = 34,
         TabIconSize = 16,
         TabTextSize = 13,
+        CategoryBarHeight = 44,
+        CategoryPillHeight = 32,
+        CategoryPillPaddingX = 14,
+        CategoryPillGap = 8,
+        CategoryTextSize = 13,
         SectionHeight = 28,
         SectionTextSize = 12,
         SectionGap = 6,
@@ -7172,49 +7205,55 @@ function MIDNIGHT:MakeWindow(config)
 
         self._TabCount = self._TabCount + 1
 
+        -- v8.1: sidebar is now a vertical strip of 60x60 tiles (icon on top, label below)
         -- Auto-add separator in sidebar if tabs > 6
         if self._TabCount == 7 then
             local sep = CreateGradientSeparator(tabList, self._TabCount - 1)
             if sep then sep.LayoutOrder = self._TabCount - 1 end
         end
 
+        -- Sidebar tile button (v8.1: square 60x60 with icon + label below)
+        local tileSize = CompactStyle.SidebarTileSize
         local btn = Create("TextButton",{
             Name="Tab_"..tabName,
-            Size=UDim2.new(1,0,0,CompactStyle.TabHeight),
-            BackgroundColor3=Theme.ContentBg,  -- v7.4: tab bg matches UI bg (was Surface2)
-            BackgroundTransparency=1,  -- v7.4: transparent by default (matches sidebar)
+            Size=UDim2.new(1,0,0,tileSize),
+            BackgroundColor3=Theme.ContentBg,
+            BackgroundTransparency=1,  -- transparent by default
             BorderSizePixel=0, Text="",
             LayoutOrder=self._TabCount,
             ZIndex=ZIndex.CONTENT+1,
             Parent=tabList,
         })
-        ApplyCorner(btn,5)
-        -- v7.4: removed gradient (was making tabs look washed out); solid bg instead
+        ApplyCorner(btn,6)
 
-        local btnContent = Create("Frame",{Size=UDim2.new(1,-12,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Parent=btn})
-        Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
-
+        -- Tile content: icon centered horizontally near top, label centered below
+        local tileIconSize = CompactStyle.SidebarTileIconSize
         local tabIconEl = nil
         if tabIcon ~= "" then
-            tabIconEl = CreateIconOrText(btnContent,tabIcon,nil,UDim2.new(0,CompactStyle.TabIconSize,0,CompactStyle.TabIconSize),UDim2.new(0,0,0,0),Theme.TextMuted,FontBold,10)
-            if tabIconEl then tabIconEl.LayoutOrder=1 end
+            tabIconEl = CreateIconOrText(
+                btn, tabIcon, nil,
+                UDim2.new(0, tileIconSize, 0, tileIconSize),
+                UDim2.new(0.5, -tileIconSize/2, 0, 6),
+                Theme.TextMuted, FontBold, tileIconSize
+            )
         end
 
         local tabLabel = Create("TextLabel",{
-            Text=tabName,Font=Font,TextSize=CompactStyle.TabTextSize,TextColor3=Theme.TextSecondary,
-            TextXAlignment=Enum.TextXAlignment.Left,
-            Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
-            BackgroundTransparency=1,LayoutOrder=2,Parent=btnContent,
+            Text=tabName,Font=Font,TextSize=CompactStyle.SidebarTileTextSize,TextColor3=Theme.TextSecondary,
+            TextXAlignment=Enum.TextXAlignment.Center,
+            TextYAlignment=Enum.TextYAlignment.Center,
+            TextScaled=false,
+            Size=UDim2.new(1,-4,0,12),Position=UDim2.new(0,2,1,-14),
+            BackgroundTransparency=1,Parent=btn,
         })
 
-        -- v7.3: indicator with gradient instead of solid color
+        -- v7.3: indicator (left vertical accent line, visible when active)
         local indicator = Create("Frame",{
             Size=UDim2.new(0,3,0,0),Position=UDim2.new(0,0,0.5,0),
             BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=btn,
         })
         ApplyCorner(indicator,1)
         ApplyGradient(indicator, Theme.AccentGradient1, Theme.AccentGradient2, 90)
-        -- v7.3: glow on indicator when active
         local indicatorGlow = Create("ImageLabel",{
             Size=UDim2.new(0, 8, 0, 0),
             Position=UDim2.new(0, -2, 0.5, 0),
@@ -7224,71 +7263,58 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT, Parent=btn,
         })
 
-        -- Active tab glow stroke
+        -- Active tab glow stroke (kept disabled per v8.0)
         local tabGlowStroke = Create("UIStroke",{
             Color=Theme.AccentMuted,Thickness=1,Transparency=1,
             Parent=btn,
         })
 
         -- Scrollbar auto-hide per scrolling frame
-        -- FIX #2: Register via RegConn so the CanvasPosition listener is disconnected on
-        -- MIDNIGHT:Destroy(). Previously this connection leaked forever вЂ” every tab ever
-        -- created kept a live CanvasPosition listener even after the GUI was torn down,
-        -- causing memory bloat and potential nil-indexing crashes after Destroy().
-        -- BUG FIX #2+#3: Scrollbar auto-hide rewrite
-        -- Old code had two bugs:
-        --   1. scrollFrame.ScrollBarImageTransparency = 0 AFTER TweenObject({..Transparency=1}) cancelled
-        --      the tween visually вЂ” the bar flashed instead of fading smoothly.
-        --   2. Direct property writes (Thickness=3) on EVERY CanvasPosition change caused micro-jank;
-        --      now we guard with a `visible` flag so we only write on state transitions.
         local function setupScrollbarAutoHide(scrollFrame)
             if not scrollFrame then return end
             local fadeTimer  = nil
             local fadeToken  = 0
-            local sbVisible  = false  -- track state so we don't write on every scroll event
+            local sbVisible  = false
 
             RegConn(scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
                 if not scrollFrame.Parent then return end
                 fadeToken = fadeToken + 1
                 local token = fadeToken
 
-                -- Show bar only on state transition (hidden в†’ visible)
                 if not sbVisible then
                     sbVisible = true
                     scrollFrame.ScrollBarThickness = 3
                     scrollFrame.ScrollBarImageTransparency = 0
                 end
 
-                -- Cancel previous hide timer вЂ” use pcall in case the thread is already dead
-                -- BUG-D FIX: some executors return nil or userdata from task.delay, not a thread.
-                -- Unconditionally pcall-cancel and nil the ref; typeof guard would silently skip it.
                 if fadeTimer ~= nil then
                     pcall(function() task.cancel(fadeTimer) end)
                     fadeTimer = nil
                 end
 
-                -- Schedule hide
                 fadeTimer = task.delay(1.5, function()
                     fadeTimer = nil
                     if token ~= fadeToken or not scrollFrame.Parent then return end
-                    -- Fade out transparency only; do NOT reset Transparency back to 0 after fade
-                    -- (the old code did ScrollBarImageTransparency=0 after the tween, which
-                    --  made the bar reappear briefly вЂ” that line is intentionally absent here)
                     TweenObject(scrollFrame, {ScrollBarImageTransparency = 1}, 0.4)
                     task.delay(0.45, function()
                         if token ~= fadeToken then return end
                         if scrollFrame and scrollFrame.Parent then
-                            -- Only hide thickness AFTER the tween completes, and mark invisible
                             scrollFrame.ScrollBarThickness = 0
                             sbVisible = false
-                            -- Keep ImageTransparency=1 so next show starts from invisible state
                         end
                     end)
                 end)
             end))
         end
 
-        -- Page (tab content) — uses a ClipsDescendants frame for slide animation
+        -- ============================================================
+        -- v8.1: PAGE STRUCTURE
+        --   pageClip (Frame, ClipsDescendants, visible=false)
+        --     ├─ categoryBar (Frame, top of pageClip)  ← NEW
+        --     │     └─ categoryPillsLayout (UIListLayout horizontal)
+        --     │     └─ [pill buttons...]
+        --     └─ page (ScrollingFrame, below categoryBar)
+        -- ============================================================
         local pageClip = Create("Frame",{
             Name="TabClip_"..tabName,
             Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),
@@ -7298,23 +7324,51 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT,
             Parent=contentFrame,
         })
-        -- v7.3: pageClip has a UIScale for crossfade animation (not BackgroundTransparency,
-        -- which would paint a black opaque rectangle over content).
         local pageClipScale = Create("UIScale", {Scale = 1, Parent = pageClip})
-        local page = Create("ScrollingFrame",{
-            Name="TabContent_"..tabName,
-            Size=UDim2.new(1,-8,1,-8),Position=UDim2.new(0,4,0,4),
-            BackgroundTransparency=1,BorderSizePixel=0,
-            ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
-            AutomaticCanvasSize=Enum.AutomaticSize.Y,
+
+        -- v8.1: Category bar — horizontal strip of pill buttons at top
+        local catBarH = CompactStyle.CategoryBarHeight
+        local categoryBar = Create("Frame",{
+            Name="CategoryBar_"..tabName,
+            Size=UDim2.new(1,-8,0,catBarH),Position=UDim2.new(0,4,0,4),
+            BackgroundTransparency=1, BorderSizePixel=0,
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
-        Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=page})
-        ApplyPadding(page,2,2,6,6)
-        setupScrollbarAutoHide(page)
+        local categoryPillsLayout = Create("UIListLayout",{
+            FillDirection=Enum.FillDirection.Horizontal,
+            SortOrder=Enum.SortOrder.LayoutOrder,
+            Padding=UDim.new(0, CompactStyle.CategoryPillGap),
+            VerticalAlignment=Enum.VerticalAlignment.Center,
+            Parent=categoryBar,
+        })
+        -- Category state (per-tab)
+        local categories = {}            -- list of {name, icon, button, page (ScrollingFrame)}
+        local activeCategory = nil       -- currently-selected category, or nil if no categories
+        local defaultPage = nil          -- fallback page when no categories exist (legacy mode)
 
-        -- Empty placeholder (v7.3: parented to page directly; resolveParent() not yet declared)
+        -- v8.1: Create a "default" scrolling page for tabs that have NO categories.
+        -- This preserves backward compatibility — AddToggle/AddButton/etc attach here.
+        defaultPage = Create("ScrollingFrame",{
+            Name="TabContent_"..tabName,
+            Size=UDim2.new(1,-8,1,-(catBarH+12)),Position=UDim2.new(0,4,0,catBarH+8),
+            BackgroundTransparency=1,BorderSizePixel=0,
+            ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
+            AutomaticCanvasSize=Enum.AutomaticSize.Y,
+            Visible=true,
+            ZIndex=ZIndex.CONTENT+1,
+            Parent=pageClip,
+        })
+        Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=defaultPage})
+        ApplyPadding(defaultPage,2,2,6,6)
+        setupScrollbarAutoHide(defaultPage)
+
+        -- v8.1: category bar is hidden by default (only shown if user adds categories)
+        categoryBar.Visible = false
+        defaultPage.Size = UDim2.new(1,-8,1,-12)
+        defaultPage.Position = UDim2.new(0,4,0,4)
+
+        -- Empty placeholder
         local placeholder = Create("TextLabel",{
             Text="No items",Font=FontRegular,TextSize=12,
             TextColor3=Theme.TextMuted,
@@ -7323,17 +7377,22 @@ function MIDNIGHT:MakeWindow(config)
             TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=ZIndex.CONTENT+2,
-            Parent=page,
+            Parent=defaultPage,
         })
 
         local td = {
             _Name=tabName,
-            _Button=btn, _Page=page, _PageClip=pageClip,
+            _Button=btn, _Page=defaultPage, _PageClip=pageClip,
             _Layout=nil, _Window=wd, _ItemCount=0,
             _Indicator=indicator, _IndicatorGlow=indicatorGlow, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
             _Placeholder=placeholder,
             _Select=nil,
+            -- v8.1: category system
+            _Categories=categories,
+            _ActiveCategory=activeCategory,
+            _CategoryBar=categoryBar,
+            _DefaultPage=defaultPage,
         }
         table.insert(self._Tabs, td)
 
@@ -7343,10 +7402,6 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             local outgoing = self._ActiveTab
-
-            -- v7.5: "Scroll up" tab switch
-            -- Outgoing content scrolls UP and out, incoming content scrolls UP from below
-            -- Both happen simultaneously but in separate clip frames (no overlap)
 
             -- Phase 1: Outgoing scrolls up + fades (0.18s)
             if outgoing and outgoing._PageClip and outgoing ~= td then
@@ -7427,15 +7482,13 @@ function MIDNIGHT:MakeWindow(config)
                 end
             end
 
-            -- Phase 3: Incoming scrolls up from below (starts immediately, slight delay for outgoing to begin leaving)
+            -- Phase 3: Incoming scrolls up from below
             pageClip.Visible = true
             pageClipScale.Scale = 0.97
-            -- Start from below (Y: +35), scroll UP to center (Y: +4)
-            page.Position = UDim2.new(0, 4, 0, 35)
+            defaultPage.Position = UDim2.new(0, 4, 0, 35)
             SafeDelay(0.08, function()
                 if self._ActiveTab == td and pageClip and pageClip.Parent then
-                    -- Fast scroll up: 35 → 4 (upward), snappy Quint
-                    TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
+                    TweenObject(defaultPage, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     TweenObject(pageClipScale, {Scale = 1}, 0.26,
                         Enum.EasingStyle.Back, Enum.EasingDirection.Out)
@@ -7448,7 +7501,6 @@ function MIDNIGHT:MakeWindow(config)
 
         ApplyPressFeedback(btn, 0.97, 0.08)
         btn.MouseButton1Click:Connect(selectTab)
-        -- v7.4: hover shows a subtle bg highlight (transparency-based)
         btn.MouseEnter:Connect(function()
             if self._ActiveTab ~= td then
                 TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.7}, 0.18)
@@ -7460,15 +7512,12 @@ function MIDNIGHT:MakeWindow(config)
             end
         end)
         if #self._Tabs == 1 then
-            pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
+            pageClip.Visible=true; defaultPage.Position=UDim2.new(0,4,0,4)
             pageClipScale.Scale = 1
-            -- v7.4: first tab uses transparency-based active state
             btn.BackgroundTransparency = 0.4
             btn.BackgroundColor3 = Theme.TabActiveBg
             TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
             if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
-            -- v8.0: no glow stroke on active tab (removed per "no borders" request)
-            -- if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
             self._ActiveTab=td
         end
 
@@ -7476,7 +7525,6 @@ function MIDNIGHT:MakeWindow(config)
         function td:SetVisible(bool)
             btn.Visible = bool
             if not bool and self._Window._ActiveTab == td then
-                -- Switch to first visible tab
                 local switched = false
                 for _, t in ipairs(self._Window._Tabs) do
                     if t ~= td and t._Button.Visible then
@@ -7496,15 +7544,202 @@ function MIDNIGHT:MakeWindow(config)
 
         local function nextOrder()
             td._ItemCount = td._ItemCount + 1
-            -- Hide placeholder once there's content
             if td._Placeholder then td._Placeholder.Visible = false end
+            -- v8.1: also hide the active category's placeholder
+            if activeCategory and activeCategory.placeholder then
+                activeCategory.placeholder.Visible = false
+            end
             return td._ItemCount
         end
 
-        -- v7.2: widgets attach to active section's content holder if one exists,
-        -- otherwise to the tab page directly. Sections reset on each new AddSection call.
+        -- v8.1: resolveParent returns the active category's ScrollingFrame,
+        -- or the default page if no categories exist (backward compat).
         local function resolveParent()
-            return td._ActiveSectionHolder or page
+            if activeCategory and activeCategory.page then
+                return activeCategory.page
+            end
+            return defaultPage
+        end
+
+        -- ============================================================
+        -- v8.1: tab:AddCategory({Name=, Icon=}) — pill button at top
+        -- ============================================================
+        function td:AddCategory(cc)
+            cc = cc or {}
+            local cn = cc.Name or "Category"
+            local ci = cc.Icon
+
+            -- First category: hide default page, show category bar, shrink default page slot
+            if #categories == 0 then
+                categoryBar.Visible = true
+                defaultPage.Size = UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12))
+                defaultPage.Position = UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8)
+                -- Hide placeholder (it lived on defaultPage which is now a fallback)
+                if placeholder then placeholder.Visible = false end
+            end
+
+            -- Create the category's content page (hidden by default)
+            local catPage = Create("ScrollingFrame",{
+                Name="Cat_"..cn,
+                Size=UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12)),
+                Position=UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8),
+                BackgroundTransparency=1,BorderSizePixel=0,
+                ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
+                AutomaticCanvasSize=Enum.AutomaticSize.Y,
+                Visible=false,
+                ZIndex=ZIndex.CONTENT+1,
+                Parent=pageClip,
+            })
+            Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=catPage})
+            ApplyPadding(catPage,2,2,6,6)
+            setupScrollbarAutoHide(catPage)
+
+            -- Empty placeholder for this category
+            local catPlaceholder = Create("TextLabel",{
+                Text="No items in "..cn,Font=FontRegular,TextSize=12,
+                TextColor3=Theme.TextMuted,
+                Size=UDim2.new(1,0,1,0),
+                TextXAlignment=Enum.TextXAlignment.Center,
+                TextYAlignment=Enum.TextYAlignment.Center,
+                BackgroundTransparency=1,
+                ZIndex=ZIndex.CONTENT+2,
+                Parent=catPage,
+            })
+
+            -- Pill button in the category bar
+            local pillH = CompactStyle.CategoryPillHeight
+            local pill = Create("TextButton",{
+                Name="Pill_"..cn,
+                Text="",
+                Size=UDim2.new(0,0,pillH,0),AutomaticSize=Enum.AutomaticSize.X,
+                BackgroundColor3=Theme.Surface3,  -- v8.0: bg = matte, but Surface3 still = #121212 so invisible
+                BackgroundTransparency=1,  -- transparent until active
+                BorderSizePixel=0,
+                LayoutOrder=#categories + 1,
+                ZIndex=ZIndex.CONTENT+2,
+                Parent=categoryBar,
+            })
+            ApplyCorner(pill, pillH/2)
+
+            -- Pill content: icon + label, horizontal
+            local pillContent = Create("Frame",{
+                Size=UDim2.new(1,-CompactStyle.CategoryPillPaddingX*2,1,0),
+                Position=UDim2.new(0,CompactStyle.CategoryPillPaddingX,0,0),
+                BackgroundTransparency=1,Parent=pill,
+            })
+            Create("UIListLayout",{
+                FillDirection=Enum.FillDirection.Horizontal,
+                SortOrder=Enum.SortOrder.LayoutOrder,
+                Padding=UDim.new(0,4),
+                VerticalAlignment=Enum.VerticalAlignment.Center,
+                Parent=pillContent,
+            })
+
+            local pillIconEl = nil
+            if ci and ci ~= "" then
+                pillIconEl = CreateIconOrText(
+                    pillContent, ci, nil,
+                    UDim2.new(0,12,0,12), UDim2.new(0,0,0,0),
+                    Theme.TextMuted, FontBold, 12
+                )
+                if pillIconEl then pillIconEl.LayoutOrder = 1 end
+            end
+
+            local pillLabel = Create("TextLabel",{
+                Text=cn,Font=Font,TextSize=CompactStyle.CategoryTextSize,TextColor3=Theme.TextSecondary,
+                TextXAlignment=Enum.TextXAlignment.Left,
+                Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
+                BackgroundTransparency=1,LayoutOrder=2,Parent=pillContent,
+            })
+
+            local catData = {
+                name=cn, icon=ci,
+                button=pill, label=pillLabel, iconEl=pillIconEl,
+                page=catPage, placeholder=catPlaceholder,
+                itemCount=0,
+            }
+            categories[#categories + 1] = catData
+
+            -- Pill click: switch to this category
+            local function selectCategory()
+                if activeCategory == catData then return end
+                local prev = activeCategory
+                activeCategory = catData
+                td._ActiveCategory = catData
+
+                -- Hide previous category's page
+                if prev and prev.page then
+                    TweenObject(prev.page, {Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8+20)}, 0.14,
+                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    SafeDelay(0.15, function()
+                        if activeCategory ~= prev and prev.page then
+                            prev.page.Visible = false
+                            prev.page.Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8)
+                        end
+                    end)
+                end
+
+                -- Show new category page
+                catPage.Visible = true
+                catPage.Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8+20)
+                TweenObject(catPage, {Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8)}, 0.18,
+                    Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+                -- Hide defaultPage (legacy mode) when switching to a category
+                if defaultPage and defaultPage.Visible then
+                    defaultPage.Visible = false
+                end
+
+                -- Update pill styling
+                for _, c in ipairs(categories) do
+                    local isActive = (c == catData)
+                    TweenObject(c.button, {
+                        BackgroundColor3 = isActive and Theme.Accent or Theme.Surface3,
+                        BackgroundTransparency = isActive and 0 or 1,
+                    }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    if c.label then
+                        TweenObject(c.label, {
+                            TextColor3 = isActive and Theme.TextPrimary or Theme.TextSecondary,
+                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    end
+                    if c.iconEl then
+                        if c.iconEl:IsA("ImageLabel") then
+                            TweenObject(c.iconEl, {
+                                ImageColor3 = isActive and Theme.Accent or Theme.TextMuted,
+                            }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        else
+                            TweenObject(c.iconEl, {
+                                TextColor3 = isActive and Theme.Accent or Theme.TextMuted,
+                            }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                        end
+                    end
+                end
+            end
+
+            ApplyPressFeedback(pill, 0.97, 0.06)
+            pill.MouseButton1Click:Connect(selectCategory)
+            pill.MouseEnter:Connect(function()
+                if activeCategory ~= catData then
+                    TweenObject(pill, {BackgroundColor3 = Theme.Surface3, BackgroundTransparency = 0.5}, 0.14)
+                end
+            end)
+            pill.MouseLeave:Connect(function()
+                if activeCategory ~= catData then
+                    TweenObject(pill, {BackgroundColor3 = Theme.Surface3, BackgroundTransparency = 1}, 0.14)
+                end
+            end)
+
+            -- Auto-select first category
+            if #categories == 1 then
+                task.defer(function()
+                    selectCategory()
+                end)
+            end
+
+            -- Return a small handle with AddSection etc that attach to this category's page
+            -- For simplicity, the user just continues to call tab:AddSection/AddToggle etc
+            -- after AddCategory — resolveParent() returns the active category's page.
+            return catData
         end
 
         local function registerCommand(title, kind, action, extraSearch)
