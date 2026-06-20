@@ -731,6 +731,46 @@ local function Create(className, props, children)
     if props then
         parent = props.Parent
         props.Parent = nil
+        -- v7.6: Some executors reject Font data-type objects on Instance.Font
+        -- assignment ("EnumItem, number, or string expected, got Font").
+        -- Coerce any Font instances in props to their Enum.Font equivalent
+        -- BEFORE assignment so we work everywhere.
+        local _needFontCoerce = false
+        for k, v in pairs(props) do
+            if type(k) == "string" and (k == "Font" or k == "FontFace") and typeof(v) == "Font" then
+                _needFontCoerce = true
+                break
+            end
+        end
+        if _needFontCoerce then
+            -- Map Font weight -> Enum.Font (Gotham family). Roblox's Font data type
+            -- exposes .Weight as an EnumItem of FontWeight.
+            local function _coerceFont(f)
+                if typeof(f) ~= "Font" then return f end
+                -- Try direct assignment first; if it works, keep the Font object
+                -- (modern Roblox client supports it). This pcall is cheap.
+                local ok = pcall(function() inst.Font = f end)
+                if ok then return f end
+                -- Fallback: derive Enum.Font from FontWeight
+                local w = f.Weight
+                if w == Enum.FontWeight.Bold then
+                    return Enum.Font.GothamBold
+                elseif w == Enum.FontWeight.ExtraBold or w == Enum.FontWeight.Heavy or w == Enum.FontWeight.Black then
+                    return Enum.Font.GothamBold  -- GothamBlack is deprecated; Bold is closest
+                elseif w == Enum.FontWeight.SemiBold or w == Enum.FontWeight.Medium then
+                    return Enum.Font.GothamSemibold
+                elseif w == Enum.FontWeight.ExtraLight or w == Enum.FontWeight.Thin or w == Enum.FontWeight.Light then
+                    return Enum.Font.Gotham  -- lightest available Gotham
+                else
+                    return Enum.Font.GothamBold  -- Regular / default -> Bold (matches our v7.6 default)
+                end
+            end
+            for k, v in pairs(props) do
+                if type(k) == "string" and (k == "Font" or k == "FontFace") and typeof(v) == "Font" then
+                    props[k] = _coerceFont(v)
+                end
+            end
+        end
         if DEBUG_MODE then
             for k, v in pairs(props) do
                 if type(k) == "string" then
