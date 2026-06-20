@@ -557,9 +557,9 @@ local CompactStyle = {
     WidgetRadius = 5,
     InputRadius = 4,
     BadgeRadius = 4,
-    -- v8.2: more square window (was 900x500 landscape, now 800x600 squarish per reference)
-    WindowWidth = 800,
-    WindowHeight = 600,
+    -- v8.3: smaller squarish window (was 800x600)
+    WindowWidth = 700,
+    WindowHeight = 500,
     TitleBarHeight = 36,
     CollapsedWindowHeight = 36,
     SidebarWidth = 80,
@@ -601,8 +601,8 @@ local CompactStyle = {
 
 local DensityStyles = {
     Compact = {
-        WindowWidth = 800,
-        WindowHeight = 600,
+        WindowWidth = 700,
+        WindowHeight = 500,
         TitleBarHeight = 36,
         CollapsedWindowHeight = 36,
         SidebarWidth = 80,
@@ -4112,7 +4112,7 @@ function MIDNIGHT:_OpenDropdown(config)
     local optsScroll = Create("ScrollingFrame",{
         Size = UDim2.new(1,0,0,optsListH),
         BackgroundTransparency=1, BorderSizePixel=0,
-        ScrollBarThickness=3, ScrollBarImageColor3=Theme.ScrollBarColor,
+        ScrollBarThickness=0, ScrollBarImageColor3=Theme.ScrollBarColor,
         CanvasSize = UDim2.new(0,0,0,0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         LayoutOrder=1,
@@ -7023,19 +7023,19 @@ function MIDNIGHT:MakeWindow(config)
         Name="Sidebar",Size=UDim2.new(0,sidebarW,1,-footerH),
         BackgroundColor3=Theme.Surface1,BorderSizePixel=0,Parent=body,
     })
-    -- v8.2: thin sapphire divider between sidebar and content (1px, ~30% opacity)
+    -- v8.3: thin white divider between sidebar and content (1px, ~40% opacity)
     local sidebarDivider = Create("Frame",{
         Size=UDim2.new(0,CompactStyle.DividerThickness,1,0),
         Position=UDim2.new(1,-CompactStyle.DividerThickness,0,0),
-        BackgroundColor3=Theme.Accent,
-        BackgroundTransparency=0.70,  -- 30% visible sapphire
+        BackgroundColor3=Color3.fromRGB(255, 255, 255),  -- pure white
+        BackgroundTransparency=0.60,  -- 40% visible white
         BorderSizePixel=0,Parent=sidebar,
     })
 
     local tabList = Create("ScrollingFrame",{
         Name="TabList",Size=UDim2.new(1,0,1,-8),Position=UDim2.new(0,0,0,4),
         BackgroundTransparency=1,BorderSizePixel=0,
-        ScrollBarThickness=2,ScrollBarImageColor3=Theme.ScrollBarColor,
+        ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
         AutomaticCanvasSize=Enum.AutomaticSize.Y,
         ZIndex=ZIndex.CONTENT,Parent=sidebar,
     })
@@ -7298,7 +7298,7 @@ function MIDNIGHT:MakeWindow(config)
 
                 if not sbVisible then
                     sbVisible = true
-                    scrollFrame.ScrollBarThickness = 3
+                    scrollFrame.ScrollBarThickness = 0
                     scrollFrame.ScrollBarImageTransparency = 0
                 end
 
@@ -7350,15 +7350,15 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
-        -- v8.2: thin sapphire divider BELOW category bar (only visible when categories exist)
+        -- v8.3: thin white divider BELOW category bar (only visible when categories exist)
         local categoryDivider = Create("Frame",{
             Name="CategoryDivider",
             Size=UDim2.new(1,-8,0,CompactStyle.DividerThickness),
             Position=UDim2.new(0,4,0,catBarH+4),
-            BackgroundColor3=Theme.Accent,
-            BackgroundTransparency=0.70,  -- 30% visible sapphire
+            BackgroundColor3=Color3.fromRGB(255, 255, 255),  -- pure white
+            BackgroundTransparency=0.60,  -- 40% visible white
             BorderSizePixel=0,
-            Visible=false,  -- shown only when categories are added
+            Visible=false,
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
@@ -7380,7 +7380,7 @@ function MIDNIGHT:MakeWindow(config)
             Name="TabContent_"..tabName,
             Size=UDim2.new(1,-8,1,-(catBarH+12)),Position=UDim2.new(0,4,0,catBarH+8),
             BackgroundTransparency=1,BorderSizePixel=0,
-            ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
+            ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
             AutomaticCanvasSize=Enum.AutomaticSize.Y,
             Visible=true,
             ZIndex=ZIndex.CONTENT+1,
@@ -7622,7 +7622,7 @@ function MIDNIGHT:MakeWindow(config)
                 Size=UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12)),
                 Position=UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8),
                 BackgroundTransparency=1,BorderSizePixel=0,
-                ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
+                ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
                 AutomaticCanvasSize=Enum.AutomaticSize.Y,
                 Visible=false,
                 ZIndex=ZIndex.CONTENT+1,
@@ -7757,16 +7757,9 @@ function MIDNIGHT:MakeWindow(config)
 
             ApplyPressFeedback(pill, 0.97, 0.06)
             pill.MouseButton1Click:Connect(selectCategory)
-            pill.MouseEnter:Connect(function()
-                if activeCategory ~= catData then
-                    TweenObject(pill, {BackgroundColor3 = Theme.Surface3, BackgroundTransparency = 0.5}, 0.14)
-                end
-            end)
-            pill.MouseLeave:Connect(function()
-                if activeCategory ~= catData then
-                    TweenObject(pill, {BackgroundColor3 = Theme.Surface3, BackgroundTransparency = 1}, 0.14)
-                end
-            end)
+            -- v8.3: no hover effect on category pills (per request)
+            -- (was: BackgroundTransparency=0.5 on hover; now: stays transparent unless active)
+            -- pill.MouseEnter / MouseLeave intentionally removed
 
             -- Auto-select first category
             if #categories == 1 then
@@ -9599,7 +9592,7 @@ function MIDNIGHT:MakeWindow(config)
                 Position=UDim2.new(0,8,0,yOff+30),
                 BackgroundColor3=Theme.Surface0,
                 BorderSizePixel=0,
-                ScrollBarThickness=3,
+                ScrollBarThickness=0,
                 ScrollBarImageColor3=Theme.ScrollBarColor,
                 AutomaticCanvasSize=Enum.AutomaticSize.Y,
                 ZIndex=ZIndex.CONTENT, Parent=outer,
@@ -9953,7 +9946,7 @@ function MIDNIGHT:MakeWindow(config)
         ApplyHoverEffect(fwClose,Theme.CloseNormal,Theme.CloseHover,false)
         ApplyPressFeedback(fwClose, 0.92, 0.08)
 
-        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
+        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
         Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=fScroll})
         ApplyPadding(fScroll,4,4,5,5)
 
@@ -10372,7 +10365,7 @@ function MIDNIGHT:MakeWindow(config)
             Position=UDim2.new(0,0,0,34),
             BackgroundTransparency=1,
             BorderSizePixel=0,
-            ScrollBarThickness=3,
+            ScrollBarThickness=0,
             ScrollBarImageColor3=Theme.ScrollBarColor,
             AutomaticCanvasSize=Enum.AutomaticSize.Y,
             ZIndex=ZIndex.OVERLAY + 13,
