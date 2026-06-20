@@ -7396,6 +7396,15 @@ function MIDNIGHT:MakeWindow(config)
         }
         table.insert(self._Tabs, td)
 
+        -- v8.1: forward-declare td:AddCategory as a stub so the method exists
+        -- on td IMMEDIATELY after creation, even if some executor has trouble
+        -- with late method definitions. The real implementation below overrides
+        -- this stub. Calling the stub before the real impl is set would warn.
+        function td:AddCategory(cc)
+            warn("[MIDNIGHT] AddCategory not yet initialized for tab '" .. tostring(td._Name) .. "'.")
+            return nil
+        end
+
         local function selectTab()
             if self._ActiveTab == td and pageClip.Visible then
                 return
