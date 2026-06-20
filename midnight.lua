@@ -75,8 +75,12 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:SetIcons({ settings = "rbxassetid://123" })
 -- MIDNIGHT:UseLucideIcons("https://cdn.example.com/lucide", ".png")
 -- MIDNIGHT:GetLucideIcons()
--- MIDNIGHT:UseLucideBlox()
--- MIDNIGHT:GetLucideBloxAssets()
+-- MIDNIGHT:UseIconVaultKit()              -- activate pre-baked 219-icon IconVaultKitAssets table (rbxassetid://). One-liner, works out of the box.
+-- MIDNIGHT:UseIconVaultKit("lucide")      -- HTTP fallback: pull SVG directly from https://api.iconify.design/lucide/{name}.svg
+-- MIDNIGHT:GetIconVaultKitAssets()
+-- MIDNIGHT:SetIconVaultKitAssets(table)   -- inject/override { ["eye"] = "rbxassetid://XXX", ... } (for re-uploaded icons on your own account)
+-- MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")                                -- load PNGs from GitHub repo via raw.githubusercontent.com
+-- MIDNIGHT:UseGitHubIcons("https://github.com/stackkked/dih/tree/main/Icons", ".png") -- full URL form, explicit extension
 -- MIDNIGHT:SetThemeColor(Color3.fromRGB(96, 190, 255))
 -- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
 -- MIDNIGHT:GetDensityMode()
@@ -2128,7 +2132,9 @@ local IconLoadJobs   = setmetatable({}, { __mode = "k" })
 --// When no image URL is configured, these characters are rendered as TextLabels.
 --// To use actual Lucide PNG images, call MIDNIGHT:UseLucideIcons(assetBaseURL)
 --// with a URL pointing to your uploaded icon assets (e.g. rbxassetid://).
---// To use pre-uploaded LucideBlox icons (rbxassetid://), call MIDNIGHT:UseLucideBlox()
+--// To use IconVaultKit (https://iconvaultkit.com) icons, call MIDNIGHT:UseIconVaultKit()
+--// after either filling MIDNIGHT.IconVaultKitAssets via build pipeline
+--// (see scripts/build_iconvaultkit_icons.js) or via MIDNIGHT:SetIconVaultKitAssets(table).
 local LucideIcons = {
     -- Navigation / UI
     ["chevron-right"]   = "вЂє",
@@ -2284,122 +2290,239 @@ local LucideIcons = {
 }
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
---// LUCIDEBLOX ASSET MAP
---// Pre-uploaded Lucide icons as Roblox image assets (rbxassetid://)
---// Source: https://github.com/frappedevs/lucideblox
---// Call MIDNIGHT:UseLucideBlox() to activate these icons automatically
---// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-local LucideBloxAssets = {
-    ["activity"]        = "rbxassetid://7733655755",
-    ["alert-circle"]    = "rbxassetid://7733658271",
-    ["alert-octagon"]   = "rbxassetid://7733658335",
-    ["alert-triangle"]  = "rbxassetid://7733658504",
-    ["arrow-down"]      = "rbxassetid://7733672933",
-    ["arrow-left"]      = "rbxassetid://7733673136",
-    ["arrow-right"]     = "rbxassetid://7733673345",
-    ["arrow-up"]        = "rbxassetid://7733673717",
-    ["arrow-up-right"]  = "rbxassetid://7733673646",
-    ["bell"]            = "rbxassetid://7733911828",
-    ["bookmark"]        = "rbxassetid://7733692043",
-    ["calendar"]        = "rbxassetid://7733919198",
-    ["camera"]          = "rbxassetid://7733708692",
-    ["check"]           = "rbxassetid://7733715400",
-    ["check-circle"]    = "rbxassetid://7733919427",
-    ["chevron-down"]    = "rbxassetid://7733717447",
-    ["chevron-left"]    = "rbxassetid://7733717651",
-    ["chevron-right"]   = "rbxassetid://7733717755",
-    ["chevron-up"]      = "rbxassetid://7733919605",
-    ["chevrons-down"]   = "rbxassetid://7733720604",
-    ["chevrons-right"]  = "rbxassetid://7733919682",
-    ["clipboard"]       = "rbxassetid://7733734762",
-    ["clock"]           = "rbxassetid://7733734848",
-    ["code"]            = "rbxassetid://7733749837",
-    ["compass"]         = "rbxassetid://7733924216",
-    ["copy"]            = "rbxassetid://7733764083",
-    ["cpu"]             = "rbxassetid://7733765045",
-    ["crosshair"]       = "rbxassetid://7733765307",
-    ["crown"]           = "rbxassetid://7733765398",
-    ["database"]        = "rbxassetid://7743866778",
-    ["download"]        = "rbxassetid://7733770755",
-    ["expand"]          = "rbxassetid://7733771982",
-    ["external-link"]   = "rbxassetid://7743866903",
-    ["eye"]             = "rbxassetid://7733774602",
-    ["eye-off"]         = "rbxassetid://7733774495",
-    ["file-text"]       = "rbxassetid://7733789088",
-    ["filter"]          = "rbxassetid://7733798407",
-    ["flag"]            = "rbxassetid://7733798691",
-    ["flame"]           = "rbxassetid://7733798747",
-    ["folder"]          = "rbxassetid://7733799185",
-    ["gamepad"]         = "rbxassetid://7733799901",
-    ["gamepad-2"]       = "rbxassetid://7733799795",
-    ["gauge"]           = "rbxassetid://7733799969",
-    ["gem"]             = "rbxassetid://7733942651",
-    ["globe"]           = "rbxassetid://7733954760",
-    ["grid"]            = "rbxassetid://7733955179",
-    ["hammer"]          = "rbxassetid://7733955511",
-    ["hard-drive"]      = "rbxassetid://7733955793",
-    ["hash"]            = "rbxassetid://7733955906",
-    ["heart"]           = "rbxassetid://7733956134",
-    ["help-circle"]     = "rbxassetid://7733956210",
-    ["home"]            = "rbxassetid://7733960981",
-    ["image"]           = "rbxassetid://7733964126",
-    ["info"]            = "rbxassetid://7733964719",
-    ["key"]             = "rbxassetid://7733965118",
-    ["layers"]          = "rbxassetid://7743868936",
-    ["layout"]          = "rbxassetid://7733970543",
-    ["link"]            = "rbxassetid://7733978098",
-    ["lock"]            = "rbxassetid://7733992528",
-    ["mail"]            = "rbxassetid://7733992732",
-    ["map"]             = "rbxassetid://7733992829",
-    ["map-pin"]         = "rbxassetid://7733992789",
-    ["maximize"]        = "rbxassetid://7733992982",
-    ["menu"]            = "rbxassetid://7733993211",
-    ["message-circle"]  = "rbxassetid://7733993311",
-    ["mic"]             = "rbxassetid://7743869805",
-    ["minimize"]        = "rbxassetid://7733997941",
-    ["minus"]           = "rbxassetid://7734000129",
-    ["moon"]            = "rbxassetid://7743870134",
-    ["more-horizontal"] = "rbxassetid://7734006080",
-    ["more-vertical"]   = "rbxassetid://7734006187",
-    ["move"]            = "rbxassetid://7743870731",
-    ["music"]           = "rbxassetid://7734020554",
-    ["navigation"]      = "rbxassetid://7734020989",
-    ["package"]         = "rbxassetid://7734021469",
-    ["palette"]         = "rbxassetid://7734021595",
-    ["pen-tool"]        = "rbxassetid://7734022041",
-    ["pencil"]          = "rbxassetid://7734022107",
-    ["pin"]             = "rbxassetid://8997386648",
-    ["plus"]            = "rbxassetid://7734042071",
-    ["power"]           = "rbxassetid://7734042493",
-    ["radio"]           = "rbxassetid://7743871662",
-    ["refresh-cw"]      = "rbxassetid://7734051052",
-    ["scan"]            = "rbxassetid://8997386861",
-    ["search"]          = "rbxassetid://7734052925",
-    ["send"]            = "rbxassetid://7734053039",
-    ["server"]          = "rbxassetid://7734053426",
-    ["settings"]        = "rbxassetid://7734053495",
-    ["shield"]          = "rbxassetid://7734056608",
-    ["shield-check"]    = "rbxassetid://7734056411",
-    ["shrink"]          = "rbxassetid://7734056971",
-    ["sliders"]         = "rbxassetid://7734058803",
-    ["sort-asc"]        = "rbxassetid://7734060715",
-    ["sort-desc"]       = "rbxassetid://7743871973",
-    ["star"]            = "rbxassetid://7734068321",
-    ["sun"]             = "rbxassetid://7734068495",
-    ["target"]          = "rbxassetid://7743872758",
-    ["terminal"]        = "rbxassetid://7743872929",
-    ["timer"]           = "rbxassetid://7743873443",
-    ["trash"]           = "rbxassetid://7743873871",
-    ["unlock"]          = "rbxassetid://7743875263",
-    ["upload"]          = "rbxassetid://7743875428",
-    ["user"]            = "rbxassetid://7743875962",
-    ["users"]           = "rbxassetid://7743876054",
-    ["volume-2"]        = "rbxassetid://7743877250",
-    ["volume-x"]        = "rbxassetid://7743877381",
-    ["wifi"]            = "rbxassetid://7743878148",
-    ["wrench"]          = "rbxassetid://7743878358",
-    ["x"]               = "rbxassetid://7743878857",
-    ["x-circle"]        = "rbxassetid://7743878496",
+--// ICONVAULTKIT ASSET MAP
+--// Pre-baked icon asset table: 219 PNG icons sourced from iconvaultkit.com
+--// (which is a UI over the Iconify API: lucide, mdi, game-icons, ph, tabler,
+--// mingcute, fluent), uploaded to Roblox as user image assets.
+--//
+--// These IDs are account-specific (uploaded to the Diana_papana6 account,
+--// user ID 1845072772). If you fork this library, you MUST re-upload the
+--// PNGs from download/icons/ to your own Roblox account and replace the
+--// IDs below — see scripts/fetch_rbx_asset_ids.py for automation.
+--//
+--// To activate: call MIDNIGHT:UseIconVaultKit() after loadstring().
+--// Icons not in this table fall back to Unicode / ASCII text
+--// (see LucideIcons / SafeLucideText below).
+local IconVaultKitAssets = {
+    ["activity"]            = "rbxassetid://114513156447166",
+    ["alarm-clock"]         = "rbxassetid://111597312925023",
+    ["alert-circle"]        = "rbxassetid://140724675109414",
+    ["alert-octagon"]       = "rbxassetid://87222540122720",
+    ["alert-triangle"]      = "rbxassetid://114086654663385",
+    ["ammo"]                = "rbxassetid://138510493854811",
+    ["armor"]               = "rbxassetid://114773182501222",
+    ["arrow-down"]          = "rbxassetid://133866418700682",
+    ["arrow-left"]          = "rbxassetid://115175036080554",
+    ["arrow-right"]         = "rbxassetid://92964829937984",
+    ["arrow-up"]            = "rbxassetid://103734595322886",
+    ["arrow-up-right"]      = "rbxassetid://116527576776499",
+    ["award"]               = "rbxassetid://83436497114488",
+    ["axe"]                 = "rbxassetid://81034079064204",
+    ["backpack"]            = "rbxassetid://90697665281310",
+    ["badge"]               = "rbxassetid://110678246412602",
+    ["badge-check"]         = "rbxassetid://140182515660878",
+    ["ban"]                 = "rbxassetid://98975334652761",
+    ["banknote"]            = "rbxassetid://91712117661243",
+    ["bar-chart"]           = "rbxassetid://126862365099823",
+    ["battery"]             = "rbxassetid://104164300211504",
+    ["battery-charging"]    = "rbxassetid://139800929068102",
+    ["battery-full"]        = "rbxassetid://76460087795760",
+    ["battery-low"]         = "rbxassetid://80124445225748",
+    ["battery-medium"]      = "rbxassetid://122588955165389",
+    ["bell"]                = "rbxassetid://102151217405271",
+    ["binoculars"]          = "rbxassetid://135228703089865",
+    ["bolt"]                = "rbxassetid://138623355166320",
+    ["bomb"]                = "rbxassetid://123873289490276",
+    ["bookmark"]            = "rbxassetid://118028023642101",
+    ["box"]                 = "rbxassetid://126855225487761",
+    ["building"]            = "rbxassetid://78335031445904",
+    ["bullet"]              = "rbxassetid://113767174535787",
+    ["bullets"]             = "rbxassetid://134666639899734",
+    ["c4"]                  = "rbxassetid://107560566888614",
+    ["calendar"]            = "rbxassetid://137146423667952",
+    ["camera"]              = "rbxassetid://140224447235685",
+    ["case"]                = "rbxassetid://135773613241498",
+    ["check"]               = "rbxassetid://98092181300782",
+    ["check-circle"]        = "rbxassetid://101345985309915",
+    ["chevron-down"]        = "rbxassetid://117353066457761",
+    ["chevron-left"]        = "rbxassetid://87797524789495",
+    ["chevron-right"]       = "rbxassetid://102099240693658",
+    ["chevron-up"]          = "rbxassetid://89368768853742",
+    ["chevrons-down"]       = "rbxassetid://120975757253464",
+    ["chevrons-right"]      = "rbxassetid://90339945158203",
+    ["clipboard"]           = "rbxassetid://85035110864245",
+    ["clock"]               = "rbxassetid://139687535199609",
+    ["code"]                = "rbxassetid://78511713307794",
+    ["coins"]               = "rbxassetid://132981082121773",
+    ["combat-knife"]        = "rbxassetid://123254978844585",
+    ["compass"]             = "rbxassetid://109479063470378",
+    ["copy"]                = "rbxassetid://79226812147622",
+    ["cpu"]                 = "rbxassetid://100619005364768",
+    ["credit-card"]         = "rbxassetid://124822862002754",
+    ["crosshair"]           = "rbxassetid://81245507484042",
+    ["crown"]               = "rbxassetid://113229938897517",
+    ["database"]            = "rbxassetid://83200593076743",
+    ["defuse-kit"]          = "rbxassetid://139209638154070",
+    ["diamond"]             = "rbxassetid://81928901583489",
+    ["dollar-sign"]         = "rbxassetid://104984167635583",
+    ["download"]            = "rbxassetid://92496813895076",
+    ["expand"]              = "rbxassetid://130797339033672",
+    ["explosion"]           = "rbxassetid://103183936203198",
+    ["explosion-burst"]     = "rbxassetid://100952829856506",
+    ["external-link"]       = "rbxassetid://116761397078887",
+    ["eye"]                 = "rbxassetid://100963792705069",
+    ["eye-off"]             = "rbxassetid://121883839638533",
+    ["factory"]             = "rbxassetid://137472740353392",
+    ["file-text"]           = "rbxassetid://100194714327009",
+    ["filter"]              = "rbxassetid://78033542068962",
+    ["fire"]                = "rbxassetid://131960548708996",
+    ["flag"]                = "rbxassetid://73468090669660",
+    ["flag-triangle-right"] = "rbxassetid://91425519216372",
+    ["flame"]               = "rbxassetid://71061737163596",
+    ["flashbang"]           = "rbxassetid://79072168354549",
+    ["folder"]              = "rbxassetid://81462060496703",
+    ["gamepad"]             = "rbxassetid://124699443195659",
+    ["gamepad-2"]           = "rbxassetid://110954720665368",
+    ["gas-mask"]            = "rbxassetid://93110664660354",
+    ["gas-station"]         = "rbxassetid://77919349770109",
+    ["gauge"]               = "rbxassetid://117989789791727",
+    ["gem"]                 = "rbxassetid://136514947407374",
+    ["gift"]                = "rbxassetid://115435156733480",
+    ["grenade"]             = "rbxassetid://131678899440352",
+    ["grid"]                = "rbxassetid://87177036710223",
+    ["hammer"]              = "rbxassetid://76056803582886",
+    ["hard-drive"]          = "rbxassetid://80380702368024",
+    ["hash"]                = "rbxassetid://97014269210665",
+    ["headphones"]          = "rbxassetid://70844835830930",
+    ["headset"]             = "rbxassetid://80188127594767",
+    ["heart"]               = "rbxassetid://138685769927763",
+    ["heart-pulse"]         = "rbxassetid://85211165336094",
+    ["helmet"]              = "rbxassetid://139523453632477",
+    ["help-circle"]         = "rbxassetid://104585479672959",
+    ["home"]                = "rbxassetid://110686864760568",
+    ["hourglass"]           = "rbxassetid://125918884187567",
+    ["image"]               = "rbxassetid://73878812821172",
+    ["info"]                = "rbxassetid://139811311844076",
+    ["jet"]                 = "rbxassetid://100135648790760",
+    ["joystick"]            = "rbxassetid://133271288182024",
+    ["kevlar"]              = "rbxassetid://123619645872039",
+    ["key"]                 = "rbxassetid://107077724288585",
+    ["knife"]               = "rbxassetid://92103318591967",
+    ["layers"]              = "rbxassetid://113942003387186",
+    ["layout"]              = "rbxassetid://110718173399973",
+    ["lightning"]           = "rbxassetid://138420001551900",
+    ["link"]                = "rbxassetid://75590824837569",
+    ["lock"]                = "rbxassetid://104295235557873",
+    ["log-in"]              = "rbxassetid://124673995386338",
+    ["log-out"]             = "rbxassetid://120534284712793",
+    ["magazine"]            = "rbxassetid://134673082582060",
+    ["mail"]                = "rbxassetid://73705643702309",
+    ["map"]                 = "rbxassetid://138249416372223",
+    ["map-pin"]             = "rbxassetid://111027593775380",
+    ["maximize"]            = "rbxassetid://78688419770476",
+    ["medal"]               = "rbxassetid://104594446218230",
+    ["megaphone"]           = "rbxassetid://98940420048738",
+    ["menu"]                = "rbxassetid://136891783075811",
+    ["message-circle"]      = "rbxassetid://71011443903708",
+    ["mic"]                 = "rbxassetid://116357239271478",
+    ["mic-off"]             = "rbxassetid://86948401410375",
+    ["minimize"]            = "rbxassetid://77750562912742",
+    ["minus"]               = "rbxassetid://110116338380666",
+    ["missile"]             = "rbxassetid://129520097223102",
+    ["molotov"]             = "rbxassetid://83868024922531",
+    ["moon"]                = "rbxassetid://120947518602390",
+    ["more-horizontal"]     = "rbxassetid://79903926513609",
+    ["more-vertical"]       = "rbxassetid://80579195199543",
+    ["move"]                = "rbxassetid://95101553782732",
+    ["music"]               = "rbxassetid://74976030157711",
+    ["navigation"]          = "rbxassetid://114292789810716",
+    ["night-vision"]        = "rbxassetid://98182782433291",
+    ["package"]             = "rbxassetid://98110785069962",
+    ["paintbrush"]          = "rbxassetid://129955700941949",
+    ["palette"]             = "rbxassetid://86990510125215",
+    ["panel-left"]          = "rbxassetid://71521811069804",
+    ["panel-right"]         = "rbxassetid://126305907630783",
+    ["pause"]               = "rbxassetid://128881587477403",
+    ["pen-tool"]            = "rbxassetid://95570079042028",
+    ["pencil"]              = "rbxassetid://130681036400993",
+    ["pin"]                 = "rbxassetid://91675813173932",
+    ["pistol"]              = "rbxassetid://131628542286870",
+    ["play"]                = "rbxassetid://124394159494931",
+    ["plus"]                = "rbxassetid://140686232181724",
+    ["power"]               = "rbxassetid://102456533184941",
+    ["pulse"]               = "rbxassetid://128700651604087",
+    ["puzzle"]              = "rbxassetid://103033499276498",
+    ["radio"]               = "rbxassetid://123637469344584",
+    ["refresh-cw"]          = "rbxassetid://85207466415328",
+    ["ribbon"]              = "rbxassetid://72147410555799",
+    ["rifle"]               = "rbxassetid://117038338988262",
+    ["rocket"]              = "rbxassetid://133289242039433",
+    ["rotate-ccw"]          = "rbxassetid://92476139310136",
+    ["rotate-cw"]           = "rbxassetid://88958092789102",
+    ["scissors"]            = "rbxassetid://98035292143952",
+    ["scope"]               = "rbxassetid://80028790019416",
+    ["scope-aim"]           = "rbxassetid://128850265765599",
+    ["screwdriver"]         = "rbxassetid://124531757180477",
+    ["search"]              = "rbxassetid://79868800250829",
+    ["send"]                = "rbxassetid://71590327072067",
+    ["server"]              = "rbxassetid://131992033109628",
+    ["settings"]            = "rbxassetid://129582482134575",
+    ["shell"]               = "rbxassetid://125914975125942",
+    ["shield"]              = "rbxassetid://98743102621690",
+    ["shield-alert"]        = "rbxassetid://119348972830012",
+    ["shield-check"]        = "rbxassetid://74100062680792",
+    ["shopping-bag"]        = "rbxassetid://125870457989446",
+    ["shopping-cart"]       = "rbxassetid://102567296957035",
+    ["shotgun"]             = "rbxassetid://124754791508321",
+    ["shrink"]              = "rbxassetid://133971760815335",
+    ["sidebar"]             = "rbxassetid://89248278321523",
+    ["signal"]              = "rbxassetid://114422507293539",
+    ["signal-high"]         = "rbxassetid://120537054877124",
+    ["signal-low"]          = "rbxassetid://85406757762700",
+    ["skip-forward"]        = "rbxassetid://106661683443168",
+    ["skull"]               = "rbxassetid://114291724500233",
+    ["skull-crossbones"]    = "rbxassetid://124621820879257",
+    ["sliders"]             = "rbxassetid://87756435943388",
+    ["smg"]                 = "rbxassetid://87206622174769",
+    ["smoke-grenade"]       = "rbxassetid://129554998500083",
+    ["sniper"]              = "rbxassetid://121621428517963",
+    ["sort-asc"]            = "rbxassetid://139063662885025",
+    ["sort-desc"]           = "rbxassetid://84168833106995",
+    ["sparkles"]            = "rbxassetid://77307349382581",
+    ["spray-can"]           = "rbxassetid://115478210579228",
+    ["star"]                = "rbxassetid://83133277790521",
+    ["stopwatch"]           = "rbxassetid://78673272725100",
+    ["sun"]                 = "rbxassetid://118222680178569",
+    ["sword"]               = "rbxassetid://70783315878997",
+    ["swords"]              = "rbxassetid://96906286931788",
+    ["tank"]                = "rbxassetid://103747978793552",
+    ["target"]              = "rbxassetid://129962482979326",
+    ["terminal"]            = "rbxassetid://115468861331121",
+    ["timer"]               = "rbxassetid://78760136292052",
+    ["trash"]               = "rbxassetid://109717713125244",
+    ["trending-down"]       = "rbxassetid://83030103577542",
+    ["trending-up"]         = "rbxassetid://121841189396008",
+    ["trophy"]              = "rbxassetid://126889525565863",
+    ["unlock"]              = "rbxassetid://137826256822743",
+    ["upload"]              = "rbxassetid://92414836356804",
+    ["user"]                = "rbxassetid://115703578769127",
+    ["user-check"]          = "rbxassetid://125171345580772",
+    ["user-plus"]           = "rbxassetid://123739169941080",
+    ["user-x"]              = "rbxassetid://86026233394296",
+    ["users"]               = "rbxassetid://123991941649903",
+    ["vest"]                = "rbxassetid://121698285056711",
+    ["volume-2"]            = "rbxassetid://134256143341306",
+    ["volume-x"]            = "rbxassetid://92618152969235",
+    ["walkie-talkie"]       = "rbxassetid://123876296403028",
+    ["wallet"]              = "rbxassetid://73761593408589",
+    ["warehouse"]           = "rbxassetid://101564334966147",
+    ["wifi"]                = "rbxassetid://92082171876544",
+    ["wifi-off"]            = "rbxassetid://95331674969394",
+    ["wire-cutter"]         = "rbxassetid://72936878143036",
+    ["wrench"]              = "rbxassetid://78240686411371",
+    ["x"]                   = "rbxassetid://75034160993721",
+    ["x-circle"]            = "rbxassetid://81755440082904",
+    ["zap"]                 = "rbxassetid://70508202669930",
 }
 
 local SafeLucideText = {
@@ -2551,8 +2674,12 @@ local function BuildSafeIconFallback(iconName)
 end
 
 local function UseDefaultIconSet()
+    -- Auto-activate IconVaultKitAssets only if it has been populated
+    -- (either via build pipeline / iconvaultkit_assets.lua, or via SetIconVaultKitAssets).
+    -- If the table is empty, we fall through and rely on Unicode / ASCII text fallbacks.
     if IconBaseURL ~= "" or next(IconOverrides) ~= nil then return end
-    for k, v in pairs(LucideBloxAssets) do
+    if next(IconVaultKitAssets) == nil then return end
+    for k, v in pairs(IconVaultKitAssets) do
         IconOverrides[k] = v
     end
 end
@@ -2907,28 +3034,150 @@ function MIDNIGHT:GetLucideIcons()
     return LucideIcons
 end
 
-function MIDNIGHT:UseLucideBlox()
-    -- Activate pre-uploaded Lucide icons from the LucideBlox project.
-    -- Source: https://github.com/frappedevs/lucideblox
-    -- These are actual Lucide icons uploaded as Roblox image assets (rbxassetid://).
-    -- Call this function once after loading the library to enable real icon images
-    -- instead of Unicode text fallbacks.
+function MIDNIGHT:SetIconVaultKitAssets(assetsTable)
+    -- Inject a { ["eye"] = "rbxassetid://XXX", ... } map populated after manually
+    -- uploading the PNGs produced by scripts/build_iconvaultkit_icons.js to Roblox.
+    -- Safe to call before or after MIDNIGHT:UseIconVaultKit().
+    if type(assetsTable) ~= "table" then return end
+    for k, v in pairs(assetsTable) do
+        if type(k) == "string" and type(v) == "string" and v ~= "" then
+            IconVaultKitAssets[k] = v
+        end
+    end
+    -- If we're already in asset-override mode, refresh IconOverrides + cache immediately.
+    if next(IconOverrides) ~= nil then
+        for k, v in pairs(assetsTable) do
+            IconOverrides[k] = v
+            IconCache[k] = v
+        end
+    end
+end
+
+function MIDNIGHT:UseIconVaultKit(collection)
+    -- Activate IconVaultKit icons (https://iconvaultkit.com — UI over the Iconify API).
     --
-    -- Example:
+    -- Two modes:
+    --   1) Asset mode (default, recommended): uses the IconVaultKitAssets table.
+    --      Populate it via MIDNIGHT:SetIconVaultKitAssets(t) or by editing the table directly.
+    --      Run scripts/build_iconvaultkit_icons.js to generate PNGs + an empty Lua template.
+    --
+    --   2) HTTP mode (executor-dependent): pass a collection prefix like "lucide", "tabler",
+    --      "heroicons", "mdi", etc. IconBaseURL is set to https://api.iconify.design/{collection}
+    --      and IconExt to ".svg". NOTE: Roblox ImageLabel does NOT render SVG natively, so this
+    --      mode only works on executors that allow external HTTP images in ImageLabel AND
+    --      can render SVG. Use asset mode for production.
+    --
+    -- Example (asset mode):
     --   local MIDNIGHT = loadstring(readfile("midnight.lua"))()
-    --   MIDNIGHT:UseLucideBlox()  -- Enable Lucide icon images
+    --   local IVK = loadstring(readfile("iconvaultkit_assets.lua"))()
+    --   MIDNIGHT:SetIconVaultKitAssets(IVK)
+    --   MIDNIGHT:UseIconVaultKit()
     --
-    -- Icons not available in LucideBlox will still use Unicode text fallbacks.
-    self:SetIcons(LucideBloxAssets)
-    -- Clear base URL since we're using direct rbxassetid:// overrides
+    -- Example (HTTP mode, executor-dependent):
+    --   MIDNIGHT:UseIconVaultKit("lucide")
+    --
+    -- Icons not in IconVaultKitAssets still use Unicode / ASCII text fallbacks.
+    if type(collection) == "string" and collection ~= "" then
+        -- Detect GitHub URL/path form and delegate to UseGitHubIcons()
+        -- e.g. "stackkked/dih/main/Icons" or "https://github.com/.../tree/main/Icons"
+        if collection:find("github%.com", 1, true)
+           or collection:find("raw%.githubusercontent%.com", 1, true)
+           or collection:find("^[%w_.-]+/[%w_.-]+/[%w_.-]+/") then
+            self:UseGitHubIcons(collection)
+            return
+        end
+
+        -- Otherwise treat as Iconify collection prefix (HTTP mode, SVG).
+        -- Note: Roblox ImageLabel does NOT render SVG natively — use only on
+        -- executors that allow external SVG. For production use asset mode
+        -- or UseGitHubIcons().
+        IconBaseURL = "https://api.iconify.design/" .. collection
+        IconExt = ".svg"
+        IconOverrides = {}
+        IconCache = {}
+        return
+    end
+
+    -- Asset mode
+    -- The IconVaultKitAssets table is pre-baked with 219 rbxassetid:// URLs
+    -- (uploaded to the Diana_papana6 Roblox account). If you fork this library
+    -- and re-upload to your own account, the warning below will fire until
+    -- you call MIDNIGHT:SetIconVaultKitAssets(t) with your own IDs.
+    if next(IconVaultKitAssets) == nil then
+        warn("[MIDNIGHT] UseIconVaultKit(): IconVaultKitAssets is empty. " ..
+             "Either use the pre-baked midnight.lua (which ships with 219 IDs), " ..
+             "or call MIDNIGHT:SetIconVaultKitAssets(t) with your own rbxassetid:// map. " ..
+             "Falling back to Unicode text icons.")
+    end
+    self:SetIcons(IconVaultKitAssets)
     IconBaseURL = ""
     IconCache = {}
 end
 
-function MIDNIGHT:GetLucideBloxAssets()
-    -- Returns the full LucideBloxAssets map (icon name в†’ rbxassetid:// URL)
-    -- Useful for reference or to selectively override specific icons
-    return LucideBloxAssets
+function MIDNIGHT:GetIconVaultKitAssets()
+    -- Returns the IconVaultKitAssets map (icon name -> rbxassetid:// URL).
+    -- Useful for inspection or programmatic population.
+    return IconVaultKitAssets
+end
+
+function MIDNIGHT:UseGitHubIcons(repoPath, extension)
+    -- Load icon PNGs directly from a GitHub repository via raw.githubusercontent.com.
+    -- Bypasses the need to upload anything to Roblox — the executor fetches PNGs
+    -- over HTTP at runtime. Works on every modern executor that allows external
+    -- images in ImageLabel.Image (Synapse, Script-Ware, Krnl, Fluxus, ...).
+    --
+    -- repoPath accepts three forms (all normalized to the same raw URL):
+    --   1) Full https://github.com/... URL with /tree/<branch>/...
+    --        "https://github.com/stackkked/dih/tree/main/Icons"
+    --   2) Full https://raw.githubusercontent.com/... URL (used as-is)
+    --        "https://raw.githubusercontent.com/stackkked/dih/main/Icons"
+    --   3) Short owner/repo/branch/path form (no scheme, no host)
+    --        "stackkked/dih/main/Icons"
+    --
+    -- extension: file extension to append to icon names. Default ".png".
+    --            Must match what's actually committed in the repo.
+    --
+    -- Final URL pattern resolved per icon:
+    --   https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>/<kebab-name>.<ext>
+    --
+    -- Example:
+    --   local MIDNIGHT = loadstring(readfile("midnight.lua"))()
+    --   MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")
+    --   -- eye icon -> https://raw.githubusercontent.com/stackkked/dih/main/Icons/eye.png
+    --
+    -- Notes:
+    --   - Icon names follow Lucide kebab-case ('eye', 'chevron-right', ...).
+    --   - camelCase names are auto-converted to kebab-case on lookup.
+    --   - If GitHub returns 404 for an icon (not in repo), ImageLabel falls back
+    --     to the Unicode / ASCII text icons defined in LucideIcons / SafeLucideText.
+    --   - For private repos, this won't work — raw.githubusercontent.com requires
+    --     the repo to be public.
+    if type(repoPath) ~= "string" or repoPath == "" then
+        warn("[MIDNIGHT] UseGitHubIcons(): repoPath is required " ..
+             "(e.g. \"stackkked/dih/main/Icons\" or full github.com URL).")
+        return
+    end
+
+    local path = repoPath
+    local ext  = extension or ".png"
+    -- Normalize extension: ensure leading dot
+    if ext:sub(1, 1) ~= "." then ext = "." .. ext end
+
+    -- Strip scheme + host
+    path = path:gsub("^https?://", "")
+    path = path:gsub("^github%.com/", "")
+    path = path:gsub("^raw%.githubusercontent%.com/", "")
+    -- Strip leading/trailing slashes
+    path = path:gsub("^/+", ""):gsub("/+$", "")
+    -- Convert /tree/<branch>/ -> /<branch>/
+    -- e.g. "stackkked/dih/tree/main/Icons" -> "stackkked/dih/main/Icons"
+    path = path:gsub("/tree/", "/")
+
+    local rawURL = "https://raw.githubusercontent.com/" .. path
+    IconBaseURL = rawURL
+    IconExt     = ext
+    IconOverrides = {}
+    IconCache   = {}
 end
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
@@ -12855,6 +13104,6 @@ end
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 MIDNIGHT.KeyUtils = KeyUtils
 MIDNIGHT.LucideIcons = LucideIcons
-MIDNIGHT.LucideBloxAssets = LucideBloxAssets
+MIDNIGHT.IconVaultKitAssets = IconVaultKitAssets
 
 return MIDNIGHT
