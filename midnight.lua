@@ -81,7 +81,7 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:SetIconVaultKitAssets(table)   -- inject/override { ["eye"] = "rbxassetid://XXX", ... } (for re-uploaded icons on your own account)
 -- MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")                                -- load PNGs from GitHub repo via raw.githubusercontent.com
 -- MIDNIGHT:UseGitHubIcons("https://github.com/stackkked/dih/tree/main/Icons", ".png") -- full URL form, explicit extension
--- MIDNIGHT:SetThemeColor(Color3.fromRGB(96, 190, 255))
+-- MIDNIGHT:SetThemeColor(Color3.fromRGB(59, 130, 246))  -- v7.7 default: sapphire (#3B82F6)
 -- MIDNIGHT:SetFont({Body=Font.new(...), Bold=Font.new(...), Regular=Font.new(...)})  -- override fonts at runtime
 -- MIDNIGHT:GetFont()                       -- returns current {Body, Bold, Regular} font slots
 -- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
@@ -370,100 +370,131 @@ local ZIndex = {
 --// THEME
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
-    -- CORE BACKGROUNDS — Soft Charcoal (v7.6 light): lifted ~30-40 luminance
-    -- points across the board so the window reads as dark-grey instead of
-    -- near-black. Accent stays blue; text contrast preserved.
-    WindowBg       = Color3.fromRGB(38, 42, 52),
-    SidebarBg      = Color3.fromRGB(32, 36, 46),
-    ContentBg      = Color3.fromRGB(42, 46, 56),
-    TabBg          = Color3.fromRGB(46, 50, 62),
-    TabHoverBg     = Color3.fromRGB(56, 62, 76),
-    TabActiveBg    = Color3.fromRGB(64, 72, 88),
-    ItemBg         = Color3.fromRGB(50, 55, 68),
-    ItemHoverBg    = Color3.fromRGB(60, 66, 80),
-    InputBg        = Color3.fromRGB(54, 60, 74),
-    DropdownBg     = Color3.fromRGB(50, 55, 68),
-    TitleBarBg     = Color3.fromRGB(42, 46, 56),
-    Accent         = Color3.fromRGB(96, 165, 250),
-    AccentHover    = Color3.fromRGB(125, 180, 255),
-    AccentDark     = Color3.fromRGB(56, 130, 220),
-    AccentSoft     = Color3.fromRGB(140, 195, 255),
-    AccentMuted    = Color3.fromRGB(70, 110, 165),
-    AccentFaint    = Color3.fromRGB(50, 80, 115),
-    TextPrimary    = Color3.fromRGB(245, 248, 252),
-    TextSecondary  = Color3.fromRGB(190, 198, 210),
-    TextMuted      = Color3.fromRGB(135, 145, 158),
-    TextAccent     = Color3.fromRGB(140, 195, 255),
-    Border         = Color3.fromRGB(70, 78, 92),
-    BorderLight    = Color3.fromRGB(90, 100, 115),
-    BorderAccent   = Color3.fromRGB(80, 130, 180),
-    BorderSoft     = Color3.fromRGB(58, 64, 76),
-    BorderStrong   = Color3.fromRGB(100, 110, 125),
-    ToggleOn       = Color3.fromRGB(96, 165, 250),
-    ToggleOff      = Color3.fromRGB(60, 66, 78),
-    ToggleKnob     = Color3.fromRGB(255, 255, 255),
-    SliderTrack    = Color3.fromRGB(60, 66, 78),
-    SliderFill     = Color3.fromRGB(96, 165, 250),
-    SliderKnob     = Color3.fromRGB(255, 255, 255),
-    Success        = Color3.fromRGB(74, 222, 128),
-    Warning        = Color3.fromRGB(250, 204, 21),
-    Error          = Color3.fromRGB(248, 113, 113),
-    Info           = Color3.fromRGB(96, 165, 250),
-    WatermarkBg    = Color3.fromRGB(38, 42, 52),
-    KeybindBg      = Color3.fromRGB(38, 42, 52),
-    CloseNormal    = Color3.fromRGB(70, 78, 92),
+    -- ============================================================
+    -- PREMIUM SAPPHIRE (v7.7)
+    -- Absolute matte black + sapphire-blue accent + pure white text.
+    -- Layered surfaces use minimal RGB shifts (0..14) to preserve
+    -- hierarchy without breaking the "pure black" feel.
+    -- ============================================================
+
+    -- CORE BACKGROUNDS — absolute matte black with subtle layer shifts
+    WindowBg       = Color3.fromRGB(0, 0, 0),       -- pure black window
+    SidebarBg      = Color3.fromRGB(0, 0, 0),       -- pure black sidebar
+    ContentBg      = Color3.fromRGB(2, 2, 4),       -- barely-visible lift on content area
+    TabBg          = Color3.fromRGB(6, 6, 10),      -- tab resting state
+    TabHoverBg     = Color3.fromRGB(14, 14, 22),    -- tab hover
+    TabActiveBg    = Color3.fromRGB(22, 22, 36),    -- tab selected (subtle sapphire tint)
+    ItemBg         = Color3.fromRGB(8, 8, 12),      -- widget resting
+    ItemHoverBg    = Color3.fromRGB(18, 18, 28),    -- widget hover
+    InputBg        = Color3.fromRGB(10, 10, 14),    -- text input resting
+    DropdownBg     = Color3.fromRGB(8, 8, 12),      -- dropdown popup
+    TitleBarBg     = Color3.fromRGB(0, 0, 0),       -- title bar = window bg (seamless)
+
+    -- ACCENT — Sapphire blue (#3B82F6 family)
+    Accent         = Color3.fromRGB(59, 130, 246),  -- #3B82F6 main sapphire
+    AccentHover    = Color3.fromRGB(96, 165, 250),  -- #60A5FA lighter on hover
+    AccentDark     = Color3.fromRGB(30, 64, 175),   -- #1E40AF deep sapphire
+    AccentSoft     = Color3.fromRGB(147, 197, 253), -- #93C5FD soft accent for text
+    AccentMuted    = Color3.fromRGB(45, 80, 130),   -- muted sapphire for backgrounds
+    AccentFaint    = Color3.fromRGB(20, 35, 60),    -- very faint accent
+
+    -- TEXT — pure white (not grey) as requested
+    TextPrimary    = Color3.fromRGB(255, 255, 255), -- pure white
+    TextSecondary  = Color3.fromRGB(229, 231, 235), -- #E5E7EB near-white
+    TextMuted      = Color3.fromRGB(148, 163, 184), -- #94A3B8 slate-400 (still readable on black)
+    TextAccent     = Color3.fromRGB(147, 197, 253), -- #93C5FD sapphire-tinted text
+
+    -- BORDERS — barely-visible against pure black, with subtle sapphire tint
+    Border         = Color3.fromRGB(30, 30, 42),    -- neutral border
+    BorderLight    = Color3.fromRGB(50, 50, 65),    -- hover border
+    BorderAccent   = Color3.fromRGB(59, 130, 246),  -- sapphire border on focus
+    BorderSoft     = Color3.fromRGB(20, 20, 28),    -- soft divider
+    BorderStrong   = Color3.fromRGB(70, 70, 85),    -- strong separator
+
+    -- TOGGLE / SLIDER
+    ToggleOn       = Color3.fromRGB(59, 130, 246),  -- sapphire when ON
+    ToggleOff      = Color3.fromRGB(30, 30, 40),    -- dark grey when OFF
+    ToggleKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
+    SliderTrack    = Color3.fromRGB(30, 30, 40),    -- dark grey track
+    SliderFill     = Color3.fromRGB(59, 130, 246),  -- sapphire fill
+    SliderKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
+
+    -- STATUS COLORS — kept vibrant against pure black
+    Success        = Color3.fromRGB(74, 222, 128),  -- #4ADE80
+    Warning        = Color3.fromRGB(250, 204, 21),  -- #FACC15
+    Error          = Color3.fromRGB(248, 113, 113), -- #F87171
+    Info           = Color3.fromRGB(59, 130, 246),  -- sapphire = info
+
+    -- UTILITY BACKGROUNDS — pure black with minimal lift
+    WatermarkBg    = Color3.fromRGB(0, 0, 0),
+    KeybindBg      = Color3.fromRGB(0, 0, 0),
+    CloseNormal    = Color3.fromRGB(30, 30, 40),
     CloseHover     = Color3.fromRGB(220, 70, 70),
-    MinNormal      = Color3.fromRGB(70, 78, 92),
-    MinHover       = Color3.fromRGB(70, 110, 165),
-    ScrollBarColor = Color3.fromRGB(110, 120, 135),
-    ScrollBarBg    = Color3.fromRGB(46, 52, 64),
+    MinNormal      = Color3.fromRGB(30, 30, 40),
+    MinHover       = Color3.fromRGB(59, 130, 246),  -- sapphire on hover
+    ScrollBarColor = Color3.fromRGB(60, 60, 75),
+    ScrollBarBg    = Color3.fromRGB(10, 10, 14),
     Shadow         = Color3.fromRGB(0, 0, 0),
-    SeparatorBg    = Color3.fromRGB(65, 72, 84),
-    InputHoverBg   = Color3.fromRGB(64, 70, 84),
-    OverlayBg      = Color3.fromRGB(50, 55, 68),
-    OverlayCard    = Color3.fromRGB(58, 64, 78),
-    OverlayStroke  = Color3.fromRGB(80, 90, 105),
-    UtilityBg      = Color3.fromRGB(38, 42, 52),
-    UtilityHeader  = Color3.fromRGB(50, 55, 68),
-    UtilityAccent  = Color3.fromRGB(96, 165, 250),
-    Surface0       = Color3.fromRGB(38, 42, 52),
-    Surface1       = Color3.fromRGB(46, 50, 62),
-    Surface2       = Color3.fromRGB(54, 60, 74),
-    Surface3       = Color3.fromRGB(64, 72, 88),
-    Surface4       = Color3.fromRGB(74, 82, 98),
-    Surface5       = Color3.fromRGB(84, 92, 108),
-    AccentGlow     = Color3.fromRGB(96, 165, 250),
-    AccentGradient1 = Color3.fromRGB(96, 165, 250),
-    AccentGradient2 = Color3.fromRGB(74, 144, 226),
-    AccentGradient3 = Color3.fromRGB(140, 110, 255),
-    GradientStart  = Color3.fromRGB(54, 60, 74),
-    GradientEnd    = Color3.fromRGB(38, 42, 52),
+    SeparatorBg    = Color3.fromRGB(25, 25, 35),
+    InputHoverBg   = Color3.fromRGB(20, 20, 30),
+    OverlayBg      = Color3.fromRGB(8, 8, 12),
+    OverlayCard    = Color3.fromRGB(14, 14, 22),
+    OverlayStroke  = Color3.fromRGB(50, 50, 65),
+    UtilityBg      = Color3.fromRGB(0, 0, 0),
+    UtilityHeader  = Color3.fromRGB(8, 8, 12),
+    UtilityAccent  = Color3.fromRGB(59, 130, 246),
+
+    -- SURFACE LAYERS — minimal lift from pure black, slight sapphire tint
+    Surface0       = Color3.fromRGB(0, 0, 0),       -- base
+    Surface1       = Color3.fromRGB(6, 6, 10),
+    Surface2       = Color3.fromRGB(12, 12, 18),
+    Surface3       = Color3.fromRGB(20, 20, 30),
+    Surface4       = Color3.fromRGB(28, 28, 40),
+    Surface5       = Color3.fromRGB(36, 36, 50),
+
+    -- ACCENT GRADIENTS — sapphire variants
+    AccentGlow     = Color3.fromRGB(59, 130, 246),
+    AccentGradient1 = Color3.fromRGB(59, 130, 246),  -- sapphire
+    AccentGradient2 = Color3.fromRGB(30, 64, 175),   -- deep sapphire
+    AccentGradient3 = Color3.fromRGB(96, 165, 250),  -- light sapphire
+    GradientStart  = Color3.fromRGB(12, 12, 18),     -- subtle surface gradient
+    GradientEnd    = Color3.fromRGB(0, 0, 0),        -- fade to pure black
+
+    -- OVERLAYS / EFFECTS
     HoverOverlay   = Color3.fromRGB(255, 255, 255),
-    HoverOverlayT  = 0.06,
+    HoverOverlayT  = 0.04,  -- 4% white on hover
     PressOverlay   = Color3.fromRGB(0, 0, 0),
-    PressOverlayT  = 0.10,
-    FocusRing      = Color3.fromRGB(96, 165, 250),
-    FocusRingT     = 0.45,
+    PressOverlayT  = 0.20,  -- 20% black on press (more pronounced on pure black bg)
+    FocusRing      = Color3.fromRGB(59, 130, 246),  -- sapphire focus ring
+    FocusRingT     = 0.55,
+
+    -- SHADOWS — kept dark (they're already on pure black so fade softly)
     Shadow0        = Color3.fromRGB(0, 0, 0),
-    Shadow0T       = 0.30,
+    Shadow0T       = 0.40,
     Shadow1        = Color3.fromRGB(0, 0, 0),
-    Shadow1T       = 0.50,
+    Shadow1T       = 0.60,
     Shadow2        = Color3.fromRGB(0, 0, 0),
-    Shadow2T       = 0.65,
+    Shadow2T       = 0.75,
+
+    -- HIGHLIGHTS
     Highlight      = Color3.fromRGB(255, 255, 255),
-    HighlightT     = 0.08,
-    SelectionBg    = Color3.fromRGB(96, 165, 250),
-    SelectionBgT   = 0.22,
-    BadgeBg        = Color3.fromRGB(96, 165, 250),
+    HighlightT     = 0.06,  -- 6% white top edge highlight
+    SelectionBg    = Color3.fromRGB(59, 130, 246),
+    SelectionBgT   = 0.25,
+    BadgeBg        = Color3.fromRGB(59, 130, 246),
     BadgeBgT       = 0.25,
-    BadgeText      = Color3.fromRGB(200, 230, 255),
-    Divider        = Color3.fromRGB(65, 72, 84),
-    DividerSoft    = Color3.fromRGB(54, 60, 72),
-    Glow0          = Color3.fromRGB(96, 165, 250),
+    BadgeText      = Color3.fromRGB(191, 219, 254), -- light sapphire badge text
+
+    -- DIVIDERS
+    Divider        = Color3.fromRGB(25, 25, 35),
+    DividerSoft    = Color3.fromRGB(15, 15, 22),
+
+    -- GLOWS — sapphire accent
+    Glow0          = Color3.fromRGB(59, 130, 246),
     Glow0T         = 0.30,
-    Glow1          = Color3.fromRGB(96, 165, 250),
+    Glow1          = Color3.fromRGB(59, 130, 246),
     Glow1T         = 0.55,
-    Glow2          = Color3.fromRGB(96, 165, 250),
+    Glow2          = Color3.fromRGB(59, 130, 246),
     Glow2T         = 0.75,
 }
 
@@ -3342,7 +3373,7 @@ function MIDNIGHT:ApplyStylePreset(name)
     end
     self:SetDensityMode("Compact")
     self:SetNotificationStyle("Compact")
-    self:SetThemeColor(Color3.fromRGB(96, 190, 255))
+    self:SetThemeColor(Color3.fromRGB(59, 130, 246))  -- v7.7: sapphire accent (Premium Sapphire preset)
     self._StylePreset = "Midnight"
     return self._StylePreset
 end
