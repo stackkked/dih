@@ -88,7 +88,7 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:GetDensityMode()
 -- MIDNIGHT:GetDensityModes()
 -- MIDNIGHT:SetNotificationStyle("Compact") -- Compact | Readable | Classic
--- MIDNIGHT:ApplyStylePreset("Midnight") -- Midnight | Readable | Streamer
+-- MIDNIGHT:ApplyStylePreset("BlackPurple") -- BlackPurple | Midnight | Readable | Streamer
 -- MIDNIGHT:SetMenuKey("RightShift")
 -- MIDNIGHT:SetWatermarkText("My watermark")
 -- MIDNIGHT:CreateWatermark({ Name = "MIDNIGHT", Position = "TopLeft", ShowFPS = true, ShowPing = true })
@@ -370,137 +370,112 @@ local ZIndex = {
 --// THEME
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
-    -- ============================================================
-    -- PREMIUM SAPPHIRE — PURE BLACK (v7.8)
-    -- EVERY background is absolute matte black #000000.
-    -- The ONLY non-black colors are:
-    --   1. Purple accent (#A855F7 family) — for active states, sliders, etc.
-    --   2. Status colors (Success/Warning/Error) — for notifications.
-    --   3. Pure white text (#FFFFFF) — everywhere, no grey.
-    -- Borders are also pure black; visual separation comes from strokes
-    -- being semi-transparent over the underlying black + sapphire accents.
-    -- ============================================================
+    -- Black-purple palette with layered depth.
+    WindowBg       = Color3.fromRGB(6, 5, 10),
+    SidebarBg      = Color3.fromRGB(9, 7, 15),
+    ContentBg      = Color3.fromRGB(11, 8, 18),
+    TabBg          = Color3.fromRGB(14, 10, 24),
+    TabHoverBg     = Color3.fromRGB(18, 13, 30),
+    TabActiveBg    = Color3.fromRGB(24, 16, 38),
+    ItemBg         = Color3.fromRGB(12, 9, 20),
+    ItemHoverBg    = Color3.fromRGB(18, 12, 30),
+    InputBg        = Color3.fromRGB(14, 10, 24),
+    DropdownBg     = Color3.fromRGB(12, 9, 22),
+    TitleBarBg     = Color3.fromRGB(8, 6, 14),
 
-    -- CORE BACKGROUNDS — all matte dark #121212
-    WindowBg       = Color3.fromRGB(18, 18, 18),
-    SidebarBg      = Color3.fromRGB(18, 18, 18),
-    ContentBg      = Color3.fromRGB(18, 18, 18),
-    TabBg          = Color3.fromRGB(18, 18, 18),
-    TabHoverBg     = Color3.fromRGB(18, 18, 18),
-    TabActiveBg    = Color3.fromRGB(18, 18, 18),
-    ItemBg         = Color3.fromRGB(18, 18, 18),
-    ItemHoverBg    = Color3.fromRGB(18, 18, 18),
-    InputBg        = Color3.fromRGB(18, 18, 18),
-    DropdownBg     = Color3.fromRGB(18, 18, 18),
-    TitleBarBg     = Color3.fromRGB(18, 18, 18),
+    Accent         = Color3.fromRGB(168, 85, 247),
+    AccentHover    = Color3.fromRGB(202, 145, 255),
+    AccentDark     = Color3.fromRGB(111, 46, 186),
+    AccentSoft     = Color3.fromRGB(229, 204, 255),
+    AccentMuted    = Color3.fromRGB(123, 61, 184),
+    AccentFaint    = Color3.fromRGB(76, 41, 120),
 
-    -- ACCENT — Sapphire blue (#3B82F6 family) — the ONLY non-black/non-white color
-    Accent         = Color3.fromRGB(168, 85, 247),  -- #3B82F6 main sapphire
-    AccentHover    = Color3.fromRGB(192, 132, 252),  -- #60A5FA lighter on hover
-    AccentDark     = Color3.fromRGB(126, 34, 206),   -- #1E40AF deep sapphire
-    AccentSoft     = Color3.fromRGB(216, 180, 254), -- #93C5FD soft accent
-    AccentMuted    = Color3.fromRGB(168, 85, 247),  -- sapphire (no muted variant — keep premium)
-    AccentFaint    = Color3.fromRGB(168, 85, 247),  -- sapphire (no faint variant)
+    TextPrimary    = Color3.fromRGB(246, 242, 255),
+    TextSecondary  = Color3.fromRGB(220, 210, 236),
+    TextMuted      = Color3.fromRGB(152, 144, 170),
+    TextAccent     = Color3.fromRGB(239, 225, 255),
 
-    -- TEXT — pure white everywhere, no grey
-    TextPrimary    = Color3.fromRGB(255, 255, 255), -- pure white
-    TextSecondary  = Color3.fromRGB(255, 255, 255), -- pure white (same as primary)
-    TextMuted      = Color3.fromRGB(255, 255, 255), -- pure white (no muted text)
-    TextAccent     = Color3.fromRGB(216, 180, 254), -- #93C5FD sapphire-tinted for accent labels
+    Border         = Color3.fromRGB(28, 20, 40),
+    BorderLight    = Color3.fromRGB(40, 29, 58),
+    BorderAccent   = Color3.fromRGB(122, 64, 198),
+    BorderSoft     = Color3.fromRGB(34, 25, 49),
+    BorderStrong   = Color3.fromRGB(52, 38, 78),
 
-    -- BORDERS — sapphire-tinted for visibility on pure black
-    -- (pure black borders would be invisible on pure black bg)
-    Border         = Color3.fromRGB(18, 18, 18),  -- invisible border (matches bg, no stroke)
-    BorderLight    = Color3.fromRGB(18, 18, 18),  -- invisible border
-    BorderAccent   = Color3.fromRGB(18, 18, 18),  -- invisible border
-    BorderSoft     = Color3.fromRGB(18, 18, 18),  -- invisible border
-    BorderStrong   = Color3.fromRGB(18, 18, 18),  -- invisible border
+    ToggleOn       = Color3.fromRGB(168, 85, 247),
+    ToggleOff      = Color3.fromRGB(14, 10, 23),
+    ToggleKnob     = Color3.fromRGB(246, 243, 255),
+    SliderTrack    = Color3.fromRGB(14, 10, 23),
+    SliderFill     = Color3.fromRGB(168, 85, 247),
+    SliderKnob     = Color3.fromRGB(246, 243, 255),
 
-    -- TOGGLE / SLIDER — sapphire on pure black
-    ToggleOn       = Color3.fromRGB(168, 85, 247),  -- sapphire when ON
-    ToggleOff      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 when OFF
-    ToggleKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
-    SliderTrack    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 track
-    SliderFill     = Color3.fromRGB(168, 85, 247),  -- sapphire fill
-    SliderKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
+    Success        = Color3.fromRGB(74, 222, 128),
+    Warning        = Color3.fromRGB(250, 204, 21),
+    Error          = Color3.fromRGB(248, 113, 113),
+    Info           = Color3.fromRGB(168, 85, 247),
 
-    -- STATUS COLORS — kept vibrant for notifications (not bg, so not black)
-    Success        = Color3.fromRGB(74, 222, 128),  -- #4ADE80
-    Warning        = Color3.fromRGB(250, 204, 21),  -- #FACC15
-    Error          = Color3.fromRGB(248, 113, 113), -- #F87171
-    Info           = Color3.fromRGB(168, 85, 247),  -- sapphire = info
-
-    -- UTILITY BACKGROUNDS — pure black
-    WatermarkBg    = Color3.fromRGB(18, 18, 18),
-    KeybindBg      = Color3.fromRGB(18, 18, 18),
-    CloseNormal    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes red on hover
+    WatermarkBg    = Color3.fromRGB(10, 8, 18),
+    KeybindBg      = Color3.fromRGB(10, 8, 18),
+    CloseNormal    = Color3.fromRGB(14, 10, 23),
     CloseHover     = Color3.fromRGB(220, 70, 70),
-    MinNormal      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes sapphire on hover
+    MinNormal      = Color3.fromRGB(14, 10, 23),
     MinHover       = Color3.fromRGB(168, 85, 247),
-    ScrollBarColor = Color3.fromRGB(80, 80, 84),  -- subtle grey scrollbar (visible on #121212)
-    ScrollBarBg    = Color3.fromRGB(18, 18, 18),
-    Shadow         = Color3.fromRGB(18, 18, 18),
-    SeparatorBg    = Color3.fromRGB(18, 18, 18),  -- invisible separator
-    InputHoverBg   = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 (no lift on hover)
-    OverlayBg      = Color3.fromRGB(18, 18, 18),
-    OverlayCard    = Color3.fromRGB(18, 18, 18),
-    OverlayStroke  = Color3.fromRGB(18, 18, 18),  -- invisible overlay stroke
-    UtilityBg      = Color3.fromRGB(18, 18, 18),
-    UtilityHeader  = Color3.fromRGB(18, 18, 18),
-    UtilityAccent  = Color3.fromRGB(168, 85, 247),
+    ScrollBarColor = Color3.fromRGB(151, 93, 244),
+    ScrollBarBg    = Color3.fromRGB(8, 6, 14),
+    Shadow         = Color3.fromRGB(4, 2, 8),
+    SeparatorBg    = Color3.fromRGB(16, 12, 26),
+    InputHoverBg   = Color3.fromRGB(18, 13, 30),
+    OverlayBg      = Color3.fromRGB(8, 6, 14),
+    OverlayCard    = Color3.fromRGB(11, 8, 18),
+    OverlayStroke  = Color3.fromRGB(34, 24, 48),
+    UtilityBg      = Color3.fromRGB(10, 8, 18),
+    UtilityHeader  = Color3.fromRGB(12, 9, 21),
+    UtilityAccent  = Color3.fromRGB(181, 111, 255),
 
-    -- SURFACE LAYERS — ALL pure black (hierarchy via sapphire strokes only)
-    Surface0       = Color3.fromRGB(18, 18, 18),
-    Surface1       = Color3.fromRGB(18, 18, 18),
-    Surface2       = Color3.fromRGB(18, 18, 18),
-    Surface3       = Color3.fromRGB(18, 18, 18),
-    Surface4       = Color3.fromRGB(18, 18, 18),
-    Surface5       = Color3.fromRGB(18, 18, 18),
+    Surface0       = Color3.fromRGB(6, 5, 10),
+    Surface1       = Color3.fromRGB(9, 7, 15),
+    Surface2       = Color3.fromRGB(12, 9, 20),
+    Surface3       = Color3.fromRGB(16, 11, 26),
+    Surface4       = Color3.fromRGB(20, 14, 32),
+    Surface5       = Color3.fromRGB(25, 18, 39),
 
-    -- ACCENT GRADIENTS — sapphire variants
     AccentGlow     = Color3.fromRGB(168, 85, 247),
-    AccentGradient1 = Color3.fromRGB(168, 85, 247),  -- sapphire
-    AccentGradient2 = Color3.fromRGB(126, 34, 206),   -- deep sapphire
-    AccentGradient3 = Color3.fromRGB(192, 132, 252),  -- light sapphire
-    GradientStart  = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient start
-    GradientEnd    = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient end
+    AccentGradient1 = Color3.fromRGB(168, 85, 247),
+    AccentGradient2 = Color3.fromRGB(123, 61, 201),
+    AccentGradient3 = Color3.fromRGB(232, 193, 255),
+    GradientStart  = Color3.fromRGB(5, 4, 9),
+    GradientEnd    = Color3.fromRGB(16, 10, 26),
 
-    -- OVERLAYS / EFFECTS
-    HoverOverlay   = Color3.fromRGB(168, 85, 247),  -- sapphire tint on hover (4% opacity)
-    HoverOverlayT  = 0.04,
-    PressOverlay   = Color3.fromRGB(255, 255, 255), -- white flash on press (10% opacity)
-    PressOverlayT  = 0.10,
-    FocusRing      = Color3.fromRGB(168, 85, 247),  -- sapphire focus ring
-    FocusRingT     = 0.55,
+    HoverOverlay   = Color3.fromRGB(168, 85, 247),
+    HoverOverlayT  = 0.06,
+    PressOverlay   = Color3.fromRGB(255, 255, 255),
+    PressOverlayT  = 0.08,
+    FocusRing      = Color3.fromRGB(186, 127, 255),
+    FocusRingT     = 0.48,
 
-    -- SHADOWS — pure black (no visible shadow on pure black bg, just depth)
-    Shadow0        = Color3.fromRGB(18, 18, 18),
-    Shadow0T       = 0.40,
-    Shadow1        = Color3.fromRGB(18, 18, 18),
-    Shadow1T       = 0.60,
-    Shadow2        = Color3.fromRGB(18, 18, 18),
-    Shadow2T       = 0.75,
+    Shadow0        = Color3.fromRGB(4, 2, 8),
+    Shadow0T       = 0.42,
+    Shadow1        = Color3.fromRGB(8, 5, 14),
+    Shadow1T       = 0.58,
+    Shadow2        = Color3.fromRGB(14, 9, 22),
+    Shadow2T       = 0.74,
 
-    -- HIGHLIGHTS — white top edge
-    Highlight      = Color3.fromRGB(255, 255, 255),
-    HighlightT     = 0.08,
-    SelectionBg    = Color3.fromRGB(168, 85, 247),  -- sapphire selection
-    SelectionBgT   = 0.30,
-    BadgeBg        = Color3.fromRGB(168, 85, 247),  -- sapphire badge
-    BadgeBgT       = 0.30,
-    BadgeText      = Color3.fromRGB(255, 255, 255), -- pure white badge text
+    Highlight      = Color3.fromRGB(243, 239, 255),
+    HighlightT     = 0.12,
+    SelectionBg    = Color3.fromRGB(35, 23, 58),
+    SelectionBgT   = 0.24,
+    BadgeBg        = Color3.fromRGB(168, 85, 247),
+    BadgeBgT       = 0.32,
+    BadgeText      = Color3.fromRGB(255, 255, 255),
 
-    -- DIVIDERS — sapphire (visible against pure black)
-    Divider        = Color3.fromRGB(18, 18, 18),
-    DividerSoft    = Color3.fromRGB(18, 18, 18),
+    Divider        = Color3.fromRGB(30, 22, 43),
+    DividerSoft    = Color3.fromRGB(22, 16, 32),
 
-    -- GLOWS — sapphire accent
     Glow0          = Color3.fromRGB(168, 85, 247),
     Glow0T         = 0.30,
-    Glow1          = Color3.fromRGB(168, 85, 247),
+    Glow1          = Color3.fromRGB(128, 67, 204),
     Glow1T         = 0.55,
-    Glow2          = Color3.fromRGB(168, 85, 247),
-    Glow2T         = 0.75,
+    Glow2          = Color3.fromRGB(214, 177, 255),
+    Glow2T         = 0.78,
 }
 
 --// FONT SYSTEM (v7.6)
@@ -3375,6 +3350,18 @@ function MIDNIGHT:SetThemeColor(color)
     Theme.AccentMuted  = DarkenColor(color, 60)
     Theme.AccentFaint  = AccentTint(color, 0.22)
     Theme.UtilityAccent = LightenColor(color, 8)
+    Theme.AccentGlow   = color
+    Theme.AccentGradient1 = color
+    Theme.AccentGradient2 = DarkenColor(color, 26)
+    Theme.AccentGradient3 = LightenColor(color, 34)
+    Theme.ScrollBarColor = LightenColor(color, 6)
+    Theme.FocusRing    = LightenColor(color, 18)
+    Theme.Glow0        = color
+    Theme.Glow1        = LightenColor(color, 18)
+    Theme.Glow2        = LightenColor(color, 36)
+    Theme.SelectionBg  = AccentTint(color, 0.18)
+    Theme.BadgeBg      = AccentTint(color, 0.24)
+    Theme.HoverOverlay = color
     local r, g, b = ColorToRGB(color)
     Theme.BorderAccent = Color3.fromRGB(
         math.floor(r * 0.57),
@@ -3415,6 +3402,12 @@ function MIDNIGHT:ApplyStylePreset(name)
         self:SetDensityMode("Streamer")
         self:SetNotificationStyle("Readable")
         self._StylePreset = "Streamer"
+        return self._StylePreset
+    elseif preset == "blackpurple" then
+        self:SetDensityMode("Compact")
+        self:SetNotificationStyle("Compact")
+        self:SetThemeColor(Color3.fromRGB(168, 85, 247))
+        self._StylePreset = "BlackPurple"
         return self._StylePreset
     end
     self:SetDensityMode("Compact")
@@ -6843,10 +6836,12 @@ function MIDNIGHT:MakeWindow(config)
     -- TITLE BAR — v7.4: matches window bg (no separate dark strip)
     local tb = Create("Frame",{
         Name="TitleBar", Size=UDim2.new(1,0,0,titleBarH),
-        BackgroundColor3=Theme.WindowBg, BorderSizePixel=0,
+        BackgroundColor3=Theme.TitleBarBg, BorderSizePixel=0,
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
+    ApplyGradient(tb, Theme.TitleBarBg, Theme.Surface1, 90)
+    local titleGlow = CreateAccentLine(tb, CompactStyle.HeaderRadius, Theme.Accent)
     -- v7.5: removed the mask frame (was making bottom corners square when minimized)
     -- v7.5: removed logo glow (was looking bad as a square/circle behind moon icon)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
@@ -7023,12 +7018,13 @@ function MIDNIGHT:MakeWindow(config)
         Name="Sidebar",Size=UDim2.new(0,sidebarW,1,-footerH),
         BackgroundColor3=Theme.Surface1,BorderSizePixel=0,Parent=body,
     })
-    -- v8.3: thin white divider between sidebar and content (1px, ~40% opacity)
+    ApplyGradient(sidebar, Theme.SidebarBg, Theme.Surface2, 90)
+    -- v8.3: thin violet divider between sidebar and content (1px, subtle)
     local sidebarDivider = Create("Frame",{
         Size=UDim2.new(0,CompactStyle.DividerThickness,1,0),
         Position=UDim2.new(1,-CompactStyle.DividerThickness,0,0),
-        BackgroundColor3=Color3.fromRGB(255, 255, 255),  -- pure white
-        BackgroundTransparency=0.60,  -- 40% visible white
+        BackgroundColor3=Theme.BorderAccent,
+        BackgroundTransparency=0.72,
         BorderSizePixel=0,Parent=sidebar,
     })
 
@@ -7075,6 +7071,7 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.CONTENT,Parent=body,
     })
     ApplyCorner(contentFrame,CompactStyle.WindowRadius)
+    ApplyGradient(contentFrame, Theme.ContentBg, Theme.Surface3, 90)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface0,BorderSizePixel=0,Parent=contentFrame})
 
     -- v7.5: forward declare wd so filterTabs closure can reference it
@@ -7232,8 +7229,8 @@ function MIDNIGHT:MakeWindow(config)
         local btn = Create("TextButton",{
             Name="Tab_"..tabName,
             Size=UDim2.new(1,0,0,tileSize),
-            BackgroundColor3=Theme.ContentBg,
-            BackgroundTransparency=1,  -- transparent by default
+            BackgroundColor3=Theme.TabBg,
+            BackgroundTransparency=0.16,
             BorderSizePixel=0, Text="",
             LayoutOrder=self._TabCount,
             ZIndex=ZIndex.CONTENT+1,
@@ -7346,7 +7343,7 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
-        -- v8.3: thin white divider BELOW category bar (only visible when categories exist)
+    -- v8.3: thin violet divider BELOW category bar (only visible when categories exist)
         local categoryDivider = Create("Frame",{
             Name="CategoryDivider",
             Size=UDim2.new(1,-8,0,CompactStyle.DividerThickness),
@@ -7469,8 +7466,8 @@ function MIDNIGHT:MakeWindow(config)
                 end
                 -- v8.5: active tab = purple bubble (filled) + bottom underline
                 TweenObject(t._Button, {
-                    BackgroundColor3 = active and Theme.Accent or Theme.ContentBg,
-                    BackgroundTransparency = active and 0 or 1,
+                    BackgroundColor3 = active and Theme.TabActiveBg or Theme.TabBg,
+                    BackgroundTransparency = active and 0 or 0.16,
                 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 -- v8.5: indicator is now a bottom underline (was left vertical stripe)
                 if t._Indicator then
@@ -7482,25 +7479,26 @@ function MIDNIGHT:MakeWindow(config)
                 if t._Label then
                     -- v8.5: active label = white on purple bubble; inactive = secondary white
                     TweenObject(t._Label, {
-                        TextColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextSecondary,
+                        TextColor3 = active and Theme.TextPrimary or Theme.TextSecondary,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
                         -- v8.5: active icon = white on purple bubble; inactive = muted
                         TweenObject(t._IconEl, {
-                            ImageColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
+                            ImageColor3 = active and Theme.TextPrimary or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
                         TweenObject(t._IconEl, {
-                            TextColor3 = active and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
+                            TextColor3 = active and Theme.TextPrimary or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
                 if t._GlowStroke then
-                    -- v8.0: no glow stroke on active tab (always transparent)
+                    -- v8.0: subtle outline on active tab, invisible otherwise
                     TweenObject(t._GlowStroke, {
-                        Transparency = 1,
+                        Transparency = active and 0.55 or 1,
+                        Color = active and Theme.Accent or Theme.BorderSoft,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
             end
@@ -7526,12 +7524,12 @@ function MIDNIGHT:MakeWindow(config)
         btn.MouseButton1Click:Connect(selectTab)
         btn.MouseEnter:Connect(function()
             if self._ActiveTab ~= td then
-                TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.7}, 0.18)
+                TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.05}, 0.18)
             end
         end)
         btn.MouseLeave:Connect(function()
             if self._ActiveTab ~= td then
-                TweenObject(btn, {BackgroundColor3 = Theme.ContentBg, BackgroundTransparency = 1}, 0.18)
+                TweenObject(btn, {BackgroundColor3 = Theme.TabBg, BackgroundTransparency = 0.16}, 0.18)
             end
         end)
         if #self._Tabs == 1 then
@@ -7539,15 +7537,19 @@ function MIDNIGHT:MakeWindow(config)
             pageClipScale.Scale = 1
             -- v8.5: first tab auto-active = purple bubble + white text + bottom underline
             btn.BackgroundTransparency = 0
-            btn.BackgroundColor3 = Theme.Accent
+            btn.BackgroundColor3 = Theme.TabActiveBg
             if indicator then indicator.BackgroundTransparency = 0 end
-            if tabLabel then tabLabel.TextColor3 = Color3.fromRGB(255, 255, 255) end
+            if tabLabel then tabLabel.TextColor3 = Theme.TextPrimary end
             if tabIconEl then
                 if tabIconEl:IsA("ImageLabel") then
-                    tabIconEl.ImageColor3 = Color3.fromRGB(255, 255, 255)
+                    tabIconEl.ImageColor3 = Theme.TextPrimary
                 else
-                    tabIconEl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    tabIconEl.TextColor3 = Theme.TextPrimary
                 end
+            end
+            if tabGlowStroke then
+                tabGlowStroke.Transparency = 0.55
+                tabGlowStroke.Color = Theme.Accent
             end
             self._ActiveTab=td
         end
@@ -7645,8 +7647,8 @@ function MIDNIGHT:MakeWindow(config)
                 Name="Pill_"..cn,
                 Text="",
                 Size=UDim2.new(0,0,pillH,0),AutomaticSize=Enum.AutomaticSize.X,
-                BackgroundColor3=Theme.Surface3,  -- v8.0: bg = matte, but Surface3 still = #121212 so invisible
-                BackgroundTransparency=1,  -- transparent until active
+                BackgroundColor3=Theme.TabBg,
+                BackgroundTransparency=0.16,
                 BorderSizePixel=0,
                 LayoutOrder=#categories + 1,
                 ZIndex=ZIndex.CONTENT+2,
@@ -7742,26 +7744,26 @@ function MIDNIGHT:MakeWindow(config)
                 -- Update pill styling
                 for _, c in ipairs(categories) do
                     local isActive = (c == catData)
-                    -- v8.4: active pill = purple bubble (filled); inactive = transparent
-                    TweenObject(c.button, {
-                        BackgroundColor3 = isActive and Theme.Accent or Theme.Surface3,
-                        BackgroundTransparency = isActive and 0 or 1,
+                -- v8.4: active pill = purple bubble (filled); inactive = transparent
+                TweenObject(c.button, {
+                        BackgroundColor3 = isActive and Theme.TabActiveBg or Theme.TabBg,
+                        BackgroundTransparency = isActive and 0 or 0.16,
                     }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     if c.label then
                         -- Active label = white on purple; inactive = secondary white
                         TweenObject(c.label, {
-                            TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextSecondary,
+                            TextColor3 = isActive and Theme.TextPrimary or Theme.TextSecondary,
                         }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                     if c.iconEl then
                         -- Active icon = white on purple; inactive = muted
                         if c.iconEl:IsA("ImageLabel") then
                             TweenObject(c.iconEl, {
-                                ImageColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
+                                ImageColor3 = isActive and Theme.TextPrimary or Theme.TextMuted,
                             }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         else
                             TweenObject(c.iconEl, {
-                                TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
+                                TextColor3 = isActive and Theme.TextPrimary or Theme.TextMuted,
                             }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         end
                     end
