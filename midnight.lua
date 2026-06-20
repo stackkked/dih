@@ -81,7 +81,7 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:SetIconVaultKitAssets(table)   -- inject/override { ["eye"] = "rbxassetid://XXX", ... } (for re-uploaded icons on your own account)
 -- MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")                                -- load PNGs from GitHub repo via raw.githubusercontent.com
 -- MIDNIGHT:UseGitHubIcons("https://github.com/stackkked/dih/tree/main/Icons", ".png") -- full URL form, explicit extension
--- MIDNIGHT:SetThemeColor(Color3.fromRGB(59, 130, 246))  -- v7.7 default: sapphire (#3B82F6)
+-- MIDNIGHT:SetThemeColor(Color3.fromRGB(168, 85, 247))  -- v8.4 default: purple (#A855F7)
 -- MIDNIGHT:SetFont({Body=Font.new(...), Bold=Font.new(...), Regular=Font.new(...)})  -- override fonts at runtime
 -- MIDNIGHT:GetFont()                       -- returns current {Body, Bold, Regular} font slots
 -- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
@@ -374,7 +374,7 @@ local Theme = {
     -- PREMIUM SAPPHIRE — PURE BLACK (v7.8)
     -- EVERY background is absolute matte black #000000.
     -- The ONLY non-black colors are:
-    --   1. Sapphire accent (#3B82F6 family) — for active states, sliders, etc.
+    --   1. Purple accent (#A855F7 family) — for active states, sliders, etc.
     --   2. Status colors (Success/Warning/Error) — for notifications.
     --   3. Pure white text (#FFFFFF) — everywhere, no grey.
     -- Borders are also pure black; visual separation comes from strokes
@@ -395,18 +395,18 @@ local Theme = {
     TitleBarBg     = Color3.fromRGB(18, 18, 18),
 
     -- ACCENT — Sapphire blue (#3B82F6 family) — the ONLY non-black/non-white color
-    Accent         = Color3.fromRGB(59, 130, 246),  -- #3B82F6 main sapphire
-    AccentHover    = Color3.fromRGB(96, 165, 250),  -- #60A5FA lighter on hover
-    AccentDark     = Color3.fromRGB(30, 64, 175),   -- #1E40AF deep sapphire
-    AccentSoft     = Color3.fromRGB(147, 197, 253), -- #93C5FD soft accent
-    AccentMuted    = Color3.fromRGB(59, 130, 246),  -- sapphire (no muted variant — keep premium)
-    AccentFaint    = Color3.fromRGB(59, 130, 246),  -- sapphire (no faint variant)
+    Accent         = Color3.fromRGB(168, 85, 247),  -- #3B82F6 main sapphire
+    AccentHover    = Color3.fromRGB(192, 132, 252),  -- #60A5FA lighter on hover
+    AccentDark     = Color3.fromRGB(126, 34, 206),   -- #1E40AF deep sapphire
+    AccentSoft     = Color3.fromRGB(216, 180, 254), -- #93C5FD soft accent
+    AccentMuted    = Color3.fromRGB(168, 85, 247),  -- sapphire (no muted variant — keep premium)
+    AccentFaint    = Color3.fromRGB(168, 85, 247),  -- sapphire (no faint variant)
 
     -- TEXT — pure white everywhere, no grey
     TextPrimary    = Color3.fromRGB(255, 255, 255), -- pure white
     TextSecondary  = Color3.fromRGB(255, 255, 255), -- pure white (same as primary)
     TextMuted      = Color3.fromRGB(255, 255, 255), -- pure white (no muted text)
-    TextAccent     = Color3.fromRGB(147, 197, 253), -- #93C5FD sapphire-tinted for accent labels
+    TextAccent     = Color3.fromRGB(216, 180, 254), -- #93C5FD sapphire-tinted for accent labels
 
     -- BORDERS — sapphire-tinted for visibility on pure black
     -- (pure black borders would be invisible on pure black bg)
@@ -417,18 +417,18 @@ local Theme = {
     BorderStrong   = Color3.fromRGB(18, 18, 18),  -- invisible border
 
     -- TOGGLE / SLIDER — sapphire on pure black
-    ToggleOn       = Color3.fromRGB(59, 130, 246),  -- sapphire when ON
+    ToggleOn       = Color3.fromRGB(168, 85, 247),  -- sapphire when ON
     ToggleOff      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 when OFF
     ToggleKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
     SliderTrack    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212 track
-    SliderFill     = Color3.fromRGB(59, 130, 246),  -- sapphire fill
+    SliderFill     = Color3.fromRGB(168, 85, 247),  -- sapphire fill
     SliderKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
 
     -- STATUS COLORS — kept vibrant for notifications (not bg, so not black)
     Success        = Color3.fromRGB(74, 222, 128),  -- #4ADE80
     Warning        = Color3.fromRGB(250, 204, 21),  -- #FACC15
     Error          = Color3.fromRGB(248, 113, 113), -- #F87171
-    Info           = Color3.fromRGB(59, 130, 246),  -- sapphire = info
+    Info           = Color3.fromRGB(168, 85, 247),  -- sapphire = info
 
     -- UTILITY BACKGROUNDS — pure black
     WatermarkBg    = Color3.fromRGB(18, 18, 18),
@@ -436,7 +436,7 @@ local Theme = {
     CloseNormal    = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes red on hover
     CloseHover     = Color3.fromRGB(220, 70, 70),
     MinNormal      = Color3.fromRGB(18, 18, 18),       -- matte dark #121212, becomes sapphire on hover
-    MinHover       = Color3.fromRGB(59, 130, 246),
+    MinHover       = Color3.fromRGB(168, 85, 247),
     ScrollBarColor = Color3.fromRGB(80, 80, 84),  -- subtle grey scrollbar (visible on #121212)
     ScrollBarBg    = Color3.fromRGB(18, 18, 18),
     Shadow         = Color3.fromRGB(18, 18, 18),
@@ -447,7 +447,7 @@ local Theme = {
     OverlayStroke  = Color3.fromRGB(18, 18, 18),  -- invisible overlay stroke
     UtilityBg      = Color3.fromRGB(18, 18, 18),
     UtilityHeader  = Color3.fromRGB(18, 18, 18),
-    UtilityAccent  = Color3.fromRGB(59, 130, 246),
+    UtilityAccent  = Color3.fromRGB(168, 85, 247),
 
     -- SURFACE LAYERS — ALL pure black (hierarchy via sapphire strokes only)
     Surface0       = Color3.fromRGB(18, 18, 18),
@@ -458,19 +458,19 @@ local Theme = {
     Surface5       = Color3.fromRGB(18, 18, 18),
 
     -- ACCENT GRADIENTS — sapphire variants
-    AccentGlow     = Color3.fromRGB(59, 130, 246),
-    AccentGradient1 = Color3.fromRGB(59, 130, 246),  -- sapphire
-    AccentGradient2 = Color3.fromRGB(30, 64, 175),   -- deep sapphire
-    AccentGradient3 = Color3.fromRGB(96, 165, 250),  -- light sapphire
+    AccentGlow     = Color3.fromRGB(168, 85, 247),
+    AccentGradient1 = Color3.fromRGB(168, 85, 247),  -- sapphire
+    AccentGradient2 = Color3.fromRGB(126, 34, 206),   -- deep sapphire
+    AccentGradient3 = Color3.fromRGB(192, 132, 252),  -- light sapphire
     GradientStart  = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient start
     GradientEnd    = Color3.fromRGB(18, 18, 18),        -- matte dark #121212 gradient end
 
     -- OVERLAYS / EFFECTS
-    HoverOverlay   = Color3.fromRGB(59, 130, 246),  -- sapphire tint on hover (4% opacity)
+    HoverOverlay   = Color3.fromRGB(168, 85, 247),  -- sapphire tint on hover (4% opacity)
     HoverOverlayT  = 0.04,
     PressOverlay   = Color3.fromRGB(255, 255, 255), -- white flash on press (10% opacity)
     PressOverlayT  = 0.10,
-    FocusRing      = Color3.fromRGB(59, 130, 246),  -- sapphire focus ring
+    FocusRing      = Color3.fromRGB(168, 85, 247),  -- sapphire focus ring
     FocusRingT     = 0.55,
 
     -- SHADOWS — pure black (no visible shadow on pure black bg, just depth)
@@ -484,9 +484,9 @@ local Theme = {
     -- HIGHLIGHTS — white top edge
     Highlight      = Color3.fromRGB(255, 255, 255),
     HighlightT     = 0.08,
-    SelectionBg    = Color3.fromRGB(59, 130, 246),  -- sapphire selection
+    SelectionBg    = Color3.fromRGB(168, 85, 247),  -- sapphire selection
     SelectionBgT   = 0.30,
-    BadgeBg        = Color3.fromRGB(59, 130, 246),  -- sapphire badge
+    BadgeBg        = Color3.fromRGB(168, 85, 247),  -- sapphire badge
     BadgeBgT       = 0.30,
     BadgeText      = Color3.fromRGB(255, 255, 255), -- pure white badge text
 
@@ -495,11 +495,11 @@ local Theme = {
     DividerSoft    = Color3.fromRGB(18, 18, 18),
 
     -- GLOWS — sapphire accent
-    Glow0          = Color3.fromRGB(59, 130, 246),
+    Glow0          = Color3.fromRGB(168, 85, 247),
     Glow0T         = 0.30,
-    Glow1          = Color3.fromRGB(59, 130, 246),
+    Glow1          = Color3.fromRGB(168, 85, 247),
     Glow1T         = 0.55,
-    Glow2          = Color3.fromRGB(59, 130, 246),
+    Glow2          = Color3.fromRGB(168, 85, 247),
     Glow2T         = 0.75,
 }
 
@@ -3419,7 +3419,7 @@ function MIDNIGHT:ApplyStylePreset(name)
     end
     self:SetDensityMode("Compact")
     self:SetNotificationStyle("Compact")
-    self:SetThemeColor(Color3.fromRGB(59, 130, 246))  -- v7.7: sapphire accent (Premium Sapphire preset)
+    self:SetThemeColor(Color3.fromRGB(168, 85, 247))  -- v8.4: purple accent (Black Purple preset)
     self._StylePreset = "Midnight"
     return self._StylePreset
 end
@@ -7660,6 +7660,20 @@ function MIDNIGHT:MakeWindow(config)
             -- v8.2: rectangular pills with small radius (was pillH/2 = round pill)
             ApplyCorner(pill, CompactStyle.CategoryPillRadius)
 
+            -- v8.4: thin accent bar BELOW the active pill (bubble underline)
+            -- Visible only on the active category, hidden otherwise.
+            local pillUnderline = Create("Frame",{
+                Name="PillUnderline_"..cn,
+                Size=UDim2.new(1,0,0,2),
+                Position=UDim2.new(0,0,1,-1),
+                BackgroundColor3=Theme.Accent,  -- purple
+                BackgroundTransparency=1,  -- hidden by default
+                BorderSizePixel=0,
+                ZIndex=ZIndex.CONTENT+3,
+                Parent=pill,
+            })
+            ApplyCorner(pillUnderline, 1)
+
             -- Pill content: icon + label, horizontal
             local pillContent = Create("Frame",{
                 Size=UDim2.new(1,-CompactStyle.CategoryPillPaddingX*2,1,0),
@@ -7694,6 +7708,7 @@ function MIDNIGHT:MakeWindow(config)
             local catData = {
                 name=cn, icon=ci,
                 button=pill, label=pillLabel, iconEl=pillIconEl,
+                underline=pillUnderline,  -- v8.4: thin bar below active pill
                 page=catPage, placeholder=catPlaceholder,
                 itemCount=0,
             }
@@ -7732,25 +7747,34 @@ function MIDNIGHT:MakeWindow(config)
                 -- Update pill styling
                 for _, c in ipairs(categories) do
                     local isActive = (c == catData)
+                    -- v8.4: active pill = purple bubble (filled); inactive = transparent
                     TweenObject(c.button, {
                         BackgroundColor3 = isActive and Theme.Accent or Theme.Surface3,
                         BackgroundTransparency = isActive and 0 or 1,
                     }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     if c.label then
+                        -- Active label = white on purple; inactive = secondary white
                         TweenObject(c.label, {
-                            TextColor3 = isActive and Theme.TextPrimary or Theme.TextSecondary,
+                            TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextSecondary,
                         }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                     if c.iconEl then
+                        -- Active icon = white on purple; inactive = muted
                         if c.iconEl:IsA("ImageLabel") then
                             TweenObject(c.iconEl, {
-                                ImageColor3 = isActive and Theme.Accent or Theme.TextMuted,
+                                ImageColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
                             }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         else
                             TweenObject(c.iconEl, {
-                                TextColor3 = isActive and Theme.Accent or Theme.TextMuted,
+                                TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Theme.TextMuted,
                             }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                         end
+                    end
+                    -- v8.4: thin purple underline below active pill (bubble indicator)
+                    if c.underline then
+                        TweenObject(c.underline, {
+                            BackgroundTransparency = isActive and 0 or 1,
+                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
             end
