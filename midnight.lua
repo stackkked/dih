@@ -82,6 +82,8 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")                                -- load PNGs from GitHub repo via raw.githubusercontent.com
 -- MIDNIGHT:UseGitHubIcons("https://github.com/stackkked/dih/tree/main/Icons", ".png") -- full URL form, explicit extension
 -- MIDNIGHT:SetThemeColor(Color3.fromRGB(96, 190, 255))
+-- MIDNIGHT:SetFont({Body=Font.new(...), Bold=Font.new(...), Regular=Font.new(...)})  -- override fonts at runtime
+-- MIDNIGHT:GetFont()                       -- returns current {Body, Bold, Regular} font slots
 -- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
 -- MIDNIGHT:GetDensityMode()
 -- MIDNIGHT:GetDensityModes()
@@ -465,9 +467,29 @@ local Theme = {
     Glow2T         = 0.75,
 }
 
-local Font        = Enum.Font.GothamSemibold
-local FontBold    = Enum.Font.GothamBold
-local FontRegular = Enum.Font.Gotham
+--// FONT SYSTEM (v7.6)
+--// Uses Font.new() with the built-in GothamSSm.json family + FontWeight enum
+--// for proper weight hierarchy. GothamMedium/GothamBlack enum values are
+--// deprecated in modern Roblox (they fall back to Montserrat), so we use the
+--// Font data type which gives access to ALL weights natively.
+--//
+--// Weight mapping (bumped one step up from v7.5 for "fatter, eye-pleasing" look):
+--//   Font        = Bold       (was GothamSemibold) — main body text
+--//   FontBold    = ExtraBold  (was GothamBold)     — headings / titles
+--//   FontRegular = SemiBold   (was Gotham)         — meta / fine print
+--//
+--// To override at runtime: MIDNIGHT:SetFont({Body = Font.new(...), Bold = Font.new(...), Regular = Font.new(...)})
+--// To revert to legacy Enum.Font: MIDNIGHT:SetFont({Body = Enum.Font.GothamSemibold, Bold = Enum.Font.GothamBold, Regular = Enum.Font.Gotham})
+local _GothamFamily = "rbxasset://fonts/families/GothamSSm.json"
+local function _SafeFont(family, weight, fallbackEnum)
+    local ok, f = pcall(function() return Font.new(family, weight) end)
+    if ok and f then return f end
+    return fallbackEnum or Enum.Font.GothamBold
+end
+
+local Font        = _SafeFont(_GothamFamily, Enum.FontWeight.Bold,       Enum.Font.GothamBold)      -- main body
+local FontBold    = _SafeFont(_GothamFamily, Enum.FontWeight.ExtraBold,  Enum.Font.GothamBold)      -- headings (ExtraBold falls back to Bold if unavailable)
+local FontRegular = _SafeFont(_GothamFamily, Enum.FontWeight.SemiBold,   Enum.Font.GothamSemibold)  -- meta / fine print
 
 local CompactStyle = {
     WindowRadius = 8,
@@ -3244,6 +3266,47 @@ function MIDNIGHT:ApplyStylePreset(name)
     self:SetThemeColor(Color3.fromRGB(96, 190, 255))
     self._StylePreset = "Midnight"
     return self._StylePreset
+end
+
+function MIDNIGHT:SetFont(fonts)
+    -- Override the library's three font slots at runtime.
+    --
+    -- fonts: table with any of these keys (all optional):
+    --   Body     — main text font (used by 92+ widget labels)
+    --   Bold     — heading/title font (used by 77+ headings)
+    --   Regular  — meta/fine-print font (used by 28+ small labels)
+    --
+    -- Each value can be either:
+    --   * A Font instance: Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
+    --   * An Enum.Font value: Enum.Font.GothamBold
+    --
+    -- IMPORTANT: only affects widgets created AFTER this call. Existing widgets
+    -- keep their original font. Call SetFont() right after loadstring(), before
+    -- MakeWindow() / MakeTab() / AddXxx() to apply globally.
+    --
+    -- Example — switch to Montserrat:
+    --   local MF = "rbxasset://fonts/families/Montserrat.json"
+    --   MIDNIGHT:SetFont({
+    --       Body     = Font.new(MF, Enum.FontWeight.Bold),
+    --       Bold     = Font.new(MF, Enum.FontWeight.ExtraBold),
+    --       Regular  = Font.new(MF, Enum.FontWeight.SemiBold),
+    --   })
+    --
+    -- Example — revert to legacy Enum.Font:
+    --   MIDNIGHT:SetFont({
+    --       Body     = Enum.Font.GothamSemibold,
+    --       Bold     = Enum.Font.GothamBold,
+    --       Regular  = Enum.Font.Gotham,
+    --   })
+    if type(fonts) ~= "table" then return end
+    if fonts.Body    then Font        = fonts.Body    end
+    if fonts.Bold    then FontBold    = fonts.Bold    end
+    if fonts.Regular then FontRegular = fonts.Regular end
+end
+
+function MIDNIGHT:GetFont()
+    -- Returns the three current font slots: {Body=..., Bold=..., Regular=...}
+    return { Body = Font, Bold = FontBold, Regular = FontRegular }
 end
 
 function MIDNIGHT:SetMenuKey(keyStr)
