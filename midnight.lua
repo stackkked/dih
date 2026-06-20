@@ -371,104 +371,109 @@ local ZIndex = {
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
     -- ============================================================
-    -- PREMIUM SAPPHIRE (v7.7)
-    -- Absolute matte black + sapphire-blue accent + pure white text.
-    -- Layered surfaces use minimal RGB shifts (0..14) to preserve
-    -- hierarchy without breaking the "pure black" feel.
+    -- PREMIUM SAPPHIRE — PURE BLACK (v7.8)
+    -- EVERY background is absolute matte black #000000.
+    -- The ONLY non-black colors are:
+    --   1. Sapphire accent (#3B82F6 family) — for active states, sliders, etc.
+    --   2. Status colors (Success/Warning/Error) — for notifications.
+    --   3. Pure white text (#FFFFFF) — everywhere, no grey.
+    -- Borders are also pure black; visual separation comes from strokes
+    -- being semi-transparent over the underlying black + sapphire accents.
     -- ============================================================
 
-    -- CORE BACKGROUNDS — absolute matte black with subtle layer shifts
-    WindowBg       = Color3.fromRGB(0, 0, 0),       -- pure black window
-    SidebarBg      = Color3.fromRGB(0, 0, 0),       -- pure black sidebar
-    ContentBg      = Color3.fromRGB(2, 2, 4),       -- barely-visible lift on content area
-    TabBg          = Color3.fromRGB(6, 6, 10),      -- tab resting state
-    TabHoverBg     = Color3.fromRGB(14, 14, 22),    -- tab hover
-    TabActiveBg    = Color3.fromRGB(22, 22, 36),    -- tab selected (subtle sapphire tint)
-    ItemBg         = Color3.fromRGB(8, 8, 12),      -- widget resting
-    ItemHoverBg    = Color3.fromRGB(18, 18, 28),    -- widget hover
-    InputBg        = Color3.fromRGB(10, 10, 14),    -- text input resting
-    DropdownBg     = Color3.fromRGB(8, 8, 12),      -- dropdown popup
-    TitleBarBg     = Color3.fromRGB(0, 0, 0),       -- title bar = window bg (seamless)
+    -- CORE BACKGROUNDS — all absolute pure black #000000
+    WindowBg       = Color3.fromRGB(0, 0, 0),
+    SidebarBg      = Color3.fromRGB(0, 0, 0),
+    ContentBg      = Color3.fromRGB(0, 0, 0),
+    TabBg          = Color3.fromRGB(0, 0, 0),
+    TabHoverBg     = Color3.fromRGB(0, 0, 0),
+    TabActiveBg    = Color3.fromRGB(0, 0, 0),
+    ItemBg         = Color3.fromRGB(0, 0, 0),
+    ItemHoverBg    = Color3.fromRGB(0, 0, 0),
+    InputBg        = Color3.fromRGB(0, 0, 0),
+    DropdownBg     = Color3.fromRGB(0, 0, 0),
+    TitleBarBg     = Color3.fromRGB(0, 0, 0),
 
-    -- ACCENT — Sapphire blue (#3B82F6 family)
+    -- ACCENT — Sapphire blue (#3B82F6 family) — the ONLY non-black/non-white color
     Accent         = Color3.fromRGB(59, 130, 246),  -- #3B82F6 main sapphire
     AccentHover    = Color3.fromRGB(96, 165, 250),  -- #60A5FA lighter on hover
     AccentDark     = Color3.fromRGB(30, 64, 175),   -- #1E40AF deep sapphire
-    AccentSoft     = Color3.fromRGB(147, 197, 253), -- #93C5FD soft accent for text
-    AccentMuted    = Color3.fromRGB(45, 80, 130),   -- muted sapphire for backgrounds
-    AccentFaint    = Color3.fromRGB(20, 35, 60),    -- very faint accent
+    AccentSoft     = Color3.fromRGB(147, 197, 253), -- #93C5FD soft accent
+    AccentMuted    = Color3.fromRGB(59, 130, 246),  -- sapphire (no muted variant — keep premium)
+    AccentFaint    = Color3.fromRGB(59, 130, 246),  -- sapphire (no faint variant)
 
-    -- TEXT — pure white (not grey) as requested
+    -- TEXT — pure white everywhere, no grey
     TextPrimary    = Color3.fromRGB(255, 255, 255), -- pure white
-    TextSecondary  = Color3.fromRGB(229, 231, 235), -- #E5E7EB near-white
-    TextMuted      = Color3.fromRGB(148, 163, 184), -- #94A3B8 slate-400 (still readable on black)
-    TextAccent     = Color3.fromRGB(147, 197, 253), -- #93C5FD sapphire-tinted text
+    TextSecondary  = Color3.fromRGB(255, 255, 255), -- pure white (same as primary)
+    TextMuted      = Color3.fromRGB(255, 255, 255), -- pure white (no muted text)
+    TextAccent     = Color3.fromRGB(147, 197, 253), -- #93C5FD sapphire-tinted for accent labels
 
-    -- BORDERS — barely-visible against pure black, with subtle sapphire tint
-    Border         = Color3.fromRGB(30, 30, 42),    -- neutral border
-    BorderLight    = Color3.fromRGB(50, 50, 65),    -- hover border
+    -- BORDERS — sapphire-tinted for visibility on pure black
+    -- (pure black borders would be invisible on pure black bg)
+    Border         = Color3.fromRGB(59, 130, 246),  -- sapphire border (subtle due to transparency)
+    BorderLight    = Color3.fromRGB(96, 165, 250),  -- lighter sapphire on hover
     BorderAccent   = Color3.fromRGB(59, 130, 246),  -- sapphire border on focus
-    BorderSoft     = Color3.fromRGB(20, 20, 28),    -- soft divider
-    BorderStrong   = Color3.fromRGB(70, 70, 85),    -- strong separator
+    BorderSoft     = Color3.fromRGB(59, 130, 246),  -- sapphire soft divider
+    BorderStrong   = Color3.fromRGB(147, 197, 253), -- strong sapphire separator
 
-    -- TOGGLE / SLIDER
+    -- TOGGLE / SLIDER — sapphire on pure black
     ToggleOn       = Color3.fromRGB(59, 130, 246),  -- sapphire when ON
-    ToggleOff      = Color3.fromRGB(30, 30, 40),    -- dark grey when OFF
+    ToggleOff      = Color3.fromRGB(0, 0, 0),       -- pure black when OFF
     ToggleKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
-    SliderTrack    = Color3.fromRGB(30, 30, 40),    -- dark grey track
+    SliderTrack    = Color3.fromRGB(0, 0, 0),       -- pure black track
     SliderFill     = Color3.fromRGB(59, 130, 246),  -- sapphire fill
     SliderKnob     = Color3.fromRGB(255, 255, 255), -- pure white knob
 
-    -- STATUS COLORS — kept vibrant against pure black
+    -- STATUS COLORS — kept vibrant for notifications (not bg, so not black)
     Success        = Color3.fromRGB(74, 222, 128),  -- #4ADE80
     Warning        = Color3.fromRGB(250, 204, 21),  -- #FACC15
     Error          = Color3.fromRGB(248, 113, 113), -- #F87171
     Info           = Color3.fromRGB(59, 130, 246),  -- sapphire = info
 
-    -- UTILITY BACKGROUNDS — pure black with minimal lift
+    -- UTILITY BACKGROUNDS — pure black
     WatermarkBg    = Color3.fromRGB(0, 0, 0),
     KeybindBg      = Color3.fromRGB(0, 0, 0),
-    CloseNormal    = Color3.fromRGB(30, 30, 40),
+    CloseNormal    = Color3.fromRGB(0, 0, 0),       -- pure black, becomes red on hover
     CloseHover     = Color3.fromRGB(220, 70, 70),
-    MinNormal      = Color3.fromRGB(30, 30, 40),
-    MinHover       = Color3.fromRGB(59, 130, 246),  -- sapphire on hover
-    ScrollBarColor = Color3.fromRGB(60, 60, 75),
-    ScrollBarBg    = Color3.fromRGB(10, 10, 14),
+    MinNormal      = Color3.fromRGB(0, 0, 0),       -- pure black, becomes sapphire on hover
+    MinHover       = Color3.fromRGB(59, 130, 246),
+    ScrollBarColor = Color3.fromRGB(59, 130, 246),  -- sapphire scrollbar on pure black
+    ScrollBarBg    = Color3.fromRGB(0, 0, 0),
     Shadow         = Color3.fromRGB(0, 0, 0),
-    SeparatorBg    = Color3.fromRGB(25, 25, 35),
-    InputHoverBg   = Color3.fromRGB(20, 20, 30),
-    OverlayBg      = Color3.fromRGB(8, 8, 12),
-    OverlayCard    = Color3.fromRGB(14, 14, 22),
-    OverlayStroke  = Color3.fromRGB(50, 50, 65),
+    SeparatorBg    = Color3.fromRGB(59, 130, 246),  -- sapphire separator (subtle due to transparency)
+    InputHoverBg   = Color3.fromRGB(0, 0, 0),       -- pure black (no lift on hover)
+    OverlayBg      = Color3.fromRGB(0, 0, 0),
+    OverlayCard    = Color3.fromRGB(0, 0, 0),
+    OverlayStroke  = Color3.fromRGB(59, 130, 246),  -- sapphire stroke on overlays
     UtilityBg      = Color3.fromRGB(0, 0, 0),
-    UtilityHeader  = Color3.fromRGB(8, 8, 12),
+    UtilityHeader  = Color3.fromRGB(0, 0, 0),
     UtilityAccent  = Color3.fromRGB(59, 130, 246),
 
-    -- SURFACE LAYERS — minimal lift from pure black, slight sapphire tint
-    Surface0       = Color3.fromRGB(0, 0, 0),       -- base
-    Surface1       = Color3.fromRGB(6, 6, 10),
-    Surface2       = Color3.fromRGB(12, 12, 18),
-    Surface3       = Color3.fromRGB(20, 20, 30),
-    Surface4       = Color3.fromRGB(28, 28, 40),
-    Surface5       = Color3.fromRGB(36, 36, 50),
+    -- SURFACE LAYERS — ALL pure black (hierarchy via sapphire strokes only)
+    Surface0       = Color3.fromRGB(0, 0, 0),
+    Surface1       = Color3.fromRGB(0, 0, 0),
+    Surface2       = Color3.fromRGB(0, 0, 0),
+    Surface3       = Color3.fromRGB(0, 0, 0),
+    Surface4       = Color3.fromRGB(0, 0, 0),
+    Surface5       = Color3.fromRGB(0, 0, 0),
 
     -- ACCENT GRADIENTS — sapphire variants
     AccentGlow     = Color3.fromRGB(59, 130, 246),
     AccentGradient1 = Color3.fromRGB(59, 130, 246),  -- sapphire
     AccentGradient2 = Color3.fromRGB(30, 64, 175),   -- deep sapphire
     AccentGradient3 = Color3.fromRGB(96, 165, 250),  -- light sapphire
-    GradientStart  = Color3.fromRGB(12, 12, 18),     -- subtle surface gradient
-    GradientEnd    = Color3.fromRGB(0, 0, 0),        -- fade to pure black
+    GradientStart  = Color3.fromRGB(0, 0, 0),        -- pure black gradient start
+    GradientEnd    = Color3.fromRGB(0, 0, 0),        -- pure black gradient end
 
     -- OVERLAYS / EFFECTS
-    HoverOverlay   = Color3.fromRGB(255, 255, 255),
-    HoverOverlayT  = 0.04,  -- 4% white on hover
-    PressOverlay   = Color3.fromRGB(0, 0, 0),
-    PressOverlayT  = 0.20,  -- 20% black on press (more pronounced on pure black bg)
+    HoverOverlay   = Color3.fromRGB(59, 130, 246),  -- sapphire tint on hover (4% opacity)
+    HoverOverlayT  = 0.04,
+    PressOverlay   = Color3.fromRGB(255, 255, 255), -- white flash on press (10% opacity)
+    PressOverlayT  = 0.10,
     FocusRing      = Color3.fromRGB(59, 130, 246),  -- sapphire focus ring
     FocusRingT     = 0.55,
 
-    -- SHADOWS — kept dark (they're already on pure black so fade softly)
+    -- SHADOWS — pure black (no visible shadow on pure black bg, just depth)
     Shadow0        = Color3.fromRGB(0, 0, 0),
     Shadow0T       = 0.40,
     Shadow1        = Color3.fromRGB(0, 0, 0),
@@ -476,18 +481,18 @@ local Theme = {
     Shadow2        = Color3.fromRGB(0, 0, 0),
     Shadow2T       = 0.75,
 
-    -- HIGHLIGHTS
+    -- HIGHLIGHTS — white top edge
     Highlight      = Color3.fromRGB(255, 255, 255),
-    HighlightT     = 0.06,  -- 6% white top edge highlight
-    SelectionBg    = Color3.fromRGB(59, 130, 246),
-    SelectionBgT   = 0.25,
-    BadgeBg        = Color3.fromRGB(59, 130, 246),
-    BadgeBgT       = 0.25,
-    BadgeText      = Color3.fromRGB(191, 219, 254), -- light sapphire badge text
+    HighlightT     = 0.08,
+    SelectionBg    = Color3.fromRGB(59, 130, 246),  -- sapphire selection
+    SelectionBgT   = 0.30,
+    BadgeBg        = Color3.fromRGB(59, 130, 246),  -- sapphire badge
+    BadgeBgT       = 0.30,
+    BadgeText      = Color3.fromRGB(255, 255, 255), -- pure white badge text
 
-    -- DIVIDERS
-    Divider        = Color3.fromRGB(25, 25, 35),
-    DividerSoft    = Color3.fromRGB(15, 15, 22),
+    -- DIVIDERS — sapphire (visible against pure black)
+    Divider        = Color3.fromRGB(59, 130, 246),
+    DividerSoft    = Color3.fromRGB(59, 130, 246),
 
     -- GLOWS — sapphire accent
     Glow0          = Color3.fromRGB(59, 130, 246),
