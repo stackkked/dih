@@ -75,20 +75,14 @@ MIDNIGHT / глобальные команды:
 -- MIDNIGHT:SetIcons({ settings = "rbxassetid://123" })
 -- MIDNIGHT:UseLucideIcons("https://cdn.example.com/lucide", ".png")
 -- MIDNIGHT:GetLucideIcons()
--- MIDNIGHT:UseIconVaultKit()              -- activate pre-baked 219-icon IconVaultKitAssets table (rbxassetid://). One-liner, works out of the box.
--- MIDNIGHT:UseIconVaultKit("lucide")      -- HTTP fallback: pull SVG directly from https://api.iconify.design/lucide/{name}.svg
--- MIDNIGHT:GetIconVaultKitAssets()
--- MIDNIGHT:SetIconVaultKitAssets(table)   -- inject/override { ["eye"] = "rbxassetid://XXX", ... } (for re-uploaded icons on your own account)
--- MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")                                -- load PNGs from GitHub repo via raw.githubusercontent.com
--- MIDNIGHT:UseGitHubIcons("https://github.com/stackkked/dih/tree/main/Icons", ".png") -- full URL form, explicit extension
--- MIDNIGHT:SetThemeColor(Color3.fromRGB(168, 85, 247))  -- v8.4 default: purple (#A855F7)
--- MIDNIGHT:SetFont({Body=Font.new(...), Bold=Font.new(...), Regular=Font.new(...)})  -- override fonts at runtime
--- MIDNIGHT:GetFont()                       -- returns current {Body, Bold, Regular} font slots
+-- MIDNIGHT:UseLucideBlox()
+-- MIDNIGHT:GetLucideBloxAssets()
+-- MIDNIGHT:SetThemeColor(Color3.fromRGB(96, 190, 255))
 -- MIDNIGHT:SetDensityMode("Compact") -- Compact | Readable | Streamer
 -- MIDNIGHT:GetDensityMode()
 -- MIDNIGHT:GetDensityModes()
 -- MIDNIGHT:SetNotificationStyle("Compact") -- Compact | Readable | Classic
--- MIDNIGHT:ApplyStylePreset("BlackPurple") -- BlackPurple | Midnight | Readable | Streamer
+-- MIDNIGHT:ApplyStylePreset("Midnight") -- Midnight | Readable | Streamer
 -- MIDNIGHT:SetMenuKey("RightShift")
 -- MIDNIGHT:SetWatermarkText("My watermark")
 -- MIDNIGHT:CreateWatermark({ Name = "MIDNIGHT", Position = "TopLeft", ShowFPS = true, ShowPing = true })
@@ -370,161 +364,104 @@ local ZIndex = {
 --// THEME
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 local Theme = {
-    -- Black-purple palette with layered depth.
-    WindowBg       = Color3.fromRGB(6, 5, 10),
-    SidebarBg      = Color3.fromRGB(9, 7, 15),
-    ContentBg      = Color3.fromRGB(11, 8, 18),
-    TabBg          = Color3.fromRGB(14, 10, 24),
-    TabHoverBg     = Color3.fromRGB(18, 13, 30),
-    TabActiveBg    = Color3.fromRGB(24, 16, 38),
-    ItemBg         = Color3.fromRGB(12, 9, 20),
-    ItemHoverBg    = Color3.fromRGB(18, 12, 30),
-    InputBg        = Color3.fromRGB(14, 10, 24),
-    DropdownBg     = Color3.fromRGB(12, 9, 22),
-    TitleBarBg     = Color3.fromRGB(8, 6, 14),
-
-    Accent         = Color3.fromRGB(168, 85, 247),
-    AccentHover    = Color3.fromRGB(202, 145, 255),
-    AccentDark     = Color3.fromRGB(111, 46, 186),
-    AccentSoft     = Color3.fromRGB(229, 204, 255),
-    AccentMuted    = Color3.fromRGB(123, 61, 184),
-    AccentFaint    = Color3.fromRGB(76, 41, 120),
-
-    TextPrimary    = Color3.fromRGB(246, 242, 255),
-    TextSecondary  = Color3.fromRGB(220, 210, 236),
-    TextMuted      = Color3.fromRGB(152, 144, 170),
-    TextAccent     = Color3.fromRGB(239, 225, 255),
-
-    Border         = Color3.fromRGB(28, 20, 40),
-    BorderLight    = Color3.fromRGB(40, 29, 58),
-    BorderAccent   = Color3.fromRGB(122, 64, 198),
-    BorderSoft     = Color3.fromRGB(34, 25, 49),
-    BorderStrong   = Color3.fromRGB(52, 38, 78),
-
-    ToggleOn       = Color3.fromRGB(168, 85, 247),
-    ToggleOff      = Color3.fromRGB(14, 10, 23),
-    ToggleKnob     = Color3.fromRGB(246, 243, 255),
-    SliderTrack    = Color3.fromRGB(14, 10, 23),
-    SliderFill     = Color3.fromRGB(168, 85, 247),
-    SliderKnob     = Color3.fromRGB(246, 243, 255),
-
+    -- CORE BACKGROUNDS — deep dark with subtle blue tint (Midnight CS2 style)
+    WindowBg       = Color3.fromRGB(14, 16, 22),
+    SidebarBg      = Color3.fromRGB(11, 13, 18),
+    ContentBg      = Color3.fromRGB(16, 18, 24),
+    TabBg          = Color3.fromRGB(18, 20, 27),
+    TabHoverBg     = Color3.fromRGB(24, 27, 35),
+    TabActiveBg    = Color3.fromRGB(28, 32, 42),
+    ItemBg         = Color3.fromRGB(18, 20, 27),
+    ItemHoverBg    = Color3.fromRGB(24, 27, 35),
+    InputBg        = Color3.fromRGB(22, 25, 32),
+    DropdownBg     = Color3.fromRGB(18, 20, 27),
+    TitleBarBg     = Color3.fromRGB(16, 18, 24),
+    Accent         = Color3.fromRGB(96, 165, 250),
+    AccentHover    = Color3.fromRGB(125, 180, 255),
+    AccentDark     = Color3.fromRGB(56, 130, 220),
+    AccentSoft     = Color3.fromRGB(140, 195, 255),
+    AccentMuted    = Color3.fromRGB(70, 110, 165),
+    AccentFaint    = Color3.fromRGB(30, 50, 75),
+    TextPrimary    = Color3.fromRGB(240, 244, 248),
+    TextSecondary  = Color3.fromRGB(170, 178, 190),
+    TextMuted      = Color3.fromRGB(105, 115, 128),
+    TextAccent     = Color3.fromRGB(140, 195, 255),
+    Border         = Color3.fromRGB(40, 45, 55),
+    BorderLight    = Color3.fromRGB(55, 62, 75),
+    BorderAccent   = Color3.fromRGB(60, 110, 165),
+    BorderSoft     = Color3.fromRGB(28, 32, 40),
+    BorderStrong   = Color3.fromRGB(65, 72, 85),
+    ToggleOn       = Color3.fromRGB(96, 165, 250),
+    ToggleOff      = Color3.fromRGB(28, 32, 40),
+    ToggleKnob     = Color3.fromRGB(255, 255, 255),
+    SliderTrack    = Color3.fromRGB(28, 32, 40),
+    SliderFill     = Color3.fromRGB(96, 165, 250),
+    SliderKnob     = Color3.fromRGB(255, 255, 255),
     Success        = Color3.fromRGB(74, 222, 128),
     Warning        = Color3.fromRGB(250, 204, 21),
     Error          = Color3.fromRGB(248, 113, 113),
-    Info           = Color3.fromRGB(168, 85, 247),
-
-    WatermarkBg    = Color3.fromRGB(10, 8, 18),
-    KeybindBg      = Color3.fromRGB(10, 8, 18),
-    CloseNormal    = Color3.fromRGB(14, 10, 23),
+    Info           = Color3.fromRGB(96, 165, 250),
+    WatermarkBg    = Color3.fromRGB(14, 16, 22),
+    KeybindBg      = Color3.fromRGB(14, 16, 22),
+    CloseNormal    = Color3.fromRGB(40, 45, 55),
     CloseHover     = Color3.fromRGB(220, 70, 70),
-    MinNormal      = Color3.fromRGB(14, 10, 23),
-    MinHover       = Color3.fromRGB(168, 85, 247),
-    ScrollBarColor = Color3.fromRGB(151, 93, 244),
-    ScrollBarBg    = Color3.fromRGB(8, 6, 14),
-    Shadow         = Color3.fromRGB(4, 2, 8),
-    SeparatorBg    = Color3.fromRGB(16, 12, 26),
-    InputHoverBg   = Color3.fromRGB(18, 13, 30),
-    OverlayBg      = Color3.fromRGB(8, 6, 14),
-    OverlayCard    = Color3.fromRGB(11, 8, 18),
-    OverlayStroke  = Color3.fromRGB(34, 24, 48),
-    UtilityBg      = Color3.fromRGB(10, 8, 18),
-    UtilityHeader  = Color3.fromRGB(12, 9, 21),
-    UtilityAccent  = Color3.fromRGB(181, 111, 255),
-
-    Surface0       = Color3.fromRGB(6, 5, 10),
-    Surface1       = Color3.fromRGB(9, 7, 15),
-    Surface2       = Color3.fromRGB(12, 9, 20),
-    Surface3       = Color3.fromRGB(16, 11, 26),
-    Surface4       = Color3.fromRGB(20, 14, 32),
-    Surface5       = Color3.fromRGB(25, 18, 39),
-
-    AccentGlow     = Color3.fromRGB(168, 85, 247),
-    AccentGradient1 = Color3.fromRGB(168, 85, 247),
-    AccentGradient2 = Color3.fromRGB(123, 61, 201),
-    AccentGradient3 = Color3.fromRGB(232, 193, 255),
-    GradientStart  = Color3.fromRGB(5, 4, 9),
-    GradientEnd    = Color3.fromRGB(16, 10, 26),
-
-    HoverOverlay   = Color3.fromRGB(168, 85, 247),
-    HoverOverlayT  = 0.06,
-    PressOverlay   = Color3.fromRGB(255, 255, 255),
-    PressOverlayT  = 0.08,
-    FocusRing      = Color3.fromRGB(186, 127, 255),
-    FocusRingT     = 0.48,
-
-    Shadow0        = Color3.fromRGB(4, 2, 8),
-    Shadow0T       = 0.42,
-    Shadow1        = Color3.fromRGB(8, 5, 14),
-    Shadow1T       = 0.58,
-    Shadow2        = Color3.fromRGB(14, 9, 22),
-    Shadow2T       = 0.74,
-
-    Highlight      = Color3.fromRGB(243, 239, 255),
-    HighlightT     = 0.12,
-    SelectionBg    = Color3.fromRGB(35, 23, 58),
-    SelectionBgT   = 0.24,
-    BadgeBg        = Color3.fromRGB(168, 85, 247),
-    BadgeBgT       = 0.32,
-    BadgeText      = Color3.fromRGB(255, 255, 255),
-
-    Divider        = Color3.fromRGB(30, 22, 43),
-    DividerSoft    = Color3.fromRGB(22, 16, 32),
-
-    Glow0          = Color3.fromRGB(168, 85, 247),
+    MinNormal      = Color3.fromRGB(40, 45, 55),
+    MinHover       = Color3.fromRGB(70, 110, 165),
+    ScrollBarColor = Color3.fromRGB(70, 80, 95),
+    ScrollBarBg    = Color3.fromRGB(20, 23, 30),
+    Shadow         = Color3.fromRGB(0, 0, 0),
+    SeparatorBg    = Color3.fromRGB(33, 37, 43),
+    InputHoverBg   = Color3.fromRGB(28, 32, 40),
+    OverlayBg      = Color3.fromRGB(18, 20, 27),
+    OverlayCard    = Color3.fromRGB(22, 25, 32),
+    OverlayStroke  = Color3.fromRGB(45, 54, 66),
+    UtilityBg      = Color3.fromRGB(14, 16, 22),
+    UtilityHeader  = Color3.fromRGB(18, 20, 27),
+    UtilityAccent  = Color3.fromRGB(96, 165, 250),
+    Surface0       = Color3.fromRGB(14, 16, 22),
+    Surface1       = Color3.fromRGB(18, 20, 27),
+    Surface2       = Color3.fromRGB(22, 25, 32),
+    Surface3       = Color3.fromRGB(28, 32, 40),
+    Surface4       = Color3.fromRGB(32, 36, 42),
+    Surface5       = Color3.fromRGB(36, 40, 46),
+    AccentGlow     = Color3.fromRGB(96, 165, 250),
+    AccentGradient1 = Color3.fromRGB(96, 165, 250),
+    AccentGradient2 = Color3.fromRGB(74, 144, 226),
+    AccentGradient3 = Color3.fromRGB(140, 110, 255),
+    GradientStart  = Color3.fromRGB(22, 25, 32),
+    GradientEnd    = Color3.fromRGB(14, 16, 22),
+    HoverOverlay   = Color3.fromRGB(255, 255, 255),
+    HoverOverlayT  = 0.04,
+    PressOverlay   = Color3.fromRGB(0, 0, 0),
+    PressOverlayT  = 0.10,
+    FocusRing      = Color3.fromRGB(96, 165, 250),
+    FocusRingT     = 0.45,
+    Shadow0        = Color3.fromRGB(0, 0, 0),
+    Shadow0T       = 0.40,
+    Shadow1        = Color3.fromRGB(0, 0, 0),
+    Shadow1T       = 0.60,
+    Shadow2        = Color3.fromRGB(0, 0, 0),
+    Shadow2T       = 0.75,
+    Highlight      = Color3.fromRGB(255, 255, 255),
+    HighlightT     = 0.06,
+    SelectionBg    = Color3.fromRGB(96, 165, 250),
+    SelectionBgT   = 0.18,
+    BadgeBg        = Color3.fromRGB(96, 165, 250),
+    BadgeBgT       = 0.20,
+    BadgeText      = Color3.fromRGB(180, 220, 255),
+    Divider        = Color3.fromRGB(33, 37, 43),
+    DividerSoft    = Color3.fromRGB(26, 29, 34),
+    Glow0          = Color3.fromRGB(96, 165, 250),
     Glow0T         = 0.30,
-    Glow1          = Color3.fromRGB(128, 67, 204),
+    Glow1          = Color3.fromRGB(96, 165, 250),
     Glow1T         = 0.55,
-    Glow2          = Color3.fromRGB(214, 177, 255),
-    Glow2T         = 0.78,
+    Glow2          = Color3.fromRGB(96, 165, 250),
+    Glow2T         = 0.75,
 }
 
---// FONT SYSTEM (v7.6)
---// Uses Font.new() with the built-in GothamSSm.json family + FontWeight enum
---// for proper weight hierarchy. GothamMedium/GothamBlack enum values are
---// deprecated in modern Roblox (they fall back to Montserrat), so we use the
---// Font data type which gives access to ALL weights natively.
---//
---// Weight mapping (bumped one step up from v7.5 for "fatter, eye-pleasing" look):
---//   Font        = Bold       (was GothamSemibold) — main body text
---//   FontBold    = ExtraBold  (was GothamBold)     — headings / titles
---//   FontRegular = SemiBold   (was Gotham)         — meta / fine print
---//
---// To override at runtime: MIDNIGHT:SetFont({Body = Font.new(...), Bold = Font.new(...), Regular = Font.new(...)})
---// To revert to legacy Enum.Font: MIDNIGHT:SetFont({Body = Enum.Font.GothamSemibold, Bold = Enum.Font.GothamBold, Regular = Enum.Font.Gotham})
-local _GothamFamily = "rbxasset://fonts/families/GothamSSm.json"
-local function _SafeFont(family, weight, fallbackEnum)
-    -- Try Font.new with the requested weight. If the executor doesn't support
-    -- Font.new at all OR doesn't expose the requested FontWeight enum item
-    -- (weight will be nil in that case), fall back to the legacy Enum.Font value.
-    -- Pass weight only if it's a valid EnumItem; Font.new(nil) crashes on some clients.
-    local ok, f
-    if weight ~= nil then
-        ok, f = pcall(function() return Font.new(family, weight) end)
-    else
-        -- weight unavailable on this executor — skip Font.new entirely,
-        -- go straight to legacy Enum.Font fallback.
-        ok = false
-    end
-    if ok and f then return f end
-    return fallbackEnum or Enum.Font.GothamBold
-end
-
--- Resolve FontWeight enum items safely. Some executors don't expose all
--- FontWeight values (e.g. Heavy/Black). Wrap in pcall and fall back to Bold.
--- If even Bold is missing, fall back to nil (Font.new will use default weight).
-local function _ResolveWeight(weightName)
-    local ok, w = pcall(function() return Enum.FontWeight[weightName] end)
-    if ok and w then return w end
-    return nil  -- let Font.new use its own default
-end
-
-local _W_Bold       = _ResolveWeight("Bold")
-local _W_ExtraBold  = _ResolveWeight("ExtraBold")  -- may be nil if executor doesn't expose it
-local _W_SemiBold   = _ResolveWeight("SemiBold")   -- may be nil if executor doesn't expose it
-
-local Font        = _SafeFont(_GothamFamily, _W_Bold,       Enum.Font.GothamBold)      -- main body
-local FontBold    = _SafeFont(_GothamFamily, _W_ExtraBold,  Enum.Font.GothamBold)      -- headings (ExtraBold falls back to Bold if unavailable)
-local FontRegular = _SafeFont(_GothamFamily, _W_SemiBold,   Enum.Font.GothamSemibold)  -- meta / fine print
+local Font        = Enum.Font.GothamSemibold
+local FontBold    = Enum.Font.GothamBold
+local FontRegular = Enum.Font.Gotham
 
 local CompactStyle = {
     WindowRadius = 8,
@@ -532,27 +469,16 @@ local CompactStyle = {
     WidgetRadius = 5,
     InputRadius = 4,
     BadgeRadius = 4,
-    -- v8.3: smaller squarish window (was 800x600)
-    WindowWidth = 700,
-    WindowHeight = 500,
+    WindowWidth = 580,
+    WindowHeight = 420,
     TitleBarHeight = 36,
     CollapsedWindowHeight = 36,
-    SidebarWidth = 80,
+    SidebarWidth = 122,
     SidebarFooterHeight = 24,
-    SidebarTileSize = 60,
-    SidebarTileIconSize = 22,
-    SidebarTileTextSize = 9,
-    SidebarPadding = 6,
     TabHeight = 28,
+    SidebarPadding = 6,
     TabIconSize = 14,
     TabTextSize = 11,
-    CategoryBarHeight = 36,
-    CategoryPillHeight = 26,
-    CategoryPillRadius = 4,        -- v8.2: rectangular pills (was pillH/2 = round)
-    CategoryPillPaddingX = 10,
-    CategoryPillGap = 6,
-    CategoryTextSize = 11,
-    DividerThickness = 1,          -- v8.2: thin sapphire separators between sections
     SectionHeight = 24,
     SectionTextSize = 10,
     SectionGap = 4,
@@ -576,26 +502,16 @@ local CompactStyle = {
 
 local DensityStyles = {
     Compact = {
-        WindowWidth = 700,
-        WindowHeight = 500,
+        WindowWidth = 580,
+        WindowHeight = 420,
         TitleBarHeight = 36,
         CollapsedWindowHeight = 36,
-        SidebarWidth = 80,
+        SidebarWidth = 122,
         SidebarFooterHeight = 24,
-        SidebarTileSize = 60,
-        SidebarTileIconSize = 22,
-        SidebarTileTextSize = 9,
-        SidebarPadding = 6,
         TabHeight = 28,
+        SidebarPadding = 6,
         TabIconSize = 14,
         TabTextSize = 11,
-        CategoryBarHeight = 36,
-        CategoryPillHeight = 26,
-        CategoryPillRadius = 4,
-        CategoryPillPaddingX = 10,
-        CategoryPillGap = 6,
-        CategoryTextSize = 11,
-        DividerThickness = 1,
         SectionHeight = 24,
         SectionTextSize = 10,
         SectionGap = 4,
@@ -617,26 +533,16 @@ local DensityStyles = {
         NotificationCompact = true,
     },
     Readable = {
-        WindowWidth = 900,
-        WindowHeight = 660,
+        WindowWidth = 620,
+        WindowHeight = 450,
         TitleBarHeight = 38,
         CollapsedWindowHeight = 38,
-        SidebarWidth = 88,
+        SidebarWidth = 134,
         SidebarFooterHeight = 26,
-        SidebarTileSize = 68,
-        SidebarTileIconSize = 24,
-        SidebarTileTextSize = 10,
-        SidebarPadding = 7,
         TabHeight = 31,
+        SidebarPadding = 7,
         TabIconSize = 15,
         TabTextSize = 12,
-        CategoryBarHeight = 40,
-        CategoryPillHeight = 30,
-        CategoryPillRadius = 5,
-        CategoryPillPaddingX = 12,
-        CategoryPillGap = 7,
-        CategoryTextSize = 12,
-        DividerThickness = 1,
         SectionHeight = 26,
         SectionTextSize = 11,
         SectionGap = 5,
@@ -658,26 +564,16 @@ local DensityStyles = {
         NotificationCompact = false,
     },
     Streamer = {
-        WindowWidth = 1000,
-        WindowHeight = 720,
+        WindowWidth = 660,
+        WindowHeight = 470,
         TitleBarHeight = 40,
         CollapsedWindowHeight = 40,
-        SidebarWidth = 96,
+        SidebarWidth = 142,
         SidebarFooterHeight = 28,
-        SidebarTileSize = 76,
-        SidebarTileIconSize = 26,
-        SidebarTileTextSize = 11,
-        SidebarPadding = 8,
         TabHeight = 34,
+        SidebarPadding = 8,
         TabIconSize = 16,
         TabTextSize = 13,
-        CategoryBarHeight = 44,
-        CategoryPillHeight = 32,
-        CategoryPillRadius = 6,
-        CategoryPillPaddingX = 14,
-        CategoryPillGap = 8,
-        CategoryTextSize = 13,
-        DividerThickness = 1,
         SectionHeight = 28,
         SectionTextSize = 12,
         SectionGap = 6,
@@ -807,61 +703,6 @@ local function Create(className, props, children)
     if props then
         parent = props.Parent
         props.Parent = nil
-        -- v7.6: Some executors reject Font data-type objects on Instance.Font
-        -- assignment ("EnumItem, number, or string expected, got Font").
-        -- Coerce any Font instances in props to their Enum.Font equivalent
-        -- BEFORE assignment so we work everywhere.
-        local _needFontCoerce = false
-        for k, v in pairs(props) do
-            if type(k) == "string" and (k == "Font" or k == "FontFace") and typeof(v) == "Font" then
-                _needFontCoerce = true
-                break
-            end
-        end
-        if _needFontCoerce then
-            -- Map Font weight -> Enum.Font (Gotham family). Roblox's Font data type
-            -- exposes .Weight as an EnumItem of FontWeight.
-            local function _coerceFont(f)
-                if typeof(f) ~= "Font" then return f end
-                -- Try direct assignment first; if it works, keep the Font object
-                -- (modern Roblox client supports it). This pcall is cheap.
-                local ok = pcall(function() inst.Font = f end)
-                if ok then return f end
-                -- Fallback: derive Enum.Font from FontWeight.
-                -- Use the numeric weight value (0-900) instead of comparing
-                -- enum items directly — some executors don't expose all
-                -- FontWeight enum items (e.g. missing Black/Heavy).
-                local w
-                pcall(function() w = f.Weight end)
-                -- Extract numeric value safely. Standard Roblox FontWeight values:
-                --   Thin=100, ExtraLight=200, Light=300, Regular=400, Medium=500,
-                --   SemiBold=600, Bold=700, ExtraBold=800, Heavy=900
-                local wNum = 700  -- default Bold
-                pcall(function()
-                    if w and type(w) == "EnumItem" and type(w.Value) == "number" then
-                        wNum = w.Value
-                    end
-                end)
-                if wNum >= 750 then
-                    return Enum.Font.GothamBold  -- ExtraBold(800), Heavy(900) -> GothamBold (GothamBlack deprecated)
-                elseif wNum >= 650 then
-                    return Enum.Font.GothamBold  -- Bold(700) -> GothamBold
-                elseif wNum >= 550 then
-                    return Enum.Font.GothamSemibold  -- SemiBold(600) -> GothamSemibold
-                elseif wNum >= 450 then
-                    return Enum.Font.GothamSemibold  -- Medium(500) -> GothamSemibold (closest available)
-                elseif wNum >= 1 then
-                    return Enum.Font.Gotham  -- Light/ExtraLight/Thin/Regular -> Gotham (lightest available)
-                else
-                    return Enum.Font.GothamBold  -- fallback default
-                end
-            end
-            for k, v in pairs(props) do
-                if type(k) == "string" and (k == "Font" or k == "FontFace") and typeof(v) == "Font" then
-                    props[k] = _coerceFont(v)
-                end
-            end
-        end
         if DEBUG_MODE then
             for k, v in pairs(props) do
                 if type(k) == "string" then
@@ -2287,9 +2128,7 @@ local IconLoadJobs   = setmetatable({}, { __mode = "k" })
 --// When no image URL is configured, these characters are rendered as TextLabels.
 --// To use actual Lucide PNG images, call MIDNIGHT:UseLucideIcons(assetBaseURL)
 --// with a URL pointing to your uploaded icon assets (e.g. rbxassetid://).
---// To use IconVaultKit (https://iconvaultkit.com) icons, call MIDNIGHT:UseIconVaultKit()
---// after either filling MIDNIGHT.IconVaultKitAssets via build pipeline
---// (see scripts/build_iconvaultkit_icons.js) or via MIDNIGHT:SetIconVaultKitAssets(table).
+--// To use pre-uploaded LucideBlox icons (rbxassetid://), call MIDNIGHT:UseLucideBlox()
 local LucideIcons = {
     -- Navigation / UI
     ["chevron-right"]   = "вЂє",
@@ -2445,239 +2284,122 @@ local LucideIcons = {
 }
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
---// ICONVAULTKIT ASSET MAP
---// Pre-baked icon asset table: 219 PNG icons sourced from iconvaultkit.com
---// (which is a UI over the Iconify API: lucide, mdi, game-icons, ph, tabler,
---// mingcute, fluent), uploaded to Roblox as user image assets.
---//
---// These IDs are account-specific (uploaded to the Diana_papana6 account,
---// user ID 1845072772). If you fork this library, you MUST re-upload the
---// PNGs from download/icons/ to your own Roblox account and replace the
---// IDs below — see scripts/fetch_rbx_asset_ids.py for automation.
---//
---// To activate: call MIDNIGHT:UseIconVaultKit() after loadstring().
---// Icons not in this table fall back to Unicode / ASCII text
---// (see LucideIcons / SafeLucideText below).
-local IconVaultKitAssets = {
-    ["activity"]            = "rbxassetid://114513156447166",
-    ["alarm-clock"]         = "rbxassetid://111597312925023",
-    ["alert-circle"]        = "rbxassetid://140724675109414",
-    ["alert-octagon"]       = "rbxassetid://87222540122720",
-    ["alert-triangle"]      = "rbxassetid://114086654663385",
-    ["ammo"]                = "rbxassetid://138510493854811",
-    ["armor"]               = "rbxassetid://114773182501222",
-    ["arrow-down"]          = "rbxassetid://133866418700682",
-    ["arrow-left"]          = "rbxassetid://115175036080554",
-    ["arrow-right"]         = "rbxassetid://92964829937984",
-    ["arrow-up"]            = "rbxassetid://103734595322886",
-    ["arrow-up-right"]      = "rbxassetid://116527576776499",
-    ["award"]               = "rbxassetid://83436497114488",
-    ["axe"]                 = "rbxassetid://81034079064204",
-    ["backpack"]            = "rbxassetid://90697665281310",
-    ["badge"]               = "rbxassetid://110678246412602",
-    ["badge-check"]         = "rbxassetid://140182515660878",
-    ["ban"]                 = "rbxassetid://98975334652761",
-    ["banknote"]            = "rbxassetid://91712117661243",
-    ["bar-chart"]           = "rbxassetid://126862365099823",
-    ["battery"]             = "rbxassetid://104164300211504",
-    ["battery-charging"]    = "rbxassetid://139800929068102",
-    ["battery-full"]        = "rbxassetid://76460087795760",
-    ["battery-low"]         = "rbxassetid://80124445225748",
-    ["battery-medium"]      = "rbxassetid://122588955165389",
-    ["bell"]                = "rbxassetid://102151217405271",
-    ["binoculars"]          = "rbxassetid://135228703089865",
-    ["bolt"]                = "rbxassetid://138623355166320",
-    ["bomb"]                = "rbxassetid://123873289490276",
-    ["bookmark"]            = "rbxassetid://118028023642101",
-    ["box"]                 = "rbxassetid://126855225487761",
-    ["building"]            = "rbxassetid://78335031445904",
-    ["bullet"]              = "rbxassetid://113767174535787",
-    ["bullets"]             = "rbxassetid://134666639899734",
-    ["c4"]                  = "rbxassetid://107560566888614",
-    ["calendar"]            = "rbxassetid://137146423667952",
-    ["camera"]              = "rbxassetid://140224447235685",
-    ["case"]                = "rbxassetid://135773613241498",
-    ["check"]               = "rbxassetid://98092181300782",
-    ["check-circle"]        = "rbxassetid://101345985309915",
-    ["chevron-down"]        = "rbxassetid://117353066457761",
-    ["chevron-left"]        = "rbxassetid://87797524789495",
-    ["chevron-right"]       = "rbxassetid://102099240693658",
-    ["chevron-up"]          = "rbxassetid://89368768853742",
-    ["chevrons-down"]       = "rbxassetid://120975757253464",
-    ["chevrons-right"]      = "rbxassetid://90339945158203",
-    ["clipboard"]           = "rbxassetid://85035110864245",
-    ["clock"]               = "rbxassetid://139687535199609",
-    ["code"]                = "rbxassetid://78511713307794",
-    ["coins"]               = "rbxassetid://132981082121773",
-    ["combat-knife"]        = "rbxassetid://123254978844585",
-    ["compass"]             = "rbxassetid://109479063470378",
-    ["copy"]                = "rbxassetid://79226812147622",
-    ["cpu"]                 = "rbxassetid://100619005364768",
-    ["credit-card"]         = "rbxassetid://124822862002754",
-    ["crosshair"]           = "rbxassetid://81245507484042",
-    ["crown"]               = "rbxassetid://113229938897517",
-    ["database"]            = "rbxassetid://83200593076743",
-    ["defuse-kit"]          = "rbxassetid://139209638154070",
-    ["diamond"]             = "rbxassetid://81928901583489",
-    ["dollar-sign"]         = "rbxassetid://104984167635583",
-    ["download"]            = "rbxassetid://92496813895076",
-    ["expand"]              = "rbxassetid://130797339033672",
-    ["explosion"]           = "rbxassetid://103183936203198",
-    ["explosion-burst"]     = "rbxassetid://100952829856506",
-    ["external-link"]       = "rbxassetid://116761397078887",
-    ["eye"]                 = "rbxassetid://100963792705069",
-    ["eye-off"]             = "rbxassetid://121883839638533",
-    ["factory"]             = "rbxassetid://137472740353392",
-    ["file-text"]           = "rbxassetid://100194714327009",
-    ["filter"]              = "rbxassetid://78033542068962",
-    ["fire"]                = "rbxassetid://131960548708996",
-    ["flag"]                = "rbxassetid://73468090669660",
-    ["flag-triangle-right"] = "rbxassetid://91425519216372",
-    ["flame"]               = "rbxassetid://71061737163596",
-    ["flashbang"]           = "rbxassetid://79072168354549",
-    ["folder"]              = "rbxassetid://81462060496703",
-    ["gamepad"]             = "rbxassetid://124699443195659",
-    ["gamepad-2"]           = "rbxassetid://110954720665368",
-    ["gas-mask"]            = "rbxassetid://93110664660354",
-    ["gas-station"]         = "rbxassetid://77919349770109",
-    ["gauge"]               = "rbxassetid://117989789791727",
-    ["gem"]                 = "rbxassetid://136514947407374",
-    ["gift"]                = "rbxassetid://115435156733480",
-    ["grenade"]             = "rbxassetid://131678899440352",
-    ["grid"]                = "rbxassetid://87177036710223",
-    ["hammer"]              = "rbxassetid://76056803582886",
-    ["hard-drive"]          = "rbxassetid://80380702368024",
-    ["hash"]                = "rbxassetid://97014269210665",
-    ["headphones"]          = "rbxassetid://70844835830930",
-    ["headset"]             = "rbxassetid://80188127594767",
-    ["heart"]               = "rbxassetid://138685769927763",
-    ["heart-pulse"]         = "rbxassetid://85211165336094",
-    ["helmet"]              = "rbxassetid://139523453632477",
-    ["help-circle"]         = "rbxassetid://104585479672959",
-    ["home"]                = "rbxassetid://110686864760568",
-    ["hourglass"]           = "rbxassetid://125918884187567",
-    ["image"]               = "rbxassetid://73878812821172",
-    ["info"]                = "rbxassetid://139811311844076",
-    ["jet"]                 = "rbxassetid://100135648790760",
-    ["joystick"]            = "rbxassetid://133271288182024",
-    ["kevlar"]              = "rbxassetid://123619645872039",
-    ["key"]                 = "rbxassetid://107077724288585",
-    ["knife"]               = "rbxassetid://92103318591967",
-    ["layers"]              = "rbxassetid://113942003387186",
-    ["layout"]              = "rbxassetid://110718173399973",
-    ["lightning"]           = "rbxassetid://138420001551900",
-    ["link"]                = "rbxassetid://75590824837569",
-    ["lock"]                = "rbxassetid://104295235557873",
-    ["log-in"]              = "rbxassetid://124673995386338",
-    ["log-out"]             = "rbxassetid://120534284712793",
-    ["magazine"]            = "rbxassetid://134673082582060",
-    ["mail"]                = "rbxassetid://73705643702309",
-    ["map"]                 = "rbxassetid://138249416372223",
-    ["map-pin"]             = "rbxassetid://111027593775380",
-    ["maximize"]            = "rbxassetid://78688419770476",
-    ["medal"]               = "rbxassetid://104594446218230",
-    ["megaphone"]           = "rbxassetid://98940420048738",
-    ["menu"]                = "rbxassetid://136891783075811",
-    ["message-circle"]      = "rbxassetid://71011443903708",
-    ["mic"]                 = "rbxassetid://116357239271478",
-    ["mic-off"]             = "rbxassetid://86948401410375",
-    ["minimize"]            = "rbxassetid://77750562912742",
-    ["minus"]               = "rbxassetid://110116338380666",
-    ["missile"]             = "rbxassetid://129520097223102",
-    ["molotov"]             = "rbxassetid://83868024922531",
-    ["moon"]                = "rbxassetid://120947518602390",
-    ["more-horizontal"]     = "rbxassetid://79903926513609",
-    ["more-vertical"]       = "rbxassetid://80579195199543",
-    ["move"]                = "rbxassetid://95101553782732",
-    ["music"]               = "rbxassetid://74976030157711",
-    ["navigation"]          = "rbxassetid://114292789810716",
-    ["night-vision"]        = "rbxassetid://98182782433291",
-    ["package"]             = "rbxassetid://98110785069962",
-    ["paintbrush"]          = "rbxassetid://129955700941949",
-    ["palette"]             = "rbxassetid://86990510125215",
-    ["panel-left"]          = "rbxassetid://71521811069804",
-    ["panel-right"]         = "rbxassetid://126305907630783",
-    ["pause"]               = "rbxassetid://128881587477403",
-    ["pen-tool"]            = "rbxassetid://95570079042028",
-    ["pencil"]              = "rbxassetid://130681036400993",
-    ["pin"]                 = "rbxassetid://91675813173932",
-    ["pistol"]              = "rbxassetid://131628542286870",
-    ["play"]                = "rbxassetid://124394159494931",
-    ["plus"]                = "rbxassetid://140686232181724",
-    ["power"]               = "rbxassetid://102456533184941",
-    ["pulse"]               = "rbxassetid://128700651604087",
-    ["puzzle"]              = "rbxassetid://103033499276498",
-    ["radio"]               = "rbxassetid://123637469344584",
-    ["refresh-cw"]          = "rbxassetid://85207466415328",
-    ["ribbon"]              = "rbxassetid://72147410555799",
-    ["rifle"]               = "rbxassetid://117038338988262",
-    ["rocket"]              = "rbxassetid://133289242039433",
-    ["rotate-ccw"]          = "rbxassetid://92476139310136",
-    ["rotate-cw"]           = "rbxassetid://88958092789102",
-    ["scissors"]            = "rbxassetid://98035292143952",
-    ["scope"]               = "rbxassetid://80028790019416",
-    ["scope-aim"]           = "rbxassetid://128850265765599",
-    ["screwdriver"]         = "rbxassetid://124531757180477",
-    ["search"]              = "rbxassetid://79868800250829",
-    ["send"]                = "rbxassetid://71590327072067",
-    ["server"]              = "rbxassetid://131992033109628",
-    ["settings"]            = "rbxassetid://129582482134575",
-    ["shell"]               = "rbxassetid://125914975125942",
-    ["shield"]              = "rbxassetid://98743102621690",
-    ["shield-alert"]        = "rbxassetid://119348972830012",
-    ["shield-check"]        = "rbxassetid://74100062680792",
-    ["shopping-bag"]        = "rbxassetid://125870457989446",
-    ["shopping-cart"]       = "rbxassetid://102567296957035",
-    ["shotgun"]             = "rbxassetid://124754791508321",
-    ["shrink"]              = "rbxassetid://133971760815335",
-    ["sidebar"]             = "rbxassetid://89248278321523",
-    ["signal"]              = "rbxassetid://114422507293539",
-    ["signal-high"]         = "rbxassetid://120537054877124",
-    ["signal-low"]          = "rbxassetid://85406757762700",
-    ["skip-forward"]        = "rbxassetid://106661683443168",
-    ["skull"]               = "rbxassetid://114291724500233",
-    ["skull-crossbones"]    = "rbxassetid://124621820879257",
-    ["sliders"]             = "rbxassetid://87756435943388",
-    ["smg"]                 = "rbxassetid://87206622174769",
-    ["smoke-grenade"]       = "rbxassetid://129554998500083",
-    ["sniper"]              = "rbxassetid://121621428517963",
-    ["sort-asc"]            = "rbxassetid://139063662885025",
-    ["sort-desc"]           = "rbxassetid://84168833106995",
-    ["sparkles"]            = "rbxassetid://77307349382581",
-    ["spray-can"]           = "rbxassetid://115478210579228",
-    ["star"]                = "rbxassetid://83133277790521",
-    ["stopwatch"]           = "rbxassetid://78673272725100",
-    ["sun"]                 = "rbxassetid://118222680178569",
-    ["sword"]               = "rbxassetid://70783315878997",
-    ["swords"]              = "rbxassetid://96906286931788",
-    ["tank"]                = "rbxassetid://103747978793552",
-    ["target"]              = "rbxassetid://129962482979326",
-    ["terminal"]            = "rbxassetid://115468861331121",
-    ["timer"]               = "rbxassetid://78760136292052",
-    ["trash"]               = "rbxassetid://109717713125244",
-    ["trending-down"]       = "rbxassetid://83030103577542",
-    ["trending-up"]         = "rbxassetid://121841189396008",
-    ["trophy"]              = "rbxassetid://126889525565863",
-    ["unlock"]              = "rbxassetid://137826256822743",
-    ["upload"]              = "rbxassetid://92414836356804",
-    ["user"]                = "rbxassetid://115703578769127",
-    ["user-check"]          = "rbxassetid://125171345580772",
-    ["user-plus"]           = "rbxassetid://123739169941080",
-    ["user-x"]              = "rbxassetid://86026233394296",
-    ["users"]               = "rbxassetid://123991941649903",
-    ["vest"]                = "rbxassetid://121698285056711",
-    ["volume-2"]            = "rbxassetid://134256143341306",
-    ["volume-x"]            = "rbxassetid://92618152969235",
-    ["walkie-talkie"]       = "rbxassetid://123876296403028",
-    ["wallet"]              = "rbxassetid://73761593408589",
-    ["warehouse"]           = "rbxassetid://101564334966147",
-    ["wifi"]                = "rbxassetid://92082171876544",
-    ["wifi-off"]            = "rbxassetid://95331674969394",
-    ["wire-cutter"]         = "rbxassetid://72936878143036",
-    ["wrench"]              = "rbxassetid://78240686411371",
-    ["x"]                   = "rbxassetid://75034160993721",
-    ["x-circle"]            = "rbxassetid://81755440082904",
-    ["zap"]                 = "rbxassetid://70508202669930",
+--// LUCIDEBLOX ASSET MAP
+--// Pre-uploaded Lucide icons as Roblox image assets (rbxassetid://)
+--// Source: https://github.com/frappedevs/lucideblox
+--// Call MIDNIGHT:UseLucideBlox() to activate these icons automatically
+--// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+local LucideBloxAssets = {
+    ["activity"]        = "rbxassetid://7733655755",
+    ["alert-circle"]    = "rbxassetid://7733658271",
+    ["alert-octagon"]   = "rbxassetid://7733658335",
+    ["alert-triangle"]  = "rbxassetid://7733658504",
+    ["arrow-down"]      = "rbxassetid://7733672933",
+    ["arrow-left"]      = "rbxassetid://7733673136",
+    ["arrow-right"]     = "rbxassetid://7733673345",
+    ["arrow-up"]        = "rbxassetid://7733673717",
+    ["arrow-up-right"]  = "rbxassetid://7733673646",
+    ["bell"]            = "rbxassetid://7733911828",
+    ["bookmark"]        = "rbxassetid://7733692043",
+    ["calendar"]        = "rbxassetid://7733919198",
+    ["camera"]          = "rbxassetid://7733708692",
+    ["check"]           = "rbxassetid://7733715400",
+    ["check-circle"]    = "rbxassetid://7733919427",
+    ["chevron-down"]    = "rbxassetid://7733717447",
+    ["chevron-left"]    = "rbxassetid://7733717651",
+    ["chevron-right"]   = "rbxassetid://7733717755",
+    ["chevron-up"]      = "rbxassetid://7733919605",
+    ["chevrons-down"]   = "rbxassetid://7733720604",
+    ["chevrons-right"]  = "rbxassetid://7733919682",
+    ["clipboard"]       = "rbxassetid://7733734762",
+    ["clock"]           = "rbxassetid://7733734848",
+    ["code"]            = "rbxassetid://7733749837",
+    ["compass"]         = "rbxassetid://7733924216",
+    ["copy"]            = "rbxassetid://7733764083",
+    ["cpu"]             = "rbxassetid://7733765045",
+    ["crosshair"]       = "rbxassetid://7733765307",
+    ["crown"]           = "rbxassetid://7733765398",
+    ["database"]        = "rbxassetid://7743866778",
+    ["download"]        = "rbxassetid://7733770755",
+    ["expand"]          = "rbxassetid://7733771982",
+    ["external-link"]   = "rbxassetid://7743866903",
+    ["eye"]             = "rbxassetid://7733774602",
+    ["eye-off"]         = "rbxassetid://7733774495",
+    ["file-text"]       = "rbxassetid://7733789088",
+    ["filter"]          = "rbxassetid://7733798407",
+    ["flag"]            = "rbxassetid://7733798691",
+    ["flame"]           = "rbxassetid://7733798747",
+    ["folder"]          = "rbxassetid://7733799185",
+    ["gamepad"]         = "rbxassetid://7733799901",
+    ["gamepad-2"]       = "rbxassetid://7733799795",
+    ["gauge"]           = "rbxassetid://7733799969",
+    ["gem"]             = "rbxassetid://7733942651",
+    ["globe"]           = "rbxassetid://7733954760",
+    ["grid"]            = "rbxassetid://7733955179",
+    ["hammer"]          = "rbxassetid://7733955511",
+    ["hard-drive"]      = "rbxassetid://7733955793",
+    ["hash"]            = "rbxassetid://7733955906",
+    ["heart"]           = "rbxassetid://7733956134",
+    ["help-circle"]     = "rbxassetid://7733956210",
+    ["home"]            = "rbxassetid://7733960981",
+    ["image"]           = "rbxassetid://7733964126",
+    ["info"]            = "rbxassetid://7733964719",
+    ["key"]             = "rbxassetid://7733965118",
+    ["layers"]          = "rbxassetid://7743868936",
+    ["layout"]          = "rbxassetid://7733970543",
+    ["link"]            = "rbxassetid://7733978098",
+    ["lock"]            = "rbxassetid://7733992528",
+    ["mail"]            = "rbxassetid://7733992732",
+    ["map"]             = "rbxassetid://7733992829",
+    ["map-pin"]         = "rbxassetid://7733992789",
+    ["maximize"]        = "rbxassetid://7733992982",
+    ["menu"]            = "rbxassetid://7733993211",
+    ["message-circle"]  = "rbxassetid://7733993311",
+    ["mic"]             = "rbxassetid://7743869805",
+    ["minimize"]        = "rbxassetid://7733997941",
+    ["minus"]           = "rbxassetid://7734000129",
+    ["moon"]            = "rbxassetid://7743870134",
+    ["more-horizontal"] = "rbxassetid://7734006080",
+    ["more-vertical"]   = "rbxassetid://7734006187",
+    ["move"]            = "rbxassetid://7743870731",
+    ["music"]           = "rbxassetid://7734020554",
+    ["navigation"]      = "rbxassetid://7734020989",
+    ["package"]         = "rbxassetid://7734021469",
+    ["palette"]         = "rbxassetid://7734021595",
+    ["pen-tool"]        = "rbxassetid://7734022041",
+    ["pencil"]          = "rbxassetid://7734022107",
+    ["pin"]             = "rbxassetid://8997386648",
+    ["plus"]            = "rbxassetid://7734042071",
+    ["power"]           = "rbxassetid://7734042493",
+    ["radio"]           = "rbxassetid://7743871662",
+    ["refresh-cw"]      = "rbxassetid://7734051052",
+    ["scan"]            = "rbxassetid://8997386861",
+    ["search"]          = "rbxassetid://7734052925",
+    ["send"]            = "rbxassetid://7734053039",
+    ["server"]          = "rbxassetid://7734053426",
+    ["settings"]        = "rbxassetid://7734053495",
+    ["shield"]          = "rbxassetid://7734056608",
+    ["shield-check"]    = "rbxassetid://7734056411",
+    ["shrink"]          = "rbxassetid://7734056971",
+    ["sliders"]         = "rbxassetid://7734058803",
+    ["sort-asc"]        = "rbxassetid://7734060715",
+    ["sort-desc"]       = "rbxassetid://7743871973",
+    ["star"]            = "rbxassetid://7734068321",
+    ["sun"]             = "rbxassetid://7734068495",
+    ["target"]          = "rbxassetid://7743872758",
+    ["terminal"]        = "rbxassetid://7743872929",
+    ["timer"]           = "rbxassetid://7743873443",
+    ["trash"]           = "rbxassetid://7743873871",
+    ["unlock"]          = "rbxassetid://7743875263",
+    ["upload"]          = "rbxassetid://7743875428",
+    ["user"]            = "rbxassetid://7743875962",
+    ["users"]           = "rbxassetid://7743876054",
+    ["volume-2"]        = "rbxassetid://7743877250",
+    ["volume-x"]        = "rbxassetid://7743877381",
+    ["wifi"]            = "rbxassetid://7743878148",
+    ["wrench"]          = "rbxassetid://7743878358",
+    ["x"]               = "rbxassetid://7743878857",
+    ["x-circle"]        = "rbxassetid://7743878496",
 }
 
 local SafeLucideText = {
@@ -2829,12 +2551,8 @@ local function BuildSafeIconFallback(iconName)
 end
 
 local function UseDefaultIconSet()
-    -- Auto-activate IconVaultKitAssets only if it has been populated
-    -- (either via build pipeline / iconvaultkit_assets.lua, or via SetIconVaultKitAssets).
-    -- If the table is empty, we fall through and rely on Unicode / ASCII text fallbacks.
     if IconBaseURL ~= "" or next(IconOverrides) ~= nil then return end
-    if next(IconVaultKitAssets) == nil then return end
-    for k, v in pairs(IconVaultKitAssets) do
+    for k, v in pairs(LucideBloxAssets) do
         IconOverrides[k] = v
     end
 end
@@ -3189,150 +2907,28 @@ function MIDNIGHT:GetLucideIcons()
     return LucideIcons
 end
 
-function MIDNIGHT:SetIconVaultKitAssets(assetsTable)
-    -- Inject a { ["eye"] = "rbxassetid://XXX", ... } map populated after manually
-    -- uploading the PNGs produced by scripts/build_iconvaultkit_icons.js to Roblox.
-    -- Safe to call before or after MIDNIGHT:UseIconVaultKit().
-    if type(assetsTable) ~= "table" then return end
-    for k, v in pairs(assetsTable) do
-        if type(k) == "string" and type(v) == "string" and v ~= "" then
-            IconVaultKitAssets[k] = v
-        end
-    end
-    -- If we're already in asset-override mode, refresh IconOverrides + cache immediately.
-    if next(IconOverrides) ~= nil then
-        for k, v in pairs(assetsTable) do
-            IconOverrides[k] = v
-            IconCache[k] = v
-        end
-    end
-end
-
-function MIDNIGHT:UseIconVaultKit(collection)
-    -- Activate IconVaultKit icons (https://iconvaultkit.com — UI over the Iconify API).
+function MIDNIGHT:UseLucideBlox()
+    -- Activate pre-uploaded Lucide icons from the LucideBlox project.
+    -- Source: https://github.com/frappedevs/lucideblox
+    -- These are actual Lucide icons uploaded as Roblox image assets (rbxassetid://).
+    -- Call this function once after loading the library to enable real icon images
+    -- instead of Unicode text fallbacks.
     --
-    -- Two modes:
-    --   1) Asset mode (default, recommended): uses the IconVaultKitAssets table.
-    --      Populate it via MIDNIGHT:SetIconVaultKitAssets(t) or by editing the table directly.
-    --      Run scripts/build_iconvaultkit_icons.js to generate PNGs + an empty Lua template.
-    --
-    --   2) HTTP mode (executor-dependent): pass a collection prefix like "lucide", "tabler",
-    --      "heroicons", "mdi", etc. IconBaseURL is set to https://api.iconify.design/{collection}
-    --      and IconExt to ".svg". NOTE: Roblox ImageLabel does NOT render SVG natively, so this
-    --      mode only works on executors that allow external HTTP images in ImageLabel AND
-    --      can render SVG. Use asset mode for production.
-    --
-    -- Example (asset mode):
+    -- Example:
     --   local MIDNIGHT = loadstring(readfile("midnight.lua"))()
-    --   local IVK = loadstring(readfile("iconvaultkit_assets.lua"))()
-    --   MIDNIGHT:SetIconVaultKitAssets(IVK)
-    --   MIDNIGHT:UseIconVaultKit()
+    --   MIDNIGHT:UseLucideBlox()  -- Enable Lucide icon images
     --
-    -- Example (HTTP mode, executor-dependent):
-    --   MIDNIGHT:UseIconVaultKit("lucide")
-    --
-    -- Icons not in IconVaultKitAssets still use Unicode / ASCII text fallbacks.
-    if type(collection) == "string" and collection ~= "" then
-        -- Detect GitHub URL/path form and delegate to UseGitHubIcons()
-        -- e.g. "stackkked/dih/main/Icons" or "https://github.com/.../tree/main/Icons"
-        if collection:find("github%.com", 1, true)
-           or collection:find("raw%.githubusercontent%.com", 1, true)
-           or collection:find("^[%w_.-]+/[%w_.-]+/[%w_.-]+/") then
-            self:UseGitHubIcons(collection)
-            return
-        end
-
-        -- Otherwise treat as Iconify collection prefix (HTTP mode, SVG).
-        -- Note: Roblox ImageLabel does NOT render SVG natively — use only on
-        -- executors that allow external SVG. For production use asset mode
-        -- or UseGitHubIcons().
-        IconBaseURL = "https://api.iconify.design/" .. collection
-        IconExt = ".svg"
-        IconOverrides = {}
-        IconCache = {}
-        return
-    end
-
-    -- Asset mode
-    -- The IconVaultKitAssets table is pre-baked with 219 rbxassetid:// URLs
-    -- (uploaded to the Diana_papana6 Roblox account). If you fork this library
-    -- and re-upload to your own account, the warning below will fire until
-    -- you call MIDNIGHT:SetIconVaultKitAssets(t) with your own IDs.
-    if next(IconVaultKitAssets) == nil then
-        warn("[MIDNIGHT] UseIconVaultKit(): IconVaultKitAssets is empty. " ..
-             "Either use the pre-baked midnight.lua (which ships with 219 IDs), " ..
-             "or call MIDNIGHT:SetIconVaultKitAssets(t) with your own rbxassetid:// map. " ..
-             "Falling back to Unicode text icons.")
-    end
-    self:SetIcons(IconVaultKitAssets)
+    -- Icons not available in LucideBlox will still use Unicode text fallbacks.
+    self:SetIcons(LucideBloxAssets)
+    -- Clear base URL since we're using direct rbxassetid:// overrides
     IconBaseURL = ""
     IconCache = {}
 end
 
-function MIDNIGHT:GetIconVaultKitAssets()
-    -- Returns the IconVaultKitAssets map (icon name -> rbxassetid:// URL).
-    -- Useful for inspection or programmatic population.
-    return IconVaultKitAssets
-end
-
-function MIDNIGHT:UseGitHubIcons(repoPath, extension)
-    -- Load icon PNGs directly from a GitHub repository via raw.githubusercontent.com.
-    -- Bypasses the need to upload anything to Roblox — the executor fetches PNGs
-    -- over HTTP at runtime. Works on every modern executor that allows external
-    -- images in ImageLabel.Image (Synapse, Script-Ware, Krnl, Fluxus, ...).
-    --
-    -- repoPath accepts three forms (all normalized to the same raw URL):
-    --   1) Full https://github.com/... URL with /tree/<branch>/...
-    --        "https://github.com/stackkked/dih/tree/main/Icons"
-    --   2) Full https://raw.githubusercontent.com/... URL (used as-is)
-    --        "https://raw.githubusercontent.com/stackkked/dih/main/Icons"
-    --   3) Short owner/repo/branch/path form (no scheme, no host)
-    --        "stackkked/dih/main/Icons"
-    --
-    -- extension: file extension to append to icon names. Default ".png".
-    --            Must match what's actually committed in the repo.
-    --
-    -- Final URL pattern resolved per icon:
-    --   https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>/<kebab-name>.<ext>
-    --
-    -- Example:
-    --   local MIDNIGHT = loadstring(readfile("midnight.lua"))()
-    --   MIDNIGHT:UseGitHubIcons("stackkked/dih/main/Icons")
-    --   -- eye icon -> https://raw.githubusercontent.com/stackkked/dih/main/Icons/eye.png
-    --
-    -- Notes:
-    --   - Icon names follow Lucide kebab-case ('eye', 'chevron-right', ...).
-    --   - camelCase names are auto-converted to kebab-case on lookup.
-    --   - If GitHub returns 404 for an icon (not in repo), ImageLabel falls back
-    --     to the Unicode / ASCII text icons defined in LucideIcons / SafeLucideText.
-    --   - For private repos, this won't work — raw.githubusercontent.com requires
-    --     the repo to be public.
-    if type(repoPath) ~= "string" or repoPath == "" then
-        warn("[MIDNIGHT] UseGitHubIcons(): repoPath is required " ..
-             "(e.g. \"stackkked/dih/main/Icons\" or full github.com URL).")
-        return
-    end
-
-    local path = repoPath
-    local ext  = extension or ".png"
-    -- Normalize extension: ensure leading dot
-    if ext:sub(1, 1) ~= "." then ext = "." .. ext end
-
-    -- Strip scheme + host
-    path = path:gsub("^https?://", "")
-    path = path:gsub("^github%.com/", "")
-    path = path:gsub("^raw%.githubusercontent%.com/", "")
-    -- Strip leading/trailing slashes
-    path = path:gsub("^/+", ""):gsub("/+$", "")
-    -- Convert /tree/<branch>/ -> /<branch>/
-    -- e.g. "stackkked/dih/tree/main/Icons" -> "stackkked/dih/main/Icons"
-    path = path:gsub("/tree/", "/")
-
-    local rawURL = "https://raw.githubusercontent.com/" .. path
-    IconBaseURL = rawURL
-    IconExt     = ext
-    IconOverrides = {}
-    IconCache   = {}
+function MIDNIGHT:GetLucideBloxAssets()
+    -- Returns the full LucideBloxAssets map (icon name в†’ rbxassetid:// URL)
+    -- Useful for reference or to selectively override specific icons
+    return LucideBloxAssets
 end
 
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
@@ -3350,18 +2946,6 @@ function MIDNIGHT:SetThemeColor(color)
     Theme.AccentMuted  = DarkenColor(color, 60)
     Theme.AccentFaint  = AccentTint(color, 0.22)
     Theme.UtilityAccent = LightenColor(color, 8)
-    Theme.AccentGlow   = color
-    Theme.AccentGradient1 = color
-    Theme.AccentGradient2 = DarkenColor(color, 26)
-    Theme.AccentGradient3 = LightenColor(color, 34)
-    Theme.ScrollBarColor = LightenColor(color, 6)
-    Theme.FocusRing    = LightenColor(color, 18)
-    Theme.Glow0        = color
-    Theme.Glow1        = LightenColor(color, 18)
-    Theme.Glow2        = LightenColor(color, 36)
-    Theme.SelectionBg  = AccentTint(color, 0.18)
-    Theme.BadgeBg      = AccentTint(color, 0.24)
-    Theme.HoverOverlay = color
     local r, g, b = ColorToRGB(color)
     Theme.BorderAccent = Color3.fromRGB(
         math.floor(r * 0.57),
@@ -3403,59 +2987,12 @@ function MIDNIGHT:ApplyStylePreset(name)
         self:SetNotificationStyle("Readable")
         self._StylePreset = "Streamer"
         return self._StylePreset
-    elseif preset == "blackpurple" then
-        self:SetDensityMode("Compact")
-        self:SetNotificationStyle("Compact")
-        self:SetThemeColor(Color3.fromRGB(168, 85, 247))
-        self._StylePreset = "BlackPurple"
-        return self._StylePreset
     end
     self:SetDensityMode("Compact")
     self:SetNotificationStyle("Compact")
-    self:SetThemeColor(Color3.fromRGB(168, 85, 247))  -- v8.4: purple accent (Black Purple preset)
+    self:SetThemeColor(Color3.fromRGB(96, 190, 255))
     self._StylePreset = "Midnight"
     return self._StylePreset
-end
-
-function MIDNIGHT:SetFont(fonts)
-    -- Override the library's three font slots at runtime.
-    --
-    -- fonts: table with any of these keys (all optional):
-    --   Body     — main text font (used by 92+ widget labels)
-    --   Bold     — heading/title font (used by 77+ headings)
-    --   Regular  — meta/fine-print font (used by 28+ small labels)
-    --
-    -- Each value can be either:
-    --   * A Font instance: Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
-    --   * An Enum.Font value: Enum.Font.GothamBold
-    --
-    -- IMPORTANT: only affects widgets created AFTER this call. Existing widgets
-    -- keep their original font. Call SetFont() right after loadstring(), before
-    -- MakeWindow() / MakeTab() / AddXxx() to apply globally.
-    --
-    -- Example — switch to Montserrat:
-    --   local MF = "rbxasset://fonts/families/Montserrat.json"
-    --   MIDNIGHT:SetFont({
-    --       Body     = Font.new(MF, Enum.FontWeight.Bold),
-    --       Bold     = Font.new(MF, Enum.FontWeight.ExtraBold),
-    --       Regular  = Font.new(MF, Enum.FontWeight.SemiBold),
-    --   })
-    --
-    -- Example — revert to legacy Enum.Font:
-    --   MIDNIGHT:SetFont({
-    --       Body     = Enum.Font.GothamSemibold,
-    --       Bold     = Enum.Font.GothamBold,
-    --       Regular  = Enum.Font.Gotham,
-    --   })
-    if type(fonts) ~= "table" then return end
-    if fonts.Body    then Font        = fonts.Body    end
-    if fonts.Bold    then FontBold    = fonts.Bold    end
-    if fonts.Regular then FontRegular = fonts.Regular end
-end
-
-function MIDNIGHT:GetFont()
-    -- Returns the three current font slots: {Body=..., Bold=..., Regular=...}
-    return { Body = Font, Bold = FontBold, Regular = FontRegular }
 end
 
 function MIDNIGHT:SetMenuKey(keyStr)
@@ -4105,7 +3642,7 @@ function MIDNIGHT:_OpenDropdown(config)
     local optsScroll = Create("ScrollingFrame",{
         Size = UDim2.new(1,0,0,optsListH),
         BackgroundTransparency=1, BorderSizePixel=0,
-        ScrollBarThickness=0, ScrollBarImageColor3=Theme.ScrollBarColor,
+        ScrollBarThickness=3, ScrollBarImageColor3=Theme.ScrollBarColor,
         CanvasSize = UDim2.new(0,0,0,0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         LayoutOrder=1,
@@ -6836,12 +6373,10 @@ function MIDNIGHT:MakeWindow(config)
     -- TITLE BAR — v7.4: matches window bg (no separate dark strip)
     local tb = Create("Frame",{
         Name="TitleBar", Size=UDim2.new(1,0,0,titleBarH),
-        BackgroundColor3=Theme.TitleBarBg, BorderSizePixel=0,
+        BackgroundColor3=Theme.WindowBg, BorderSizePixel=0,
         ClipsDescendants=false, Active=true, ZIndex=ZIndex.CONTENT, Parent=wf,
     })
     ApplyCorner(tb,CompactStyle.HeaderRadius)
-    ApplyGradient(tb, Theme.TitleBarBg, Theme.Surface1, 90)
-    local titleGlow = CreateAccentLine(tb, CompactStyle.HeaderRadius, Theme.Accent)
     -- v7.5: removed the mask frame (was making bottom corners square when minimized)
     -- v7.5: removed logo glow (was looking bad as a square/circle behind moon icon)
     CreateIconOrText(tb,"moon",nil,UDim2.new(0,14,0,14),UDim2.new(0,12,0,11),Theme.UtilityAccent,FontBold,12)
@@ -7018,20 +6553,12 @@ function MIDNIGHT:MakeWindow(config)
         Name="Sidebar",Size=UDim2.new(0,sidebarW,1,-footerH),
         BackgroundColor3=Theme.Surface1,BorderSizePixel=0,Parent=body,
     })
-    ApplyGradient(sidebar, Theme.SidebarBg, Theme.Surface2, 90)
-    -- v8.3: thin violet divider between sidebar and content (1px, subtle)
-    local sidebarDivider = Create("Frame",{
-        Size=UDim2.new(0,CompactStyle.DividerThickness,1,0),
-        Position=UDim2.new(1,-CompactStyle.DividerThickness,0,0),
-        BackgroundColor3=Theme.BorderAccent,
-        BackgroundTransparency=0.72,
-        BorderSizePixel=0,Parent=sidebar,
-    })
+    Create("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),BackgroundColor3=Theme.BorderSoft,BorderSizePixel=0,Parent=sidebar})
 
     local tabList = Create("ScrollingFrame",{
         Name="TabList",Size=UDim2.new(1,0,1,-8),Position=UDim2.new(0,0,0,4),
         BackgroundTransparency=1,BorderSizePixel=0,
-        ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
+        ScrollBarThickness=2,ScrollBarImageColor3=Theme.ScrollBarColor,
         AutomaticCanvasSize=Enum.AutomaticSize.Y,
         ZIndex=ZIndex.CONTENT,Parent=sidebar,
     })
@@ -7071,7 +6598,6 @@ function MIDNIGHT:MakeWindow(config)
         ZIndex=ZIndex.CONTENT,Parent=body,
     })
     ApplyCorner(contentFrame,CompactStyle.WindowRadius)
-    ApplyGradient(contentFrame, Theme.ContentBg, Theme.Surface3, 90)
     Create("Frame",{Size=UDim2.new(1,0,0,CompactStyle.WindowRadius),Position=UDim2.new(0,0,0,0),BackgroundColor3=Theme.Surface0,BorderSizePixel=0,Parent=contentFrame})
 
     -- v7.5: forward declare wd so filterTabs closure can reference it
@@ -7217,112 +6743,123 @@ function MIDNIGHT:MakeWindow(config)
 
         self._TabCount = self._TabCount + 1
 
-        -- v8.1: sidebar is now a vertical strip of 60x60 tiles (icon on top, label below)
         -- Auto-add separator in sidebar if tabs > 6
         if self._TabCount == 7 then
             local sep = CreateGradientSeparator(tabList, self._TabCount - 1)
             if sep then sep.LayoutOrder = self._TabCount - 1 end
         end
 
-        -- Sidebar tile button (v8.1: square 60x60 with icon + label below)
-        local tileSize = CompactStyle.SidebarTileSize
         local btn = Create("TextButton",{
             Name="Tab_"..tabName,
-            Size=UDim2.new(1,0,0,tileSize),
-            BackgroundColor3=Theme.TabBg,
-            BackgroundTransparency=0.16,
+            Size=UDim2.new(1,0,0,CompactStyle.TabHeight),
+            BackgroundColor3=Theme.ContentBg,  -- v7.4: tab bg matches UI bg (was Surface2)
+            BackgroundTransparency=1,  -- v7.4: transparent by default (matches sidebar)
             BorderSizePixel=0, Text="",
             LayoutOrder=self._TabCount,
             ZIndex=ZIndex.CONTENT+1,
             Parent=tabList,
         })
-        ApplyCorner(btn,6)
+        ApplyCorner(btn,5)
+        -- v7.4: removed gradient (was making tabs look washed out); solid bg instead
 
-        -- Tile content: icon centered horizontally near top, label centered below
-        local tileIconSize = CompactStyle.SidebarTileIconSize
+        local btnContent = Create("Frame",{Size=UDim2.new(1,-12,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Parent=btn})
+        Create("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Center,Parent=btnContent})
+
         local tabIconEl = nil
         if tabIcon ~= "" then
-            tabIconEl = CreateIconOrText(
-                btn, tabIcon, nil,
-                UDim2.new(0, tileIconSize, 0, tileIconSize),
-                UDim2.new(0.5, -tileIconSize/2, 0, 6),
-                Theme.TextMuted, FontBold, tileIconSize
-            )
+            tabIconEl = CreateIconOrText(btnContent,tabIcon,nil,UDim2.new(0,CompactStyle.TabIconSize,0,CompactStyle.TabIconSize),UDim2.new(0,0,0,0),Theme.TextMuted,FontBold,10)
+            if tabIconEl then tabIconEl.LayoutOrder=1 end
         end
 
         local tabLabel = Create("TextLabel",{
-            Text=tabName,Font=Font,TextSize=CompactStyle.SidebarTileTextSize,TextColor3=Theme.TextSecondary,
-            TextXAlignment=Enum.TextXAlignment.Center,
-            TextYAlignment=Enum.TextYAlignment.Center,
-            TextScaled=false,
-            Size=UDim2.new(1,-4,0,12),Position=UDim2.new(0,2,1,-14),
-            BackgroundTransparency=1,Parent=btn,
+            Text=tabName,Font=Font,TextSize=CompactStyle.TabTextSize,TextColor3=Theme.TextSecondary,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundTransparency=1,LayoutOrder=2,Parent=btnContent,
         })
 
-        -- v8.5: REMOVED left vertical indicator (was the "blue stripe").
-        -- Active tab now uses purple bubble fill + bottom underline (like categories).
+        -- v7.3: indicator with gradient instead of solid color
         local indicator = Create("Frame",{
-            Name="TabUnderline",
-            Size=UDim2.new(1,-8,0,2),Position=UDim2.new(0,4,1,-3),
+            Size=UDim2.new(0,3,0,0),Position=UDim2.new(0,0,0.5,0),
             BackgroundColor3=Theme.Accent,BorderSizePixel=0,Parent=btn,
-            BackgroundTransparency=1,  -- hidden by default, shown when active
         })
         ApplyCorner(indicator,1)
-        -- indicatorGlow intentionally removed (was a left-side glow image)
-        local indicatorGlow = nil
+        ApplyGradient(indicator, Theme.AccentGradient1, Theme.AccentGradient2, 90)
+        -- v7.3: glow on indicator when active
+        local indicatorGlow = Create("ImageLabel",{
+            Size=UDim2.new(0, 8, 0, 0),
+            Position=UDim2.new(0, -2, 0.5, 0),
+            BackgroundTransparency=1, Image="rbxassetid://6015897843",
+            ImageColor3=Theme.Accent, ImageTransparency=1,
+            ScaleType=Enum.ScaleType.Slice, SliceCenter=Rect.new(49,49,450,450),
+            ZIndex=ZIndex.CONTENT, Parent=btn,
+        })
 
-        -- Active tab glow stroke (kept disabled per v8.0)
+        -- Active tab glow stroke
         local tabGlowStroke = Create("UIStroke",{
             Color=Theme.AccentMuted,Thickness=1,Transparency=1,
             Parent=btn,
         })
 
         -- Scrollbar auto-hide per scrolling frame
+        -- FIX #2: Register via RegConn so the CanvasPosition listener is disconnected on
+        -- MIDNIGHT:Destroy(). Previously this connection leaked forever вЂ” every tab ever
+        -- created kept a live CanvasPosition listener even after the GUI was torn down,
+        -- causing memory bloat and potential nil-indexing crashes after Destroy().
+        -- BUG FIX #2+#3: Scrollbar auto-hide rewrite
+        -- Old code had two bugs:
+        --   1. scrollFrame.ScrollBarImageTransparency = 0 AFTER TweenObject({..Transparency=1}) cancelled
+        --      the tween visually вЂ” the bar flashed instead of fading smoothly.
+        --   2. Direct property writes (Thickness=3) on EVERY CanvasPosition change caused micro-jank;
+        --      now we guard with a `visible` flag so we only write on state transitions.
         local function setupScrollbarAutoHide(scrollFrame)
             if not scrollFrame then return end
             local fadeTimer  = nil
             local fadeToken  = 0
-            local sbVisible  = false
+            local sbVisible  = false  -- track state so we don't write on every scroll event
 
             RegConn(scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
                 if not scrollFrame.Parent then return end
                 fadeToken = fadeToken + 1
                 local token = fadeToken
 
+                -- Show bar only on state transition (hidden в†’ visible)
                 if not sbVisible then
                     sbVisible = true
-                    scrollFrame.ScrollBarThickness = 0
+                    scrollFrame.ScrollBarThickness = 3
                     scrollFrame.ScrollBarImageTransparency = 0
                 end
 
+                -- Cancel previous hide timer вЂ” use pcall in case the thread is already dead
+                -- BUG-D FIX: some executors return nil or userdata from task.delay, not a thread.
+                -- Unconditionally pcall-cancel and nil the ref; typeof guard would silently skip it.
                 if fadeTimer ~= nil then
                     pcall(function() task.cancel(fadeTimer) end)
                     fadeTimer = nil
                 end
 
+                -- Schedule hide
                 fadeTimer = task.delay(1.5, function()
                     fadeTimer = nil
                     if token ~= fadeToken or not scrollFrame.Parent then return end
+                    -- Fade out transparency only; do NOT reset Transparency back to 0 after fade
+                    -- (the old code did ScrollBarImageTransparency=0 after the tween, which
+                    --  made the bar reappear briefly вЂ” that line is intentionally absent here)
                     TweenObject(scrollFrame, {ScrollBarImageTransparency = 1}, 0.4)
                     task.delay(0.45, function()
                         if token ~= fadeToken then return end
                         if scrollFrame and scrollFrame.Parent then
+                            -- Only hide thickness AFTER the tween completes, and mark invisible
                             scrollFrame.ScrollBarThickness = 0
                             sbVisible = false
+                            -- Keep ImageTransparency=1 so next show starts from invisible state
                         end
                     end)
                 end)
             end))
         end
 
-        -- ============================================================
-        -- v8.1: PAGE STRUCTURE
-        --   pageClip (Frame, ClipsDescendants, visible=false)
-        --     ├─ categoryBar (Frame, top of pageClip)  ← NEW
-        --     │     └─ categoryPillsLayout (UIListLayout horizontal)
-        --     │     └─ [pill buttons...]
-        --     └─ page (ScrollingFrame, below categoryBar)
-        -- ============================================================
+        -- Page (tab content) — uses a ClipsDescendants frame for slide animation
         local pageClip = Create("Frame",{
             Name="TabClip_"..tabName,
             Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),
@@ -7332,63 +6869,23 @@ function MIDNIGHT:MakeWindow(config)
             ZIndex=ZIndex.CONTENT,
             Parent=contentFrame,
         })
+        -- v7.3: pageClip has a UIScale for crossfade animation (not BackgroundTransparency,
+        -- which would paint a black opaque rectangle over content).
         local pageClipScale = Create("UIScale", {Scale = 1, Parent = pageClip})
-
-        -- v8.1: Category bar — horizontal strip of pill buttons at top
-        local catBarH = CompactStyle.CategoryBarHeight
-        local categoryBar = Create("Frame",{
-            Name="CategoryBar_"..tabName,
-            Size=UDim2.new(1,-8,0,catBarH),Position=UDim2.new(0,4,0,4),
-            BackgroundTransparency=1, BorderSizePixel=0,
-            ZIndex=ZIndex.CONTENT+1,
-            Parent=pageClip,
-        })
-    -- v8.3: thin violet divider BELOW category bar (only visible when categories exist)
-        local categoryDivider = Create("Frame",{
-            Name="CategoryDivider",
-            Size=UDim2.new(1,-8,0,CompactStyle.DividerThickness),
-            Position=UDim2.new(0,4,0,catBarH+4),
-            BackgroundColor3=Color3.fromRGB(255, 255, 255),  -- pure white
-            BackgroundTransparency=0.60,  -- 40% visible white
-            BorderSizePixel=0,
-            Visible=false,
-            ZIndex=ZIndex.CONTENT+1,
-            Parent=pageClip,
-        })
-        local categoryPillsLayout = Create("UIListLayout",{
-            FillDirection=Enum.FillDirection.Horizontal,
-            SortOrder=Enum.SortOrder.LayoutOrder,
-            Padding=UDim.new(0, CompactStyle.CategoryPillGap),
-            VerticalAlignment=Enum.VerticalAlignment.Center,
-            Parent=categoryBar,
-        })
-        -- Category state (per-tab)
-        local categories = {}            -- list of {name, icon, button, page (ScrollingFrame)}
-        local activeCategory = nil       -- currently-selected category, or nil if no categories
-        local defaultPage = nil          -- fallback page when no categories exist (legacy mode)
-
-        -- v8.1: Create a "default" scrolling page for tabs that have NO categories.
-        -- This preserves backward compatibility — AddToggle/AddButton/etc attach here.
-        defaultPage = Create("ScrollingFrame",{
+        local page = Create("ScrollingFrame",{
             Name="TabContent_"..tabName,
-            Size=UDim2.new(1,-8,1,-(catBarH+12)),Position=UDim2.new(0,4,0,catBarH+8),
+            Size=UDim2.new(1,-8,1,-8),Position=UDim2.new(0,4,0,4),
             BackgroundTransparency=1,BorderSizePixel=0,
-            ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
+            ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,
             AutomaticCanvasSize=Enum.AutomaticSize.Y,
-            Visible=true,
             ZIndex=ZIndex.CONTENT+1,
             Parent=pageClip,
         })
-        Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=defaultPage})
-        ApplyPadding(defaultPage,2,2,6,6)
-        setupScrollbarAutoHide(defaultPage)
+        Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=page})
+        ApplyPadding(page,2,2,6,6)
+        setupScrollbarAutoHide(page)
 
-        -- v8.1: category bar is hidden by default (only shown if user adds categories)
-        categoryBar.Visible = false
-        defaultPage.Size = UDim2.new(1,-8,1,-12)
-        defaultPage.Position = UDim2.new(0,4,0,4)
-
-        -- Empty placeholder
+        -- Empty placeholder (v7.3: parented to page directly; resolveParent() not yet declared)
         local placeholder = Create("TextLabel",{
             Text="No items",Font=FontRegular,TextSize=12,
             TextColor3=Theme.TextMuted,
@@ -7397,33 +6894,19 @@ function MIDNIGHT:MakeWindow(config)
             TextYAlignment=Enum.TextYAlignment.Center,
             BackgroundTransparency=1,
             ZIndex=ZIndex.CONTENT+2,
-            Parent=defaultPage,
+            Parent=page,
         })
 
         local td = {
             _Name=tabName,
-            _Button=btn, _Page=defaultPage, _PageClip=pageClip,
+            _Button=btn, _Page=page, _PageClip=pageClip,
             _Layout=nil, _Window=wd, _ItemCount=0,
             _Indicator=indicator, _IndicatorGlow=indicatorGlow, _Label=tabLabel,
             _IconEl=tabIconEl, _GlowStroke=tabGlowStroke,
             _Placeholder=placeholder,
             _Select=nil,
-            -- v8.1: category system
-            _Categories=categories,
-            _ActiveCategory=activeCategory,
-            _CategoryBar=categoryBar,
-            _DefaultPage=defaultPage,
         }
         table.insert(self._Tabs, td)
-
-        -- v8.1: forward-declare td:AddCategory as a stub so the method exists
-        -- on td IMMEDIATELY after creation, even if some executor has trouble
-        -- with late method definitions. The real implementation below overrides
-        -- this stub. Calling the stub before the real impl is set would warn.
-        function td:AddCategory(cc)
-            warn("[MIDNIGHT] AddCategory not yet initialized for tab '" .. tostring(td._Name) .. "'.")
-            return nil
-        end
 
         local function selectTab()
             if self._ActiveTab == td and pageClip.Visible then
@@ -7431,6 +6914,10 @@ function MIDNIGHT:MakeWindow(config)
             end
 
             local outgoing = self._ActiveTab
+
+            -- v7.5: "Scroll up" tab switch
+            -- Outgoing content scrolls UP and out, incoming content scrolls UP from below
+            -- Both happen simultaneously but in separate clip frames (no overlap)
 
             -- Phase 1: Outgoing scrolls up + fades (0.18s)
             if outgoing and outgoing._PageClip and outgoing ~= td then
@@ -7464,52 +6951,61 @@ function MIDNIGHT:MakeWindow(config)
                         t._PageClip.Visible = false
                     end
                 end
-                -- v8.5: active tab = purple bubble (filled) + bottom underline
                 TweenObject(t._Button, {
-                    BackgroundColor3 = active and Theme.TabActiveBg or Theme.TabBg,
-                    BackgroundTransparency = active and 0 or 0.16,
+                    BackgroundColor3 = active and Theme.TabActiveBg or Theme.ContentBg,
+                    BackgroundTransparency = active and 0.4 or 1,
                 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                -- v8.5: indicator is now a bottom underline (was left vertical stripe)
-                if t._Indicator then
-                    TweenObject(t._Indicator, {
-                        BackgroundTransparency = active and 0 or 1,
-                    }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                TweenObject(t._Indicator, {
+                    Size = active and UDim2.new(0, 3, 0.62, 0) or UDim2.new(0, 3, 0, 0),
+                    Position = active and UDim2.new(0, 0, 0.19, 0) or UDim2.new(0, 0, 0.5, 0),
+                }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                if t._IndicatorGlow then
+                    if active then
+                        TweenObject(t._IndicatorGlow, {
+                            Size = UDim2.new(0, 8, 0.62, 0),
+                            Position = UDim2.new(0, -2, 0.19, 0),
+                            ImageTransparency = 0.45,
+                        }, 0.30, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                    else
+                        TweenObject(t._IndicatorGlow, {
+                            Size = UDim2.new(0, 8, 0, 0),
+                            Position = UDim2.new(0, -2, 0.5, 0),
+                            ImageTransparency = 1,
+                        }, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                    end
                 end
-                -- indicatorGlow removed in v8.5 (was left-side glow image)
                 if t._Label then
-                    -- v8.5: active label = white on purple bubble; inactive = secondary white
                     TweenObject(t._Label, {
-                        TextColor3 = active and Theme.TextPrimary or Theme.TextSecondary,
+                        TextColor3 = active and Theme.TextAccent or Theme.TextSecondary,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
                 if t._IconEl then
                     if t._IconEl:IsA("ImageLabel") then
-                        -- v8.5: active icon = white on purple bubble; inactive = muted
                         TweenObject(t._IconEl, {
-                            ImageColor3 = active and Theme.TextPrimary or Theme.TextMuted,
+                            ImageColor3 = active and Theme.Accent or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     else
                         TweenObject(t._IconEl, {
-                            TextColor3 = active and Theme.TextPrimary or Theme.TextMuted,
+                            TextColor3 = active and Theme.Accent or Theme.TextMuted,
                         }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     end
                 end
                 if t._GlowStroke then
-                    -- v8.0: subtle outline on active tab, invisible otherwise
                     TweenObject(t._GlowStroke, {
-                        Transparency = active and 0.55 or 1,
-                        Color = active and Theme.Accent or Theme.BorderSoft,
+                        Transparency = active and 0.72 or 1,
                     }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                 end
             end
 
-            -- Phase 3: Incoming scrolls up from below
+            -- Phase 3: Incoming scrolls up from below (starts immediately, slight delay for outgoing to begin leaving)
             pageClip.Visible = true
             pageClipScale.Scale = 0.97
-            defaultPage.Position = UDim2.new(0, 4, 0, 35)
+            -- Start from below (Y: +35), scroll UP to center (Y: +4)
+            page.Position = UDim2.new(0, 4, 0, 35)
             SafeDelay(0.08, function()
                 if self._ActiveTab == td and pageClip and pageClip.Parent then
-                    TweenObject(defaultPage, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
+                    -- Fast scroll up: 35 → 4 (upward), snappy Quint
+                    TweenObject(page, {Position = UDim2.new(0, 4, 0, 4)}, 0.22,
                         Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
                     TweenObject(pageClipScale, {Scale = 1}, 0.26,
                         Enum.EasingStyle.Back, Enum.EasingDirection.Out)
@@ -7522,35 +7018,26 @@ function MIDNIGHT:MakeWindow(config)
 
         ApplyPressFeedback(btn, 0.97, 0.08)
         btn.MouseButton1Click:Connect(selectTab)
+        -- v7.4: hover shows a subtle bg highlight (transparency-based)
         btn.MouseEnter:Connect(function()
             if self._ActiveTab ~= td then
-                TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.05}, 0.18)
+                TweenObject(btn, {BackgroundColor3 = Theme.TabHoverBg, BackgroundTransparency = 0.7}, 0.18)
             end
         end)
         btn.MouseLeave:Connect(function()
             if self._ActiveTab ~= td then
-                TweenObject(btn, {BackgroundColor3 = Theme.TabBg, BackgroundTransparency = 0.16}, 0.18)
+                TweenObject(btn, {BackgroundColor3 = Theme.ContentBg, BackgroundTransparency = 1}, 0.18)
             end
         end)
         if #self._Tabs == 1 then
-            pageClip.Visible=true; defaultPage.Position=UDim2.new(0,4,0,4)
+            pageClip.Visible=true; page.Position=UDim2.new(0,4,0,4)
             pageClipScale.Scale = 1
-            -- v8.5: first tab auto-active = purple bubble + white text + bottom underline
-            btn.BackgroundTransparency = 0
+            -- v7.4: first tab uses transparency-based active state
+            btn.BackgroundTransparency = 0.4
             btn.BackgroundColor3 = Theme.TabActiveBg
-            if indicator then indicator.BackgroundTransparency = 0 end
-            if tabLabel then tabLabel.TextColor3 = Theme.TextPrimary end
-            if tabIconEl then
-                if tabIconEl:IsA("ImageLabel") then
-                    tabIconEl.ImageColor3 = Theme.TextPrimary
-                else
-                    tabIconEl.TextColor3 = Theme.TextPrimary
-                end
-            end
-            if tabGlowStroke then
-                tabGlowStroke.Transparency = 0.55
-                tabGlowStroke.Color = Theme.Accent
-            end
+            TweenObject(indicator,{Size=UDim2.new(0,3,0.62,0),Position=UDim2.new(0,0,0.19,0)},0.2,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            if tabLabel then tabLabel.TextColor3=Theme.TextAccent end
+            if tabGlowStroke then tabGlowStroke.Transparency=0.72 end
             self._ActiveTab=td
         end
 
@@ -7558,6 +7045,7 @@ function MIDNIGHT:MakeWindow(config)
         function td:SetVisible(bool)
             btn.Visible = bool
             if not bool and self._Window._ActiveTab == td then
+                -- Switch to first visible tab
                 local switched = false
                 for _, t in ipairs(self._Window._Tabs) do
                     if t ~= td and t._Button.Visible then
@@ -7577,222 +7065,15 @@ function MIDNIGHT:MakeWindow(config)
 
         local function nextOrder()
             td._ItemCount = td._ItemCount + 1
+            -- Hide placeholder once there's content
             if td._Placeholder then td._Placeholder.Visible = false end
-            -- v8.1: also hide the active category's placeholder
-            if activeCategory and activeCategory.placeholder then
-                activeCategory.placeholder.Visible = false
-            end
             return td._ItemCount
         end
 
-        -- v8.1: resolveParent returns the active category's ScrollingFrame,
-        -- or the default page if no categories exist (backward compat).
+        -- v7.2: widgets attach to active section's content holder if one exists,
+        -- otherwise to the tab page directly. Sections reset on each new AddSection call.
         local function resolveParent()
-            if activeCategory and activeCategory.page then
-                return activeCategory.page
-            end
-            return defaultPage
-        end
-
-        -- ============================================================
-        -- v8.1: tab:AddCategory({Name=, Icon=}) — pill button at top
-        -- ============================================================
-        function td:AddCategory(cc)
-            cc = cc or {}
-            local cn = cc.Name or "Category"
-            local ci = cc.Icon
-
-            -- First category: hide default page, show category bar, shrink default page slot
-            if #categories == 0 then
-                categoryBar.Visible = true
-                -- v8.2: show the thin sapphire divider below the category bar
-                if categoryDivider then categoryDivider.Visible = true end
-                defaultPage.Size = UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12))
-                defaultPage.Position = UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8)
-                -- Hide placeholder (it lived on defaultPage which is now a fallback)
-                if placeholder then placeholder.Visible = false end
-            end
-
-            -- Create the category's content page (hidden by default)
-            local catPage = Create("ScrollingFrame",{
-                Name="Cat_"..cn,
-                Size=UDim2.new(1,-8,1,-(CompactStyle.CategoryBarHeight+12)),
-                Position=UDim2.new(0,4,0,CompactStyle.CategoryBarHeight+8),
-                BackgroundTransparency=1,BorderSizePixel=0,
-                ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,
-                AutomaticCanvasSize=Enum.AutomaticSize.Y,
-                Visible=false,
-                ZIndex=ZIndex.CONTENT+1,
-                Parent=pageClip,
-            })
-            Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=catPage})
-            ApplyPadding(catPage,2,2,6,6)
-            setupScrollbarAutoHide(catPage)
-
-            -- Empty placeholder for this category
-            local catPlaceholder = Create("TextLabel",{
-                Text="No items in "..cn,Font=FontRegular,TextSize=12,
-                TextColor3=Theme.TextMuted,
-                Size=UDim2.new(1,0,1,0),
-                TextXAlignment=Enum.TextXAlignment.Center,
-                TextYAlignment=Enum.TextYAlignment.Center,
-                BackgroundTransparency=1,
-                ZIndex=ZIndex.CONTENT+2,
-                Parent=catPage,
-            })
-
-            -- Pill button in the category bar (v8.2: rectangular, not round)
-            local pillH = CompactStyle.CategoryPillHeight
-            local pill = Create("TextButton",{
-                Name="Pill_"..cn,
-                Text="",
-                Size=UDim2.new(0,0,pillH,0),AutomaticSize=Enum.AutomaticSize.X,
-                BackgroundColor3=Theme.TabBg,
-                BackgroundTransparency=0.16,
-                BorderSizePixel=0,
-                LayoutOrder=#categories + 1,
-                ZIndex=ZIndex.CONTENT+2,
-                Parent=categoryBar,
-            })
-            -- v8.2: rectangular pills with small radius (was pillH/2 = round pill)
-            ApplyCorner(pill, CompactStyle.CategoryPillRadius)
-
-            -- v8.4: thin accent bar BELOW the active pill (bubble underline)
-            -- Visible only on the active category, hidden otherwise.
-            local pillUnderline = Create("Frame",{
-                Name="PillUnderline_"..cn,
-                Size=UDim2.new(1,0,0,2),
-                Position=UDim2.new(0,0,1,-1),
-                BackgroundColor3=Theme.Accent,  -- purple
-                BackgroundTransparency=1,  -- hidden by default
-                BorderSizePixel=0,
-                ZIndex=ZIndex.CONTENT+3,
-                Parent=pill,
-            })
-            ApplyCorner(pillUnderline, 1)
-
-            -- Pill content: icon + label, horizontal
-            local pillContent = Create("Frame",{
-                Size=UDim2.new(1,-CompactStyle.CategoryPillPaddingX*2,1,0),
-                Position=UDim2.new(0,CompactStyle.CategoryPillPaddingX,0,0),
-                BackgroundTransparency=1,Parent=pill,
-            })
-            Create("UIListLayout",{
-                FillDirection=Enum.FillDirection.Horizontal,
-                SortOrder=Enum.SortOrder.LayoutOrder,
-                Padding=UDim.new(0,4),
-                VerticalAlignment=Enum.VerticalAlignment.Center,
-                Parent=pillContent,
-            })
-
-            local pillIconEl = nil
-            if ci and ci ~= "" then
-                pillIconEl = CreateIconOrText(
-                    pillContent, ci, nil,
-                    UDim2.new(0,12,0,12), UDim2.new(0,0,0,0),
-                    Theme.TextMuted, FontBold, 12
-                )
-                if pillIconEl then pillIconEl.LayoutOrder = 1 end
-            end
-
-            local pillLabel = Create("TextLabel",{
-                Text=cn,Font=Font,TextSize=CompactStyle.CategoryTextSize,TextColor3=Theme.TextSecondary,
-                TextXAlignment=Enum.TextXAlignment.Left,
-                Size=UDim2.new(0,0,1,0),AutomaticSize=Enum.AutomaticSize.X,
-                BackgroundTransparency=1,LayoutOrder=2,Parent=pillContent,
-            })
-
-            local catData = {
-                name=cn, icon=ci,
-                button=pill, label=pillLabel, iconEl=pillIconEl,
-                underline=pillUnderline,  -- v8.4: thin bar below active pill
-                page=catPage, placeholder=catPlaceholder,
-                itemCount=0,
-            }
-            categories[#categories + 1] = catData
-
-            -- Pill click: switch to this category
-            local function selectCategory()
-                if activeCategory == catData then return end
-                local prev = activeCategory
-                activeCategory = catData
-                td._ActiveCategory = catData
-
-                -- Hide previous category's page
-                if prev and prev.page then
-                    TweenObject(prev.page, {Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8+20)}, 0.14,
-                        Enum.EasingStyle.Quint, Enum.EasingDirection.In)
-                    SafeDelay(0.15, function()
-                        if activeCategory ~= prev and prev.page then
-                            prev.page.Visible = false
-                            prev.page.Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8)
-                        end
-                    end)
-                end
-
-                -- Show new category page
-                catPage.Visible = true
-                catPage.Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8+20)
-                TweenObject(catPage, {Position = UDim2.new(0, 4, 0, CompactStyle.CategoryBarHeight+8)}, 0.18,
-                    Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-                -- Hide defaultPage (legacy mode) when switching to a category
-                if defaultPage and defaultPage.Visible then
-                    defaultPage.Visible = false
-                end
-
-                -- Update pill styling
-                for _, c in ipairs(categories) do
-                    local isActive = (c == catData)
-                -- v8.4: active pill = purple bubble (filled); inactive = transparent
-                TweenObject(c.button, {
-                        BackgroundColor3 = isActive and Theme.TabActiveBg or Theme.TabBg,
-                        BackgroundTransparency = isActive and 0 or 0.16,
-                    }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    if c.label then
-                        -- Active label = white on purple; inactive = secondary white
-                        TweenObject(c.label, {
-                            TextColor3 = isActive and Theme.TextPrimary or Theme.TextSecondary,
-                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    end
-                    if c.iconEl then
-                        -- Active icon = white on purple; inactive = muted
-                        if c.iconEl:IsA("ImageLabel") then
-                            TweenObject(c.iconEl, {
-                                ImageColor3 = isActive and Theme.TextPrimary or Theme.TextMuted,
-                            }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                        else
-                            TweenObject(c.iconEl, {
-                                TextColor3 = isActive and Theme.TextPrimary or Theme.TextMuted,
-                            }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                        end
-                    end
-                    -- v8.4: thin purple underline below active pill (bubble indicator)
-                    if c.underline then
-                        TweenObject(c.underline, {
-                            BackgroundTransparency = isActive and 0 or 1,
-                        }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-                    end
-                end
-            end
-
-            ApplyPressFeedback(pill, 0.97, 0.06)
-            pill.MouseButton1Click:Connect(selectCategory)
-            -- v8.3: no hover effect on category pills (per request)
-            -- (was: BackgroundTransparency=0.5 on hover; now: stays transparent unless active)
-            -- pill.MouseEnter / MouseLeave intentionally removed
-
-            -- Auto-select first category
-            if #categories == 1 then
-                task.defer(function()
-                    selectCategory()
-                end)
-            end
-
-            -- Return a small handle with AddSection etc that attach to this category's page
-            -- For simplicity, the user just continues to call tab:AddSection/AddToggle etc
-            -- after AddCategory — resolveParent() returns the active category's page.
-            return catData
+            return td._ActiveSectionHolder or page
         end
 
         local function registerCommand(title, kind, action, extraSearch)
@@ -8356,8 +7637,8 @@ function MIDNIGHT:MakeWindow(config)
             -- v7.4: solid color fill (no gradient — was looking washed out)
             local k = Create("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(r0,-7,0.5,-7),BackgroundColor3=Theme.SliderKnob,BorderSizePixel=0,Parent=track})
             ApplyCorner(k,7)
-            -- v8.0: knob has NO stroke (pure white circle on sapphire fill)
-            -- (was: UIStroke{Color=Theme.Accent, Thickness=1.5} — removed per "no borders" request)
+            -- knob border (subtle dark ring)
+            Create("UIStroke",{Color=Theme.Accent,Thickness=1.5,Transparency=0.0,Parent=k})
             -- v7.4: glow around slider knob (only visible while dragging)
             local sliderGlow = ApplyGlow(k, Theme.Accent, 0.7)
             if sliderGlow then sliderGlow.ImageTransparency = 1 end
@@ -9613,7 +8894,7 @@ function MIDNIGHT:MakeWindow(config)
                 Position=UDim2.new(0,8,0,yOff+30),
                 BackgroundColor3=Theme.Surface0,
                 BorderSizePixel=0,
-                ScrollBarThickness=0,
+                ScrollBarThickness=3,
                 ScrollBarImageColor3=Theme.ScrollBarColor,
                 AutomaticCanvasSize=Enum.AutomaticSize.Y,
                 ZIndex=ZIndex.CONTENT, Parent=outer,
@@ -9967,7 +9248,7 @@ function MIDNIGHT:MakeWindow(config)
         ApplyHoverEffect(fwClose,Theme.CloseNormal,Theme.CloseHover,false)
         ApplyPressFeedback(fwClose, 0.92, 0.08)
 
-        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=0,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
+        local fScroll=Create("ScrollingFrame",{Size=UDim2.new(1,-10,1,-(CompactStyle.OverlayHeaderHeight+8)),Position=UDim2.new(0,5,0,CompactStyle.OverlayHeaderHeight+3),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Theme.ScrollBarColor,AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=ZIndex.POPUP+1,Parent=fw})
         Create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=fScroll})
         ApplyPadding(fScroll,4,4,5,5)
 
@@ -10386,7 +9667,7 @@ function MIDNIGHT:MakeWindow(config)
             Position=UDim2.new(0,0,0,34),
             BackgroundTransparency=1,
             BorderSizePixel=0,
-            ScrollBarThickness=0,
+            ScrollBarThickness=3,
             ScrollBarImageColor3=Theme.ScrollBarColor,
             AutomaticCanvasSize=Enum.AutomaticSize.Y,
             ZIndex=ZIndex.OVERLAY + 13,
@@ -13574,6 +12855,6 @@ end
 --// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 MIDNIGHT.KeyUtils = KeyUtils
 MIDNIGHT.LucideIcons = LucideIcons
-MIDNIGHT.IconVaultKitAssets = IconVaultKitAssets
+MIDNIGHT.LucideBloxAssets = LucideBloxAssets
 
 return MIDNIGHT
